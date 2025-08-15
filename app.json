@@ -1,0 +1,64 @@
+{
+  "expo": {
+    "name": "UniConnect",
+    "slug": "uniconnect",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "main": "./index.js",
+    "icon": "./public/placeholder-logo.png",
+    "userInterfaceStyle": "light",
+    "splash": {
+      "image": "./public/placeholder-logo.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#4F46E5"
+    },
+    "assetBundlePatterns": [
+      "**/*"
+    ],
+    "ios": {
+      "supportsTablet": true,
+      "infoPlist": {
+        "NSCameraUsageDescription": "This app needs access to camera for video calls and taking photos.",
+        "NSMicrophoneUsageDescription": "This app needs access to microphone for voice messages and calls.",
+        "NSPhotoLibraryUsageDescription": "This app needs access to photo library to share images and videos."
+      }
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./public/placeholder-logo.png",
+        "backgroundColor": "#4F46E5"
+      },
+      "permissions": [
+        "CAMERA",
+        "RECORD_AUDIO",
+        "READ_EXTERNAL_STORAGE",
+        "WRITE_EXTERNAL_STORAGE",
+        "INTERNET",
+        "ACCESS_NETWORK_STATE"
+      ]
+    },
+    "web": {
+      "favicon": "./public/placeholder-logo.png",
+      "bundler": "metro"
+    },
+    "plugins": [
+      "expo-font",
+      "expo-av",
+      "expo-camera",
+      [
+        "expo-document-picker",
+        {
+          "iCloudContainerEnvironment": "Production"
+        }
+      ],
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "The app accesses your photos to let you share them with other users.",
+          "cameraPermission": "The app accesses your camera to let you take photos to share with other users."
+        }
+      ]
+    ],
+    "scheme": "uniconnect"
+  }
+} 
