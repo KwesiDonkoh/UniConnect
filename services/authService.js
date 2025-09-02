@@ -1,46 +1,30 @@
 // Simple auth service for Firebase
+import { 
+  createUserWithEmailAndPassword, 
+  signInWithEmailAndPassword, 
+  signOut, 
+  sendPasswordResetEmail, 
+  updateProfile, 
+  onAuthStateChanged 
+} from 'firebase/auth';
+import { 
+  doc, 
+  setDoc, 
+  getDoc, 
+  updateDoc 
+} from 'firebase/firestore';
+import { auth, db } from '../config/firebaseConfig';
+
 export class AuthService {
   constructor() {
-    this.auth = null;
-    this.db = null;
-    this.initialized = false;
+    this.auth = auth;
+    this.db = db;
+    this.initialized = true;
   }
 
   async initialize() {
-    if (this.initialized) return;
-
-    try {
-      // Dynamically import Firebase modules
-      const { auth } = await import('../config/firebaseConfig');
-      const { 
-        createUserWithEmailAndPassword, 
-        signInWithEmailAndPassword, 
-        signOut, 
-        sendPasswordResetEmail,
-        updateProfile,
-        onAuthStateChanged 
-      } = await import('firebase/auth');
-      const { doc, setDoc, getDoc, updateDoc } = await import('firebase/firestore');
-      const { db } = await import('../config/firebaseConfig');
-
-      this.auth = auth;
-      this.db = db;
-      this.createUserWithEmailAndPassword = createUserWithEmailAndPassword;
-      this.signInWithEmailAndPassword = signInWithEmailAndPassword;
-      this.signOut = signOut;
-      this.sendPasswordResetEmail = sendPasswordResetEmail;
-      this.updateProfile = updateProfile;
-      this.onAuthStateChanged = onAuthStateChanged;
-      this.doc = doc;
-      this.setDoc = setDoc;
-      this.getDoc = getDoc;
-      this.updateDoc = updateDoc;
-      
-      this.initialized = true;
-    } catch (error) {
-      console.error('Failed to initialize Firebase:', error);
-      throw error;
-    }
+    // Service is already initialized in constructor
+    return Promise.resolve();
   }
 
   // Sign up with email and password
@@ -48,11 +32,11 @@ export class AuthService {
     try {
       await this.initialize();
       
-      const userCredential = await this.createUserWithEmailAndPassword(this.auth, email, password);
+      const userCredential = await createUserWithEmailAndPassword(this.auth, email, password);
       const user = userCredential.user;
 
       // Update user profile with display name
-      await this.updateProfile(user, {
+      await updateProfile(user, {
         displayName: userData.fullName
       });
 
@@ -76,7 +60,7 @@ export class AuthService {
         userDocData.title = 'Lecturer'; // Default title
       }
 
-      await this.setDoc(this.doc(this.db, 'users', user.uid), userDocData);
+      await setDoc(doc(this.db, 'users', user.uid), userDocData);
 
       return {
         success: true,
@@ -100,7 +84,7 @@ export class AuthService {
     try {
       await this.initialize();
       
-      const userCredential = await this.signInWithEmailAndPassword(this.auth, email, password);
+      const userCredential = await signInWithEmailAndPassword(this.auth, email, password);
       const user = userCredential.user;
 
       // Fetch user data from Firestore
@@ -127,7 +111,7 @@ export class AuthService {
   async signOutUser() {
     try {
       await this.initialize();
-      await this.signOut(this.auth);
+      await signOut(this.auth);
       return { success: true };
     } catch (error) {
       return {
@@ -141,7 +125,7 @@ export class AuthService {
   async sendPasswordReset(email) {
     try {
       await this.initialize();
-      await this.sendPasswordResetEmail(this.auth, email);
+      await sendPasswordResetEmail(this.auth, email);
       return { success: true };
     } catch (error) {
       return {
@@ -160,7 +144,7 @@ export class AuthService {
   async getUserData(uid) {
     try {
       await this.initialize();
-      const userDoc = await this.getDoc(this.doc(this.db, 'users', uid));
+      const userDoc = await getDoc(doc(this.db, 'users', uid));
       
       if (userDoc.exists()) {
         return userDoc.data();
@@ -178,7 +162,7 @@ export class AuthService {
           updatedAt: new Date()
         };
         
-        await this.setDoc(this.doc(this.db, 'users', uid), basicUserData);
+        await setDoc(doc(this.db, 'users', uid), basicUserData);
         return basicUserData;
       }
     } catch (error) {
@@ -205,7 +189,7 @@ export class AuthService {
         return { success: false, error: 'No valid data to update' };
       }
       
-      await this.updateDoc(this.doc(this.db, 'users', uid), {
+      await updateDoc(doc(this.db, 'users', uid), {
         ...cleanUserData,
         updatedAt: new Date()
       });
@@ -231,7 +215,7 @@ export class AuthService {
   onAuthStateChange(callback) {
     if (!this.auth) {
       this.initialize().then(() => {
-        return this.onAuthStateChanged(this.auth, (firebaseUser) => {
+        return onAuthStateChanged(this.auth, (firebaseUser) => {
           if (firebaseUser) {
             // Fetch user data from Firestore when auth state changes
             this.getUserData(firebaseUser.uid).then(userData => {
@@ -247,7 +231,7 @@ export class AuthService {
       });
       return () => {}; // Return empty cleanup function
     }
-    return this.onAuthStateChanged(this.auth, (firebaseUser) => {
+    return onAuthStateChanged(this.auth, (firebaseUser) => {
       if (firebaseUser) {
         // Fetch user data from Firestore when auth state changes
         this.getUserData(firebaseUser.uid).then(userData => {
