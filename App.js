@@ -10,6 +10,7 @@ import { Ionicons } from '@expo/vector-icons';
 // Import screens
 import SplashScreen from './screens/SplashScreen';
 import LoginScreen from './screens/LoginScreen';
+import TestLogin from './TestLogin';
 import SignUpScreen from './screens/SignUpScreen';
 import ForgotPasswordScreen from './screens/ForgotPasswordScreen';
 // import LevelSelectionScreen from './screens/LevelSelectionScreen'; // Removed - level selection now happens during signup
@@ -155,6 +156,12 @@ function LecturerTabs() {
 
 // Root App Component with Provider
 export default function App() {
+  // TEMPORARY: Show login screen directly for testing
+  // Remove this and uncomment the normal flow below when ready
+  return <TestLogin />;
+
+  // NORMAL APP FLOW (commented out for testing)
+  /*
   return (
     <ErrorBoundary>
       <ThemeProvider>
@@ -170,11 +177,22 @@ export default function App() {
       </ThemeProvider>
     </ErrorBoundary>
   );
+  */
 }
 
 // Main App Content Component
 function AppContent() {
   const { isAuthenticated, isLoading, user } = useApp();
+
+  // Debug logging to help identify the current state
+  useEffect(() => {
+    console.log('🔍 App State Debug:', {
+      isAuthenticated,
+      isLoading,
+      hasUser: !!user,
+      userType: user?.userType,
+    });
+  }, [isAuthenticated, isLoading, user]);
 
   // Initialize platform health check
   useEffect(() => {
@@ -201,10 +219,10 @@ function AppContent() {
   const [showSplash, setShowSplash] = useState(true);
 
   useEffect(() => {
-    // Show splash screen for 3 seconds
+    // Show splash screen for 1 second (reduced for testing)
     setTimeout(() => {
       setShowSplash(false);
-    }, 3000);
+    }, 1000);
   }, []);
 
   // Show splash screen initially
@@ -212,7 +230,7 @@ function AppContent() {
     return <SplashScreen />;
   }
 
-  // Show loading while checking authentication state
+  // Show loading while checking authentication state (with timeout)
   if (isLoading) {
     return <SplashScreen />;
   }
@@ -221,6 +239,8 @@ function AppContent() {
   if (isAuthenticated && !user) {
     return <SplashScreen />;
   }
+
+  console.log('🚀 Rendering navigation with auth state:', { isAuthenticated, hasUser: !!user });
 
   return (
     <NavigationContainer>
