@@ -21,6 +21,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useApp } from '../context/AppContext';
 import fileUploadService from '../services/fileUploadService';
+import { DocumentUploadModal } from '../components/DocumentUploadModal';
 
 const { width, height } = Dimensions.get('window');
 
@@ -43,6 +44,7 @@ export default function UploadNotesScreen({ navigation }) {
   const [filterType, setFilterType] = useState('all');
   const [materialDescription, setMaterialDescription] = useState('');
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [showUploadModal, setShowUploadModal] = useState(false);
 
   // Animation
   const fadeAnim = useRef(new Animated.Value(0)).current;
@@ -808,6 +810,36 @@ export default function UploadNotesScreen({ navigation }) {
           </View>
         </View>
       </Modal>
+
+      {/* Enhanced Upload Modal */}
+      <DocumentUploadModal
+        visible={showUploadModal}
+        onClose={() => setShowUploadModal(false)}
+        selectedCourse={selectedCourse}
+        onUploadComplete={(uploadedFiles) => {
+          loadSharedMaterials();
+          setSelectedTab('shared');
+        }}
+      />
+
+      {/* Floating Upload Button */}
+      <TouchableOpacity
+        style={styles.floatingUploadButton}
+        onPress={() => {
+          if (!selectedCourse) {
+            Alert.alert('Select Course', 'Please select a course first to upload documents');
+            return;
+          }
+          setShowUploadModal(true);
+        }}
+      >
+        <LinearGradient
+          colors={['#6366F1', '#8B5CF6']}
+          style={styles.floatingButtonGradient}
+        >
+          <Ionicons name="cloud-upload" size={24} color="#FFFFFF" />
+        </LinearGradient>
+      </TouchableOpacity>
     </SafeAreaView>
   );
 }
@@ -1303,5 +1335,23 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '600',
     color: '#FFFFFF',
+  },
+  floatingUploadButton: {
+    position: 'absolute',
+    bottom: 20,
+    right: 20,
+    borderRadius: 28,
+    elevation: 8,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+  },
+  floatingButtonGradient: {
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
 });

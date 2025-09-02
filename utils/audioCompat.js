@@ -23,6 +23,18 @@ export class AudioCompat {
     }
   }
 
+  // Create sound async with proper error handling
+  static async createSoundAsync(source, initialStatus = {}, onPlaybackStatusUpdate = null) {
+    try {
+      const { sound } = await Audio.Sound.createAsync(source, initialStatus, onPlaybackStatusUpdate);
+      const status = await sound.getStatusAsync();
+      return { sound, status };
+    } catch (error) {
+      console.error('Error creating sound:', error);
+      throw error;
+    }
+  }
+
   static get Recording() {
     return Audio.Recording;
   }
@@ -33,6 +45,15 @@ export class AudioCompat {
 
   static get RecordingOptionsPresets() {
     return Audio.RecordingOptionsPresets;
+  }
+
+  // Audio interruption mode constants
+  static get INTERRUPTION_MODE_IOS_DO_NOT_MIX() {
+    return Audio.INTERRUPTION_MODE_IOS_DO_NOT_MIX;
+  }
+
+  static get INTERRUPTION_MODE_ANDROID_DO_NOT_MIX() {
+    return Audio.INTERRUPTION_MODE_ANDROID_DO_NOT_MIX;
   }
 
   // Add warning suppression for development

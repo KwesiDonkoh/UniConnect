@@ -25,7 +25,7 @@ class FileUploadService {
     this.currentUploads = new Map();
   }
 
-  // Pick files (documents, images, videos)
+  // Pick files (documents, images, videos) - Enhanced for better document support
   async pickFile(type = 'any') {
     try {
       let result;
@@ -58,12 +58,30 @@ class FileUploadService {
             quality: 0.7,
           });
           break;
+
+        case 'document':
+          result = await DocumentPicker.getDocumentAsync({
+            type: [
+              'application/pdf',
+              'application/msword',
+              'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+              'application/vnd.ms-excel',
+              'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+              'application/vnd.ms-powerpoint',
+              'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+              'text/plain',
+              'text/csv'
+            ],
+            copyToCacheDirectory: true,
+            multiple: true,
+          });
+          break;
           
         default:
           result = await DocumentPicker.getDocumentAsync({
             type: '*/*',
             copyToCacheDirectory: true,
-            multiple: false,
+            multiple: true,
           });
           break;
       }
@@ -76,6 +94,7 @@ class FileUploadService {
             name: asset.name || `file_${Date.now()}`,
             type: asset.mimeType || 'application/octet-stream',
             size: asset.size || 0,
+            id: `file_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
           }))
         };
       }
