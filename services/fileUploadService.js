@@ -23,6 +23,50 @@ class FileUploadService {
   constructor() {
     this.uploadProgress = new Map();
     this.currentUploads = new Map();
+    this.storageConnected = null;
+  }
+
+  // Test Firebase Storage connectivity
+  async testStorageConnection() {
+    try {
+      console.log('Testing Firebase Storage connection...');
+      
+      // Create a small test file
+      const testData = new Blob(['test'], { type: 'text/plain' });
+      const testRef = ref(storage, `test/connection_test_${Date.now()}.txt`);
+      
+      // Try to upload the test file
+      const snapshot = await uploadBytes(testRef, testData);
+      
+      // Try to get download URL
+      const downloadURL = await getDownloadURL(snapshot.ref);
+      
+      // Clean up test file
+      try {
+        await deleteObject(snapshot.ref);
+      } catch (deleteError) {
+        console.warn('Could not delete test file:', deleteError.message);
+      }
+      
+      this.storageConnected = true;
+      console.log('Firebase Storage connection test successful');
+      return { success: true, connected: true };
+      
+    } catch (error) {
+      console.error('Firebase Storage connection test failed:', error);
+      this.storageConnected = false;
+      
+      let errorMessage = 'Storage connection failed';
+      if (error.code === 'storage/unauthorized') {
+        errorMessage = 'Storage access denied. Please check authentication.';
+      } else if (error.code === 'storage/unknown') {
+        errorMessage = 'Storage service unavailable. Please try again later.';
+      } else {
+        errorMessage = error.message || 'Unknown storage connection error';
+      }
+      
+      return { success: false, connected: false, error: errorMessage };
+    }
   }
 
   // Pick files (documents, images, videos) - Enhanced for better document support
@@ -119,6 +163,14 @@ class FileUploadService {
         throw new Error('Course code is required');
       }
 
+      // Test storage connection if not already tested
+      if (this.storageConnected === null) {
+        const connectionTest = await this.testStorageConnection();
+        if (!connectionTest.success) {
+          throw new Error(`Storage unavailable: ${connectionTest.error}`);
+        }
+      }
+
       fileId = `${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
       const fileName = `${category}/${courseCode}/${fileId}_${file.name || 'unknown_file'}`;
       
@@ -145,37 +197,104 @@ class FileUploadService {
       console.log('Starting upload to Firebase Storage...');
       
       try {
-        const uploadTask = uploadBytes(storageRef, blob);
+        // Enhanced upload with better error handling and metadata
+        const metadata = {
+          contentType: file.type || 'application/octet-stream',
+          customMetadata: {
+            originalName: file.name || 'unknown',
+            uploadedBy: 'user',
+            courseCode: courseCode,
+            category: category,
+            uploadTimestamp: new Date().toISOString(),
+            fileSize: blob.size.toString()
+          }
+        };
+
+        // Create upload task with metadata
+        const uploadTask = uploadBytes(storageRef, blob, metadata);
         this.currentUploads.set(fileId, uploadTask);
         
-        console.log('Upload task created, waiting for completion...');
+        console.log('Upload task created with metadata, waiting for completion...');
       
-      // Simulate progress (since expo doesn't support progress tracking)
-      let progress = 0;
-      const progressInterval = setInterval(() => {
-        progress += Math.random() * 20;
-        if (progress >= 100) {
-          progress = 100;
-          clearInterval(progressInterval);
+        // Enhanced progress simulation
+        let progress = 0;
+        const progressInterval = setInterval(() => {
+          if (progress < 90) {
+            progress += Math.random() * 10;
+            if (onProgress) {
+              onProgress(Math.min(progress, 90));
+            }
+          }
+        }, 300);
+        
+        // Wait for upload with timeout
+        const uploadPromise = uploadTask;
+        const timeoutPromise = new Promise((_, reject) => {
+          setTimeout(() => reject(new Error('Upload timeout after 5 minutes')), 300000);
+        });
+        
+        const snapshot = await Promise.race([uploadPromise, timeoutPromise]);
+        clearInterval(progressInterval);
+        
+        console.log('Upload completed successfully');
+        
+        // Verify upload was successful
+        if (!snapshot || !snapshot.ref) {
+          throw new Error('Upload completed but snapshot is invalid');
         }
-        if (onProgress) {
-          onProgress(Math.min(progress, 99)); // Keep at 99% until upload completes
+        
+        // Verify file exists in storage
+        try {
+          const metadata = await snapshot.ref.getMetadata();
+          console.log('Upload verified, file size:', metadata.size);
+        } catch (verifyError) {
+          console.warn('Could not verify upload:', verifyError.message);
         }
-      }, 200);
-      
-      const snapshot = await uploadTask;
-      clearInterval(progressInterval);
-      
-      console.log('Upload completed, snapshot:', snapshot ? 'valid' : 'invalid');
-      
-      // Verify upload was successful
-      if (!snapshot || !snapshot.ref) {
-        throw new Error('Upload completed but snapshot is invalid');
-      }
-      
+        
       } catch (uploadError) {
         console.error('Storage upload error:', uploadError);
-        throw new Error(`Storage upload failed: ${uploadError.message}`);
+        
+        // Enhanced error handling with specific messages
+        let errorMessage = 'Upload failed';
+        
+        if (uploadError.code) {
+          switch (uploadError.code) {
+            case 'storage/unauthorized':
+              errorMessage = 'Permission denied. Please check your authentication and try again.';
+              break;
+            case 'storage/canceled':
+              errorMessage = 'Upload was canceled by user or system.';
+              break;
+            case 'storage/unknown':
+              errorMessage = 'Firebase Storage error. Please check your internet connection and try again.';
+              break;
+            case 'storage/quota-exceeded':
+              errorMessage = 'Storage quota exceeded. Please contact administrator.';
+              break;
+            case 'storage/unauthenticated':
+              errorMessage = 'Authentication required. Please log in again.';
+              break;
+            case 'storage/retry-limit-exceeded':
+              errorMessage = 'Upload failed after multiple retries. Please try again later.';
+              break;
+            case 'storage/invalid-format':
+              errorMessage = 'Invalid file format. Please check the file and try again.';
+              break;
+            case 'storage/invalid-checksum':
+              errorMessage = 'File appears to be corrupted. Please try again.';
+              break;
+            default:
+              errorMessage = `Storage error (${uploadError.code}): ${uploadError.message}`;
+          }
+        } else if (uploadError.message?.includes('timeout')) {
+          errorMessage = 'Upload timeout. Please check your connection and try again.';
+        } else if (uploadError.message?.includes('network')) {
+          errorMessage = 'Network error during upload. Please check your internet connection.';
+        } else {
+          errorMessage = uploadError.message || 'Unknown upload error occurred';
+        }
+        
+        throw new Error(errorMessage);
       }
       
       // Final progress update
