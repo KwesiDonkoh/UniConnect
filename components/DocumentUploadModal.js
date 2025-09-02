@@ -178,9 +178,26 @@ export const DocumentUploadModal = ({
       }
 
       if (failed.length > 0) {
+        const failedFileNames = failed.map(f => f.fileName || 'Unknown file').join(', ');
+        const errorMessages = failed.map(f => f.error).join('; ');
+        
         Alert.alert(
           'Partial Upload',
-          `${failed.length} file(s) failed to upload. Please try again.`
+          `${failed.length} file(s) failed to upload:\n${failedFileNames}\n\nErrors: ${errorMessages}`,
+          [
+            { 
+              text: 'Retry Failed Files', 
+              onPress: () => {
+                // Keep only the failed files for retry
+                const failedFiles = selectedFiles.filter((file, index) => 
+                  results[index] && !results[index].success
+                );
+                setSelectedFiles(failedFiles);
+                Alert.alert('Retry Ready', `${failedFiles.length} failed files ready for retry. Tap upload to try again.`);
+              }
+            },
+            { text: 'OK' }
+          ]
         );
       }
     } catch (error) {

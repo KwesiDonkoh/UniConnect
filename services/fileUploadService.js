@@ -286,30 +286,124 @@ class FileUploadService {
     }
   }
 
-  // Upload multiple files
+  // Upload multiple files with better error handling and retry logic
   async uploadMultipleFiles(files, courseCode, category = 'materials', onProgress) {
+    if (!files || files.length === 0) {
+      return { success: false, error: 'No files provided for upload', results: [] };
+    }
+
+    let successful = 0;
+    let failed = 0;
+    const results = [];
+    
     try {
-      const uploads = files.map((file, index) => 
-        this.uploadFile(file, courseCode, category, (progress) => {
-          if (onProgress) {
-            onProgress(index, progress);
+      // Process files in batches of 3 to avoid overwhelming the server
+      const batchSize = 3;
+      const batches = [];
+      
+      for (let i = 0; i < files.length; i += batchSize) {
+        batches.push(files.slice(i, i + batchSize));
+      }
+
+      for (let batchIndex = 0; batchIndex < batches.length; batchIndex++) {
+        const batch = batches[batchIndex];
+        
+        // Process batch in parallel with retry logic
+        const batchPromises = batch.map(async (file, fileIndex) => {
+          const globalIndex = batchIndex * batchSize + fileIndex;
+          let attempts = 0;
+          const maxAttempts = 3;
+          
+          while (attempts < maxAttempts) {
+            try {
+              const result = await this.uploadFile(
+                file, 
+                courseCode, 
+                category,
+                (progress) => {
+                  const overallProgress = ((globalIndex + progress / 100) / files.length) * 100;
+                  if (onProgress) onProgress(Math.min(overallProgress, 100));
+                }
+              );
+              
+              if (result.success) {
+                successful++;
+                return result;
+              } else {
+                attempts++;
+                if (attempts >= maxAttempts) {
+                  failed++;
+                  return {
+                    ...result,
+                    fileName: file.name,
+                    attempts: attempts
+                  };
+                }
+                // Wait before retry
+                await new Promise(resolve => setTimeout(resolve, 1000 * attempts));
+              }
+            } catch (error) {
+              attempts++;
+              if (attempts >= maxAttempts) {
+                failed++;
+                return {
+                  success: false,
+                  error: error.message || 'Upload failed after retries',
+                  fileName: file.name,
+                  fileId: `error_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+                  attempts: attempts
+                };
+              }
+              // Wait before retry
+              await new Promise(resolve => setTimeout(resolve, 1000 * attempts));
+            }
           }
-        })
-      );
-      
-      const results = await Promise.all(uploads);
-      const successful = results.filter(r => r.success);
-      const failed = results.filter(r => !r.success);
-      
+        });
+
+        const batchResults = await Promise.all(batchPromises);
+        results.push(...batchResults);
+        
+        // Small delay between batches
+        if (batchIndex < batches.length - 1) {
+          await new Promise(resolve => setTimeout(resolve, 500));
+        }
+      }
+
+      // Final progress update
+      if (onProgress) onProgress(100);
+
       return {
-        success: true,
-        uploaded: successful.length,
-        failed: failed.length,
-        results
+        success: successful > 0,
+        uploaded: successful,
+        failed: failed,
+        results,
+        summary: {
+          total: files.length,
+          successful,
+          failed,
+          successRate: Math.round((successful / files.length) * 100)
+        }
       };
+
     } catch (error) {
-      console.error('Error uploading multiple files:', error);
-      return { success: false, error: error.message };
+      console.error('Error in multiple file upload:', error);
+      return {
+        success: false,
+        error: error.message || 'Multiple file upload failed',
+        uploaded: successful,
+        failed: files.length - successful,
+        results: results.length > 0 ? results : [{
+          success: false,
+          error: 'Batch upload failed',
+          fileName: 'multiple_files'
+        }],
+        summary: {
+          total: files.length,
+          successful,
+          failed: files.length - successful,
+          successRate: Math.round((successful / files.length) * 100)
+        }
+      };
     }
   }
 

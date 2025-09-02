@@ -128,20 +128,56 @@ class ChatService {
     }
   }
 
-  // Send a message to a course chat
+  // Send a message to a course chat with enhanced error handling
   async sendMessage(courseCode, messageText, senderId, senderName, senderType, replyToId = null, messageType = 'text', additionalData = {}) {
-    if (!this.currentUserId || !this.userProfile) {
-      throw new Error('User not authenticated');
+    // Validate inputs
+    if (!courseCode) {
+      return { success: false, error: 'Course code is required' };
+    }
+
+    if (!messageText && messageType === 'text') {
+      return { success: false, error: 'Message text is required' };
+    }
+
+    // Ensure user is authenticated
+    if (!this.currentUserId) {
+      try {
+        // Try to get current user
+        const currentUser = auth.currentUser;
+        if (currentUser) {
+          this.currentUserId = currentUser.uid;
+          await this.initializeUserPresence();
+        } else {
+          return { success: false, error: 'User not authenticated. Please log in again.' };
+        }
+      } catch (error) {
+        return { success: false, error: 'Authentication error. Please log in again.' };
+      }
+    }
+
+    // Ensure user profile is loaded
+    if (!this.userProfile) {
+      try {
+        const userDoc = await getDoc(doc(db, 'users', this.currentUserId));
+        if (userDoc.exists()) {
+          this.userProfile = { id: this.currentUserId, ...userDoc.data() };
+        } else {
+          return { success: false, error: 'User profile not found. Please update your profile.' };
+        }
+      } catch (error) {
+        console.error('Error loading user profile:', error);
+        return { success: false, error: 'Failed to load user profile' };
+      }
     }
 
     try {
       const messagesRef = collection(db, 'chatMessages', courseCode, 'messages');
       
       const messageData = {
-        text: messageText,
+        text: messageText || '',
         type: messageType,
         senderId: senderId || this.currentUserId,
-        senderName: senderName || this.userProfile.fullName || this.userProfile.name,
+        senderName: senderName || this.userProfile.fullName || this.userProfile.name || 'Unknown User',
         senderAvatar: this.userProfile.avatar || null,
         senderType: senderType || this.userProfile.userType || 'student',
         academicLevel: this.userProfile.academicLevel || null,
@@ -160,16 +196,37 @@ class ChatService {
 
       const docRef = await addDoc(messagesRef, messageData);
       
-      // Update course's last message info
-      await this.updateCourseLastMessage(courseCode, messageData);
+      // Update course's last message info (don't fail if this fails)
+      try {
+        await this.updateCourseLastMessage(courseCode, messageData);
+      } catch (updateError) {
+        console.warn('Failed to update course last message:', updateError);
+      }
       
-      // Clear typing indicator
-      await this.setTypingStatus(courseCode, false);
+      // Clear typing indicator (don't fail if this fails)
+      try {
+        await this.setTypingStatus(courseCode, false);
+      } catch (typingError) {
+        console.warn('Failed to clear typing status:', typingError);
+      }
 
-      return { success: true, messageId: docRef.id };
+      return { success: true, messageId: docRef.id, message: { id: docRef.id, ...messageData } };
     } catch (error) {
       console.error('Error sending message:', error);
-      return { success: false, error: error.message };
+      
+      // Provide more specific error messages
+      let errorMessage = 'Failed to send message';
+      if (error.code === 'permission-denied') {
+        errorMessage = 'Permission denied. Please check your access to this course.';
+      } else if (error.code === 'unavailable') {
+        errorMessage = 'Service temporarily unavailable. Please try again.';
+      } else if (error.message?.includes('network')) {
+        errorMessage = 'Network error. Please check your internet connection.';
+      } else {
+        errorMessage = error.message || 'Failed to send message';
+      }
+      
+      return { success: false, error: errorMessage, code: error.code };
     }
   }
 
@@ -951,6 +1008,110 @@ class ChatService {
 
     this.onlineStatusListeners.set(courseCode, unsubscribe);
     return unsubscribe;
+  }
+
+  // Connection recovery function
+  async recoverConnection() {
+    try {
+      console.log('ChatService: Attempting connection recovery...');
+      
+      // Re-initialize if user exists
+      if (auth.currentUser) {
+        this.currentUserId = auth.currentUser.uid;
+        await this.initializeUserPresence();
+        console.log('ChatService: Connection recovery successful');
+        return { success: true };
+      } else {
+        console.log('ChatService: No authenticated user for recovery');
+        return { success: false, error: 'No authenticated user' };
+      }
+    } catch (error) {
+      console.error('ChatService: Connection recovery failed:', error);
+      return { success: false, error: error.message };
+    }
+  }
+
+  // Get connection status
+  getConnectionStatus() {
+    return {
+      isConnected: !!this.currentUserId,
+      hasProfile: !!this.userProfile,
+      activeListeners: {
+        messages: this.messageListeners.size,
+        typing: this.typingListeners.size,
+        onlineStatus: this.onlineStatusListeners.size
+      },
+      hasHeartbeat: !!this.heartbeatInterval
+    };
+  }
+
+  // Force refresh user profile
+  async refreshUserProfile() {
+    if (!this.currentUserId) return { success: false, error: 'No user ID' };
+    
+    try {
+      const userDoc = await getDoc(doc(db, 'users', this.currentUserId));
+      if (userDoc.exists()) {
+        this.userProfile = { id: this.currentUserId, ...userDoc.data() };
+        return { success: true, profile: this.userProfile };
+      } else {
+        return { success: false, error: 'User profile not found' };
+      }
+    } catch (error) {
+      console.error('Error refreshing user profile:', error);
+      return { success: false, error: error.message };
+    }
+  }
+
+  // Immediate cleanup for authentication changes
+  immediateCleanup() {
+    console.log('ChatService: Immediate cleanup triggered');
+    
+    // Clear all listeners
+    this.messageListeners.forEach(unsubscribe => {
+      try {
+        unsubscribe();
+      } catch (error) {
+        console.warn('Error unsubscribing message listener:', error);
+      }
+    });
+    this.messageListeners.clear();
+    
+    this.typingListeners.forEach(unsubscribe => {
+      try {
+        unsubscribe();
+      } catch (error) {
+        console.warn('Error unsubscribing typing listener:', error);
+      }
+    });
+    this.typingListeners.clear();
+    
+    this.onlineStatusListeners.forEach(unsubscribe => {
+      try {
+        unsubscribe();
+      } catch (error) {
+        console.warn('Error unsubscribing online status listener:', error);
+      }
+    });
+    this.onlineStatusListeners.clear();
+    
+    // Clear heartbeat
+    if (this.heartbeatInterval) {
+      clearInterval(this.heartbeatInterval);
+      this.heartbeatInterval = null;
+    }
+    
+    // Remove app state listener
+    if (this.appStateSubscription) {
+      this.appStateSubscription.remove();
+      this.appStateSubscription = null;
+    }
+    
+    // Reset state
+    this.currentUserId = null;
+    this.userProfile = null;
+    
+    console.log('ChatService: Immediate cleanup completed');
   }
 
   cleanup() {
