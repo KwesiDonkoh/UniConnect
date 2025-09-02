@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import {
   View,
   Text,
@@ -8,9 +8,16 @@ import {
   KeyboardAvoidingView,
   Platform,
   Alert,
+  Animated,
+  StatusBar,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { LinearGradient } from 'expo-linear-gradient';
+import { BlurView } from 'expo-blur';
 import { useApp } from '../context/AppContext';
+import { useTheme } from '../components/ThemeProvider';
+import { ModernButton, ModernInput, ModernCard } from '../components/ModernUI';
+import { Colors, Typography, Spacing, BorderRadius, Shadows, Animations } from '../themes/modernTheme';
 
 export default function LoginScreen({ navigation, onLogin }) {
   const [email, setEmail] = useState('');
@@ -18,6 +25,47 @@ export default function LoginScreen({ navigation, onLogin }) {
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const { signIn } = useApp();
+  const { theme, isDark } = useTheme();
+
+  // Animation refs
+  const fadeAnim = useRef(new Animated.Value(0)).current;
+  const slideAnim = useRef(new Animated.Value(50)).current;
+  const scaleAnim = useRef(new Animated.Value(0.8)).current;
+  const logoRotateAnim = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    // Entrance animations
+    Animated.sequence([
+      Animated.parallel([
+        Animated.timing(fadeAnim, {
+          toValue: 1,
+          duration: Animations.timing.slow,
+          useNativeDriver: true,
+        }),
+        Animated.spring(slideAnim, {
+          toValue: 0,
+          ...Animations.spring.gentle,
+        }),
+        Animated.spring(scaleAnim, {
+          toValue: 1,
+          ...Animations.spring.wobbly,
+        }),
+      ]),
+      // Logo rotation animation
+      Animated.loop(
+        Animated.timing(logoRotateAnim, {
+          toValue: 1,
+          duration: 10000,
+          useNativeDriver: true,
+        })
+      ),
+    ]).start();
+  }, []);
+
+  const logoRotation = logoRotateAnim.interpolate({
+    inputRange: [0, 1],
+    outputRange: ['0deg', '360deg'],
+  });
 
   const handleLogin = async () => {
     if (!email.trim() || !password.trim()) {
@@ -44,165 +92,224 @@ export default function LoginScreen({ navigation, onLogin }) {
   };
 
   return (
-    <KeyboardAvoidingView
-      style={styles.container}
-      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-    >
-      <View style={styles.header}>
-        <Ionicons name="school" size={60} color="#4F46E5" />
-        <Text style={styles.title}>UniConnect</Text>
-        <Text style={styles.subtitle}>Sign in to your account</Text>
-      </View>
-
-      <View style={styles.form}>
-        <View style={styles.inputContainer}>
-          <Ionicons name="mail-outline" size={20} color="#64748B" style={styles.inputIcon} />
-          <TextInput
-            style={styles.input}
-            placeholder="University Email"
-            value={email}
-            onChangeText={setEmail}
-            keyboardType="email-address"
-            autoCapitalize="none"
-            autoComplete="email"
-          />
-        </View>
-
-        <View style={styles.inputContainer}>
-          <Ionicons name="lock-closed-outline" size={20} color="#64748B" style={styles.inputIcon} />
-          <TextInput
-            style={styles.input}
-            placeholder="Password"
-            value={password}
-            onChangeText={setPassword}
-            secureTextEntry={!showPassword}
-            autoComplete="password"
-          />
-          <TouchableOpacity
-            style={styles.eyeIcon}
-            onPress={() => setShowPassword(!showPassword)}
+    <>
+      <StatusBar 
+        barStyle={isDark ? 'light-content' : 'dark-content'} 
+        backgroundColor="transparent" 
+        translucent 
+      />
+      <LinearGradient
+        colors={isDark ? Colors.gradients.cosmic : Colors.gradients.primarySubtle}
+        style={styles.gradient}
+      >
+        <KeyboardAvoidingView
+          style={styles.container}
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        >
+          <Animated.View 
+            style={[
+              styles.content,
+              {
+                opacity: fadeAnim,
+                transform: [{ translateY: slideAnim }],
+              }
+            ]}
           >
-            <Ionicons
-              name={showPassword ? 'eye-outline' : 'eye-off-outline'}
-              size={20}
-              color="#64748B"
-            />
-          </TouchableOpacity>
-        </View>
+            {/* Modern Header with Animated Logo */}
+            <Animated.View 
+              style={[
+                styles.header,
+                { transform: [{ scale: scaleAnim }] }
+              ]}
+            >
+              <Animated.View 
+                style={[
+                  styles.logoContainer,
+                  { transform: [{ rotate: logoRotation }] }
+                ]}
+              >
+                <LinearGradient
+                  colors={Colors.gradients.primary}
+                  style={styles.logoGradient}
+                >
+                  <Ionicons name="school" size={48} color="#FFFFFF" />
+                </LinearGradient>
+              </Animated.View>
+              
+              <Text style={[
+                styles.title,
+                {
+                  fontFamily: Typography.fonts.primary,
+                  fontSize: Typography.sizes['4xl'],
+                  fontWeight: Typography.weights.bold,
+                  color: isDark ? Colors.dark.text : Colors.light.text,
+                }
+              ]}>
+                UniConnect
+              </Text>
+              
+              <Text style={[
+                styles.subtitle,
+                {
+                  fontFamily: Typography.fonts.secondary,
+                  fontSize: Typography.sizes.lg,
+                  color: isDark ? Colors.dark.textSecondary : Colors.light.textSecondary,
+                }
+              ]}>
+                Sign in to your account
+              </Text>
+            </Animated.View>
 
-        <TouchableOpacity 
-          style={[styles.loginButton, isLoading && styles.buttonDisabled]} 
-          onPress={handleLogin}
-          disabled={isLoading}
-        >
-          <Text style={styles.loginButtonText}>
-            {isLoading ? 'Signing In...' : 'Log In'}
-          </Text>
-        </TouchableOpacity>
+            {/* Modern Form Card */}
+            <Animated.View style={{ transform: [{ translateY: slideAnim }] }}>
+              <ModernCard variant="glass" style={styles.formCard}>
+                <ModernInput
+                  label="University Email"
+                  value={email}
+                  onChangeText={setEmail}
+                  icon="mail-outline"
+                  keyboardType="email-address"
+                  autoCapitalize="none"
+                  autoComplete="email"
+                  variant="glass"
+                />
 
-        <TouchableOpacity 
-          style={styles.forgotPassword}
-          onPress={() => navigation.navigate('ForgotPassword')}
-        >
-          <Text style={styles.forgotPasswordText}>Forgot Password?</Text>
-        </TouchableOpacity>
+                <ModernInput
+                  label="Password"
+                  value={password}
+                  onChangeText={setPassword}
+                  icon="lock-closed-outline"
+                  rightIcon={showPassword ? 'eye-outline' : 'eye-off-outline'}
+                  onRightIconPress={() => setShowPassword(!showPassword)}
+                  secureTextEntry={!showPassword}
+                  autoComplete="password"
+                  variant="glass"
+                />
 
-        <View style={styles.signupContainer}>
-          <Text style={styles.signupText}>Don't have an account? </Text>
-          <TouchableOpacity onPress={() => navigation.navigate('SignUp')}>
-            <Text style={styles.signupLink}>Sign Up</Text>
-          </TouchableOpacity>
-        </View>
-      </View>
-    </KeyboardAvoidingView>
+                <ModernButton
+                  gradient={Colors.gradients.primary}
+                  onPress={handleLogin}
+                  disabled={isLoading}
+                  loading={isLoading}
+                  size="large"
+                  style={styles.loginButton}
+                >
+                  {isLoading ? 'Signing In...' : 'Log In'}
+                </ModernButton>
+
+                <TouchableOpacity 
+                  style={styles.forgotPassword}
+                  onPress={() => navigation.navigate('ForgotPassword')}
+                >
+                  <Text style={[
+                    styles.forgotPasswordText,
+                    {
+                      fontFamily: Typography.fonts.secondary,
+                      color: Colors.primary[600],
+                    }
+                  ]}>
+                    Forgot your password?
+                  </Text>
+                </TouchableOpacity>
+              </ModernCard>
+            </Animated.View>
+
+            {/* Modern Sign Up Section */}
+            <Animated.View 
+              style={[
+                styles.signUpContainer,
+                { opacity: fadeAnim }
+              ]}
+            >
+              <Text style={[
+                styles.signUpText,
+                {
+                  fontFamily: Typography.fonts.secondary,
+                  color: isDark ? Colors.dark.textSecondary : Colors.light.textSecondary,
+                }
+              ]}>
+                Don't have an account?{' '}
+              </Text>
+              <TouchableOpacity onPress={() => navigation.navigate('SignUp')}>
+                <Text style={[
+                  styles.signUpLink,
+                  {
+                    fontFamily: Typography.fonts.secondary,
+                    fontWeight: Typography.weights.semibold,
+                    color: Colors.primary[600],
+                  }
+                ]}>
+                  Sign Up
+                </Text>
+              </TouchableOpacity>
+            </Animated.View>
+          </Animated.View>
+        </KeyboardAvoidingView>
+      </LinearGradient>
+    </>
   );
 }
 
 const styles = StyleSheet.create({
+  gradient: {
+    flex: 1,
+  },
   container: {
     flex: 1,
-    backgroundColor: '#FFFFFF',
-    paddingHorizontal: 24,
+    justifyContent: 'center',
+    paddingHorizontal: Spacing.xl,
+    paddingTop: StatusBar.currentHeight || 0,
+  },
+  content: {
+    flex: 1,
+    justifyContent: 'center',
   },
   header: {
     alignItems: 'center',
-    marginTop: 80,
-    marginBottom: 40,
-    width: '100%',
+    marginBottom: Spacing['3xl'],
+  },
+  logoContainer: {
+    marginBottom: Spacing.lg,
+  },
+  logoGradient: {
+    width: 80,
+    height: 80,
+    borderRadius: BorderRadius.full,
+    alignItems: 'center',
+    justifyContent: 'center',
+    ...Shadows.xl,
   },
   title: {
-    fontSize: 28,
-    fontWeight: 'bold',
-    color: '#1E293B',
-    marginTop: 16,
-  },
-  subtitle: {
-    fontSize: 16,
-    color: '#64748B',
-    marginTop: 8,
+    marginBottom: Spacing.sm,
     textAlign: 'center',
   },
-  form: {
-    flex: 1,
+  subtitle: {
+    textAlign: 'center',
   },
-  inputContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#F8FAFC',
-    borderRadius: 12,
-    marginBottom: 16,
-    paddingHorizontal: 16,
-    borderWidth: 1,
-    borderColor: '#E2E8F0',
-  },
-  inputIcon: {
-    marginRight: 12,
-  },
-  input: {
-    flex: 1,
-    height: 50,
-    fontSize: 16,
-    color: '#1E293B',
-  },
-  eyeIcon: {
-    padding: 4,
+  formCard: {
+    marginBottom: Spacing.xl,
   },
   loginButton: {
-    backgroundColor: '#4F46E5',
-    borderRadius: 12,
-    height: 50,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginTop: 8,
-  },
-  buttonDisabled: {
-    backgroundColor: '#94A3B8',
-  },
-  loginButtonText: {
-    color: '#FFFFFF',
-    fontSize: 16,
-    fontWeight: '600',
+    marginTop: Spacing.md,
   },
   forgotPassword: {
     alignItems: 'center',
-    marginTop: 16,
+    marginTop: Spacing.md,
+    padding: Spacing.sm,
   },
   forgotPasswordText: {
-    color: '#4F46E5',
-    fontSize: 14,
+    fontSize: Typography.sizes.sm,
   },
-  signupContainer: {
+  signUpContainer: {
     flexDirection: 'row',
     justifyContent: 'center',
-    marginTop: 32,
+    alignItems: 'center',
+    marginTop: Spacing.lg,
   },
-  signupText: {
-    color: '#64748B',
-    fontSize: 14,
+  signUpText: {
+    fontSize: Typography.sizes.base,
   },
-  signupLink: {
-    color: '#4F46E5',
-    fontSize: 14,
-    fontWeight: '600',
+  signUpLink: {
+    fontSize: Typography.sizes.base,
   },
 });

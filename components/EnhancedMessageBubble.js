@@ -1,14 +1,18 @@
-import React from 'react';
+import React, { useRef, useEffect } from 'react';
 import {
   View,
   Text,
   StyleSheet,
   TouchableOpacity,
   Platform,
+  Animated,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
+import { BlurView } from 'expo-blur';
 import VoiceMessagePlayer from './VoiceMessagePlayer';
+import { useTheme } from './ThemeProvider';
+import { Colors, Typography, Spacing, BorderRadius, Shadows, Animations } from '../themes/modernTheme';
 
 export const EnhancedMessageBubble = ({ 
   message, 
@@ -17,6 +21,32 @@ export const EnhancedMessageBubble = ({
   onPress,
   showAvatar = false 
 }) => {
+  const { theme, isDark } = useTheme();
+  const scaleAnim = useRef(new Animated.Value(0)).current;
+  const opacityAnim = useRef(new Animated.Value(0)).current;
+  const slideAnim = useRef(new Animated.Value(20)).current;
+
+  useEffect(() => {
+    // Entrance animation
+    Animated.parallel([
+      Animated.spring(scaleAnim, {
+        toValue: 1,
+        ...Animations.spring.gentle,
+        delay: Math.random() * 100, // Stagger animation
+      }),
+      Animated.timing(opacityAnim, {
+        toValue: 1,
+        duration: Animations.timing.normal,
+        useNativeDriver: true,
+      }),
+      Animated.timing(slideAnim, {
+        toValue: 0,
+        duration: Animations.timing.normal,
+        useNativeDriver: true,
+      }),
+    ]).start();
+  }, []);
+
   const formatTime = (timestamp) => {
     if (!timestamp) return '';
     const date = timestamp.toDate ? timestamp.toDate() : new Date(timestamp);
@@ -27,15 +57,22 @@ export const EnhancedMessageBubble = ({
     (message.deletedBy && message.deletedBy.includes(message.currentUserId));
 
   return (
-    <TouchableOpacity
+    <Animated.View
       style={[
+        {
+          transform: [{ scale: scaleAnim }, { translateY: slideAnim }],
+          opacity: opacityAnim,
+        },
         styles.container,
         isCurrentUser ? styles.currentUserContainer : styles.otherUserContainer
       ]}
-      onLongPress={() => onLongPress(message)}
-      onPress={() => onPress?.(message)}
-      activeOpacity={0.8}
     >
+      <TouchableOpacity
+        onLongPress={() => onLongPress(message)}
+        onPress={() => onPress?.(message)}
+        activeOpacity={0.9}
+        style={styles.touchableContainer}
+      >
       {showAvatar && !isCurrentUser && (
         <LinearGradient
           colors={message.senderType === 'lecturer' ? ['#7C3AED', '#A855F7'] : ['#4F46E5', '#6366F1']}
@@ -151,15 +188,16 @@ export const EnhancedMessageBubble = ({
           </View>
         )}
       </View>
-    </TouchableOpacity>
+      </TouchableOpacity>
+    </Animated.View>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
     flexDirection: 'row',
-    marginVertical: 2,
-    paddingHorizontal: 16,
+    marginVertical: Spacing.xs,
+    paddingHorizontal: Spacing.md,
   },
   currentUserContainer: {
     justifyContent: 'flex-end',
@@ -167,34 +205,41 @@ const styles = StyleSheet.create({
   otherUserContainer: {
     justifyContent: 'flex-start',
   },
+  touchableContainer: {
+    flexDirection: 'row',
+    alignItems: 'flex-end',
+    maxWidth: '85%',
+  },
   avatar: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
+    width: 36,
+    height: 36,
+    borderRadius: BorderRadius.full,
     justifyContent: 'center',
     alignItems: 'center',
-    marginRight: 8,
-    marginTop: 4,
+    marginRight: Spacing.sm,
+    marginTop: Spacing.xs,
   },
   avatarText: {
     color: '#FFFFFF',
-    fontSize: 12,
-    fontWeight: 'bold',
+    fontSize: Typography.sizes.sm,
+    fontWeight: Typography.weights.semibold,
   },
   bubble: {
-    maxWidth: '80%',
-    borderRadius: 18,
-    paddingHorizontal: 14,
-    paddingVertical: 8,
+    maxWidth: '85%',
+    borderRadius: BorderRadius.xl,
+    paddingHorizontal: Spacing.md,
+    paddingVertical: Spacing.sm,
     position: 'relative',
   },
   currentUserBubble: {
-    backgroundColor: '#4F46E5',
-    borderBottomRightRadius: 4,
+    backgroundColor: Colors.primary[500],
+    borderBottomRightRadius: BorderRadius.sm,
   },
   otherUserBubble: {
-    backgroundColor: '#F1F5F9',
-    borderBottomLeftRadius: 4,
+    backgroundColor: Colors.light.cardElevated,
+    borderBottomLeftRadius: BorderRadius.sm,
+    borderWidth: 1,
+    borderColor: Colors.light.borderSubtle,
   },
   deletedBubble: {
     backgroundColor: '#F8FAFC',
