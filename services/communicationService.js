@@ -519,29 +519,52 @@ class CommunicationService {
     return { success: true, feature: 'coming_soon' };
   }
 
-  // Enhanced voice message sending with proper chat integration
+  // Enhanced voice message sending with Firebase Storage upload
   async sendVoiceMessage(courseCode, audioUri, duration, senderInfo = {}) {
     try {
-      // Import chat service dynamically to avoid circular dependency
+      // Import services dynamically to avoid circular dependency
       const { default: chatService } = await import('./chatService');
+      const { default: fileUploadService } = await import('./fileUploadService');
       
       console.log('Sending voice message:', { courseCode, audioUri, duration, senderInfo });
       
-      // Prepare voice message data
+      // First, upload the audio file to Firebase Storage
+      console.log('Uploading voice message to Firebase Storage...');
+      const uploadResult = await fileUploadService.uploadFile(
+        { 
+          uri: audioUri,
+          name: `voice_message_${Date.now()}.m4a`,
+          type: 'audio/m4a'
+        },
+        courseCode,
+        'chat_media' // Use chat_media category for voice messages
+      );
+      
+      if (!uploadResult.success) {
+        throw new Error(`Failed to upload voice message: ${uploadResult.error}`);
+      }
+      
+      console.log('Voice message uploaded successfully:', uploadResult.downloadURL);
+      
+      // Prepare voice message data with Firebase Storage URL
       const voiceMessageData = {
-        voiceUri: audioUri,
-        audioUri: audioUri, // Fallback for compatibility
+        voiceUri: uploadResult.downloadURL, // Use Firebase Storage URL
+        audioUri: uploadResult.downloadURL, // Fallback for compatibility
         duration: duration,
-        fileUrl: audioUri, // Additional fallback
+        fileUrl: uploadResult.downloadURL, // Additional fallback
         voiceMessageDuration: duration,
         isVoiceMessage: true,
+        fileId: uploadResult.fileId,
         // Enhanced metadata for cross-user compatibility
         audioMetadata: {
           duration: duration,
-          format: 'audio/mp4', // or detected format
+          format: 'audio/m4a',
           uploadedAt: new Date().toISOString(),
           compatible: true,
-          crossPlatform: true
+          crossPlatform: true,
+          storageUrl: uploadResult.downloadURL,
+          originalUri: audioUri, // Keep reference to original local file
+          fileSize: uploadResult.metadata?.fileSize || 0
         }
       };
       
@@ -563,17 +586,29 @@ class CommunicationService {
           success: true, 
           messageId: result.messageId,
           messageType: 'voice',
-          audioUri,
+          audioUri: uploadResult.downloadURL, // Return Firebase Storage URL
           duration,
           courseCode,
-          crossUserDelivery: true // Indicates it's available to all user types
+          crossUserDelivery: true, // Indicates it's available to all user types
+          uploadedFileId: uploadResult.fileId
         };
       } else {
         throw new Error(result.error || 'Failed to send voice message');
       }
     } catch (error) {
       console.error('Error sending voice message:', error);
-      return { success: false, error: error.message };
+      
+      // Provide specific error messages
+      let errorMessage = error.message;
+      if (error.message.includes('upload')) {
+        errorMessage = 'Failed to upload voice message. Please check your internet connection and try again.';
+      } else if (error.message.includes('permission')) {
+        errorMessage = 'Permission denied. Please check your access to this course.';
+      } else if (error.message.includes('network')) {
+        errorMessage = 'Network error. Please check your internet connection.';
+      }
+      
+      return { success: false, error: errorMessage };
     }
   }
 

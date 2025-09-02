@@ -842,37 +842,70 @@ export default function GroupChatScreen({ navigation }) {
     if (!selectedCourse || !audioUri) return;
 
     try {
-      // Send voice message with proper data structure
-      const voiceMessageText = `🎵 Voice message (${communicationService.formatRecordingDuration(Math.floor(duration / 1000))})`;
+      console.log('Sending voice message via communicationService:', { audioUri, duration });
       
-      const result = await chatService.sendMessage(
+      // Show loading indicator
+      setIsLoading(true);
+      
+      // Use the enhanced communicationService.sendVoiceMessage that uploads to Firebase Storage
+      const result = await communicationService.sendVoiceMessage(
         selectedCourse.code,
-        voiceMessageText,
-        user?.uid,
-        user?.fullName || user?.name,
-        user?.userType || 'student',
-        null, // no reply
-        'voice',
+        audioUri,
+        duration,
         {
-          voiceUri: audioUri,
-          uri: audioUri, // for backward compatibility
-          duration: Math.floor(duration / 1000), // in seconds
-          durationMs: duration // in milliseconds
+          senderId: user?.uid,
+          senderName: user?.fullName || user?.name,
+          senderType: user?.userType || 'student'
         }
       );
       
       if (result.success) {
+        console.log('Voice message sent successfully:', result.messageId);
         setVoiceMessageUri(null);
+        setIsLoading(false);
+        
         // Scroll to bottom to show new message
         setTimeout(() => {
           flatListRef.current?.scrollToEnd({ animated: true });
         }, 100);
+        
+        // Show success feedback
+        Alert.alert(
+          'Voice Message Sent', 
+          'Your voice message has been delivered successfully!',
+          [{ text: 'OK' }]
+        );
       } else {
-        Alert.alert('Error', 'Failed to send voice message');
+        console.error('Voice message sending failed:', result.error);
+        setIsLoading(false);
+        Alert.alert(
+          'Send Failed', 
+          result.error || 'Failed to send voice message. Please try again.',
+          [
+            { text: 'Cancel' },
+            { text: 'Retry', onPress: () => sendVoiceMessage(audioUri, duration) }
+          ]
+        );
       }
     } catch (error) {
       console.error('Error sending voice message:', error);
-      Alert.alert('Error', 'Unable to send voice message');
+      setIsLoading(false);
+      
+      let errorMessage = 'Unable to send voice message';
+      if (error.message?.includes('network')) {
+        errorMessage = 'Network error. Please check your internet connection and try again.';
+      } else if (error.message?.includes('upload')) {
+        errorMessage = 'Failed to upload voice message. Please check your storage permissions.';
+      }
+      
+      Alert.alert(
+        'Send Error', 
+        errorMessage,
+        [
+          { text: 'Cancel' },
+          { text: 'Retry', onPress: () => sendVoiceMessage(audioUri, duration) }
+        ]
+      );
     }
   };
 

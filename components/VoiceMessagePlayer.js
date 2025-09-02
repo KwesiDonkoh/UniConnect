@@ -22,14 +22,39 @@ const VoiceMessagePlayer = ({ message, isCurrentUser }) => {
   const waveformAnim = useRef(new Animated.Value(0)).current;
   const playButtonScale = useRef(new Animated.Value(1)).current;
 
-  // Enhanced audio URI detection with multiple fallbacks
+  // Enhanced audio URI detection with multiple fallbacks and validation
   const getAudioUri = () => {
-    return message?.voiceUri || 
-           message?.audioUri || 
-           message?.fileUrl || 
-           message?.uri ||
-           message?.audioMetadata?.uri ||
-           null;
+    const possibleUris = [
+      message?.voiceUri,
+      message?.audioUri, 
+      message?.fileUrl,
+      message?.uri,
+      message?.audioMetadata?.storageUrl,
+      message?.audioMetadata?.uri
+    ];
+    
+    // Find the first valid URI (prefer Firebase Storage URLs)
+    for (const uri of possibleUris) {
+      if (uri) {
+        // Prefer Firebase Storage URLs over local file paths
+        if (uri.includes('firebasestorage.googleapis.com') || uri.includes('storage.googleapis.com')) {
+          console.log('Using Firebase Storage URL for voice playback:', uri);
+          return uri;
+        }
+      }
+    }
+    
+    // If no Firebase Storage URL found, use the first available URI
+    const firstUri = possibleUris.find(uri => uri);
+    if (firstUri) {
+      console.log('Using fallback URI for voice playback:', firstUri);
+      // Check if it's a local file path that might not exist
+      if (firstUri.includes('/Library/Caches/') || firstUri.includes('/var/mobile/')) {
+        console.warn('Voice message uses local file path - may not be accessible:', firstUri);
+      }
+    }
+    
+    return firstUri || null;
   };
 
   useEffect(() => {
