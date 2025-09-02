@@ -26,46 +26,59 @@ class FileUploadService {
     this.storageConnected = null;
   }
 
-  // Test Firebase Storage connectivity
+  // Test Firebase Storage connectivity with fallback
   async testStorageConnection() {
     try {
       console.log('Testing Firebase Storage connection...');
       
-      // Create a small test file
-      const testData = new Blob(['test'], { type: 'text/plain' });
-      const testRef = ref(storage, `test/connection_test_${Date.now()}.txt`);
-      
-      // Try to upload the test file
-      const snapshot = await uploadBytes(testRef, testData);
-      
-      // Try to get download URL
-      const downloadURL = await getDownloadURL(snapshot.ref);
-      
-      // Clean up test file
-      try {
-        await deleteObject(snapshot.ref);
-      } catch (deleteError) {
-        console.warn('Could not delete test file:', deleteError.message);
+      // Skip connection test if storage is known to be working
+      if (this.storageConnected === true) {
+        return { success: true, connected: true };
       }
       
-      this.storageConnected = true;
-      console.log('Firebase Storage connection test successful');
-      return { success: true, connected: true };
+      // Create a minimal test to avoid storage/unknown errors
+      const testData = new Blob(['test'], { type: 'text/plain' });
+      const testPath = `test/connection_test_${Date.now()}.txt`;
+      const testRef = ref(storage, testPath);
+      
+      // Set a shorter timeout for connection test
+      const uploadPromise = uploadBytes(testRef, testData);
+      const timeoutPromise = new Promise((_, reject) => {
+        setTimeout(() => reject(new Error('Connection test timeout')), 10000); // 10 seconds
+      });
+      
+      try {
+        const snapshot = await Promise.race([uploadPromise, timeoutPromise]);
+        
+        // Try to get download URL
+        const downloadURL = await getDownloadURL(snapshot.ref);
+        
+        // Clean up test file
+        try {
+          await deleteObject(snapshot.ref);
+        } catch (deleteError) {
+          console.warn('Could not delete test file:', deleteError.message);
+        }
+        
+        this.storageConnected = true;
+        console.log('Firebase Storage connection test successful');
+        return { success: true, connected: true };
+        
+      } catch (testError) {
+        console.warn('Storage connection test failed, but continuing with upload attempt:', testError.message);
+        
+        // Don't fail completely - let the actual upload attempt proceed
+        // This handles cases where test fails but actual uploads work
+        this.storageConnected = null; // Reset to unknown state
+        return { success: true, connected: false, warning: 'Connection test failed, but will attempt upload' };
+      }
       
     } catch (error) {
-      console.error('Firebase Storage connection test failed:', error);
-      this.storageConnected = false;
+      console.error('Firebase Storage connection test error:', error);
+      this.storageConnected = null; // Reset to allow retry
       
-      let errorMessage = 'Storage connection failed';
-      if (error.code === 'storage/unauthorized') {
-        errorMessage = 'Storage access denied. Please check authentication.';
-      } else if (error.code === 'storage/unknown') {
-        errorMessage = 'Storage service unavailable. Please try again later.';
-      } else {
-        errorMessage = error.message || 'Unknown storage connection error';
-      }
-      
-      return { success: false, connected: false, error: errorMessage };
+      // Don't fail the upload completely - just warn
+      return { success: true, connected: false, warning: 'Connection test skipped due to error' };
     }
   }
 
@@ -163,12 +176,13 @@ class FileUploadService {
         throw new Error('Course code is required');
       }
 
-      // Test storage connection if not already tested
+      // Test storage connection if not already tested (non-blocking)
       if (this.storageConnected === null) {
         const connectionTest = await this.testStorageConnection();
-        if (!connectionTest.success) {
-          throw new Error(`Storage unavailable: ${connectionTest.error}`);
+        if (connectionTest.warning) {
+          console.warn('Storage connection warning:', connectionTest.warning);
         }
+        // Continue with upload attempt even if connection test failed
       }
 
       fileId = `${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
@@ -217,11 +231,11 @@ class FileUploadService {
         console.log('Upload task created with metadata, waiting for completion...');
       
         // Enhanced progress simulation
-        let progress = 0;
-        const progressInterval = setInterval(() => {
+      let progress = 0;
+      const progressInterval = setInterval(() => {
           if (progress < 90) {
             progress += Math.random() * 10;
-            if (onProgress) {
+        if (onProgress) {
               onProgress(Math.min(progress, 90));
             }
           }
@@ -234,15 +248,15 @@ class FileUploadService {
         });
         
         const snapshot = await Promise.race([uploadPromise, timeoutPromise]);
-        clearInterval(progressInterval);
-        
+      clearInterval(progressInterval);
+      
         console.log('Upload completed successfully');
-        
-        // Verify upload was successful
-        if (!snapshot || !snapshot.ref) {
-          throw new Error('Upload completed but snapshot is invalid');
-        }
-        
+      
+      // Verify upload was successful
+      if (!snapshot || !snapshot.ref) {
+        throw new Error('Upload completed but snapshot is invalid');
+      }
+      
         // Verify file exists in storage
         try {
           const metadata = await snapshot.ref.getMetadata();
@@ -490,7 +504,7 @@ class FileUploadService {
 
       // Final progress update
       if (onProgress) onProgress(100);
-
+      
       return {
         success: successful > 0,
         uploaded: successful,

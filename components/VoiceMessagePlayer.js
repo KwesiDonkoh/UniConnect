@@ -14,12 +14,23 @@ import communicationService from '../services/communicationService';
 const VoiceMessagePlayer = ({ message, isCurrentUser }) => {
   const [isPlaying, setIsPlaying] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const [duration, setDuration] = useState(0);
+  const [duration, setDuration] = useState(message?.duration || message?.voiceMessageDuration || 0);
   const [position, setPosition] = useState(0);
   const [hasError, setHasError] = useState(false);
+  const [audioReady, setAudioReady] = useState(false);
   
   const waveformAnim = useRef(new Animated.Value(0)).current;
   const playButtonScale = useRef(new Animated.Value(1)).current;
+
+  // Enhanced audio URI detection with multiple fallbacks
+  const getAudioUri = () => {
+    return message?.voiceUri || 
+           message?.audioUri || 
+           message?.fileUrl || 
+           message?.uri ||
+           message?.audioMetadata?.uri ||
+           null;
+  };
 
   useEffect(() => {
     if (isPlaying) {
@@ -55,10 +66,20 @@ const VoiceMessagePlayer = ({ message, isCurrentUser }) => {
       return;
     }
 
-    const audioUri = message.voiceUri || message.uri || message.fileUrl || message.audioUri;
+    const audioUri = getAudioUri();
     if (!audioUri) {
-      console.warn('Voice message not available - no audio URI found');
+      console.warn('Voice message not available - no audio URI found', {
+        messageId: message?.id,
+        messageType: message?.type,
+        senderType: message?.senderType,
+        availableFields: Object.keys(message || {})
+      });
       setHasError(true);
+      Alert.alert(
+        'Audio Not Available', 
+        'This voice message cannot be played. It may have been recorded in an incompatible format or the audio file is missing.',
+        [{ text: 'OK' }]
+      );
       return;
     }
 
@@ -80,33 +101,74 @@ const VoiceMessagePlayer = ({ message, isCurrentUser }) => {
     ]).start();
 
     try {
-      console.log('Playing audio from URI:', audioUri);
+      console.log('Playing voice message:', {
+        audioUri,
+        messageId: message?.id,
+        senderType: message?.senderType,
+        duration: duration,
+        crossPlatform: message?.audioMetadata?.crossPlatform
+      });
+      
       const result = await communicationService.playVoiceMessage(
         audioUri,
         (status) => {
           if (status.isFinished) {
             setIsPlaying(false);
             setPosition(0);
+            setAudioReady(true);
           } else if (status.positionMillis && status.durationMillis) {
             setPosition(status.positionMillis);
-            setDuration(status.durationMillis);
+            if (!duration || duration === 0) {
+              setDuration(status.durationMillis);
+            }
+            setAudioReady(true);
           }
         }
       );
 
       if (result.success) {
         setIsPlaying(true);
-        if (result.duration) {
+        setAudioReady(true);
+        if (result.duration && (!duration || duration === 0)) {
           setDuration(result.duration);
         }
+        console.log('Voice message playback started successfully');
       } else {
         setHasError(true);
-        Alert.alert('Playback Error', result.error || 'Unable to play voice message');
+        console.error('Voice message playback failed:', result.error);
+        
+        // Provide user-friendly error messages
+        let errorMessage = 'Unable to play voice message';
+        if (result.error?.includes('network')) {
+          errorMessage = 'Network error. Please check your internet connection and try again.';
+        } else if (result.error?.includes('format')) {
+          errorMessage = 'Audio format not supported on this device.';
+        } else if (result.error?.includes('permission')) {
+          errorMessage = 'Audio permission required. Please check your settings.';
+        }
+        
+        Alert.alert('Playback Error', errorMessage, [
+          { text: 'OK' },
+          { text: 'Retry', onPress: () => {
+            setHasError(false);
+            setTimeout(() => playVoiceMessage(), 500);
+          }}
+        ]);
       }
     } catch (error) {
       console.error('Error playing voice message:', error);
       setHasError(true);
-      Alert.alert('Playback Error', 'Unable to play voice message');
+      
+      let errorMessage = 'Unable to play voice message';
+      if (error.message?.includes('network')) {
+        errorMessage = 'Network error. Please check your connection.';
+      } else if (error.message?.includes('not found')) {
+        errorMessage = 'Voice message file not found. It may have been deleted.';
+      }
+      
+      Alert.alert('Playback Error', errorMessage, [
+        { text: 'OK' }
+      ]);
     } finally {
       setIsLoading(false);
     }

@@ -519,21 +519,145 @@ class CommunicationService {
     return { success: true, feature: 'coming_soon' };
   }
 
-  // Chat integration functions
-  async sendVoiceMessage(courseCode, audioUri, duration) {
+  // Enhanced voice message sending with proper chat integration
+  async sendVoiceMessage(courseCode, audioUri, duration, senderInfo = {}) {
     try {
-      // This would integrate with the chat service to send voice messages
-      // For now, return success to indicate the voice message was recorded
-      return { 
-        success: true, 
-        messageType: 'voice',
-        audioUri,
-        duration,
-        courseCode
+      // Import chat service dynamically to avoid circular dependency
+      const { default: chatService } = await import('./chatService');
+      
+      console.log('Sending voice message:', { courseCode, audioUri, duration, senderInfo });
+      
+      // Prepare voice message data
+      const voiceMessageData = {
+        voiceUri: audioUri,
+        audioUri: audioUri, // Fallback for compatibility
+        duration: duration,
+        fileUrl: audioUri, // Additional fallback
+        voiceMessageDuration: duration,
+        isVoiceMessage: true,
+        // Enhanced metadata for cross-user compatibility
+        audioMetadata: {
+          duration: duration,
+          format: 'audio/mp4', // or detected format
+          uploadedAt: new Date().toISOString(),
+          compatible: true,
+          crossPlatform: true
+        }
       };
+      
+      // Send the voice message through chat service
+      const result = await chatService.sendMessage(
+        courseCode,
+        `🎤 Voice message (${Math.round(duration / 1000)}s)`, // Display text
+        senderInfo.senderId,
+        senderInfo.senderName,
+        senderInfo.senderType,
+        null, // replyToId
+        'voice', // messageType
+        voiceMessageData // additionalData
+      );
+      
+      if (result.success) {
+        console.log('Voice message sent successfully to course:', courseCode);
+        return { 
+          success: true, 
+          messageId: result.messageId,
+          messageType: 'voice',
+          audioUri,
+          duration,
+          courseCode,
+          crossUserDelivery: true // Indicates it's available to all user types
+        };
+      } else {
+        throw new Error(result.error || 'Failed to send voice message');
+      }
     } catch (error) {
       console.error('Error sending voice message:', error);
       return { success: false, error: error.message };
+    }
+  }
+
+  // Enhanced voice message recording with user context
+  async recordVoiceMessage(courseCode, userInfo = {}) {
+    try {
+      console.log('Starting voice message recording for course:', courseCode);
+      
+      // Request audio permissions first
+      const { status } = await AudioCompat.requestPermissionsAsync();
+      if (status !== 'granted') {
+        throw new Error('Audio recording permission denied');
+      }
+
+      // Set audio mode for recording
+      await AudioCompat.setAudioModeAsync({
+        allowsRecordingIOS: true,
+        staysActiveInBackground: true,
+        interruptionModeIOS: AudioCompat.INTERRUPTION_MODE_IOS_DO_NOT_MIX,
+        playsInSilentModeIOS: true,
+        shouldDuckAndroid: true,
+        interruptionModeAndroid: AudioCompat.INTERRUPTION_MODE_ANDROID_DO_NOT_MIX,
+        playThroughEarpieceAndroid: false,
+      });
+
+      // Create recording with high-quality settings for cross-platform compatibility
+      const recording = new AudioCompat.Recording();
+      const recordingOptions = {
+        ...AudioCompat.RecordingOptionsPresets.HIGH_QUALITY,
+        // Ensure compatibility across devices
+        android: {
+          extension: '.m4a',
+          outputFormat: AudioCompat.RECORDING_OPTION_ANDROID_OUTPUT_FORMAT_MPEG_4,
+          audioEncoder: AudioCompat.RECORDING_OPTION_ANDROID_AUDIO_ENCODER_AAC,
+          sampleRate: 44100,
+          numberOfChannels: 2,
+          bitRate: 128000,
+        },
+        ios: {
+          extension: '.m4a',
+          outputFormat: AudioCompat.RECORDING_OPTION_IOS_OUTPUT_FORMAT_MPEG4AAC,
+          audioQuality: AudioCompat.RECORDING_OPTION_IOS_AUDIO_QUALITY_HIGH,
+          sampleRate: 44100,
+          numberOfChannels: 2,
+          bitRate: 128000,
+          linearPCMBitDepth: 16,
+          linearPCMIsBigEndian: false,
+          linearPCMIsFloat: false,
+        },
+        web: {
+          mimeType: 'audio/webm;codecs=opus',
+          bitsPerSecond: 128000,
+        },
+      };
+
+      await recording.prepareToRecordAsync(recordingOptions);
+      await recording.startAsync();
+      
+      this.currentRecording = recording;
+      this.isRecording = true;
+      
+      console.log('Voice recording started with cross-platform compatibility');
+      
+      return { 
+        success: true, 
+        recording,
+        isRecording: true,
+        courseCode,
+        userInfo
+      };
+      
+    } catch (error) {
+      console.error('Error starting voice recording:', error);
+      this.currentRecording = null;
+      this.isRecording = false;
+      
+      let errorMessage = 'Failed to start voice recording';
+      if (error.message.includes('permission')) {
+        errorMessage = 'Microphone permission required for voice messages';
+      } else if (error.message.includes('busy')) {
+        errorMessage = 'Microphone is busy. Please try again.';
+      }
+      
+      return { success: false, error: errorMessage };
     }
   }
 
