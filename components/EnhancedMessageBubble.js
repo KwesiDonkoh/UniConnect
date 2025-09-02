@@ -9,8 +9,8 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
-import { BlurView } from 'expo-blur';
 import VoiceMessagePlayer from './VoiceMessagePlayer';
+import BlurViewCompat from './BlurViewCompat';
 import { useTheme } from './ThemeProvider';
 import { Colors, Typography, Spacing, BorderRadius, Shadows, Animations } from '../themes/modernTheme';
 

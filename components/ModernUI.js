@@ -10,8 +10,9 @@ import {
   Platform,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { BlurView } from 'expo-blur';
 import { Ionicons } from '@expo/vector-icons';
+import BlurViewCompat from './BlurViewCompat';
+import GlassCard from './GlassCard';
 import { useTheme } from './ThemeProvider';
 import { Colors, Typography, Spacing, BorderRadius, Shadows, Animations } from '../themes/modernTheme';
 
@@ -228,9 +229,9 @@ export const ModernCard = ({
           activeOpacity={1}
           {...props}
         >
-          <BlurView intensity={20} style={cardStyle}>
+          <GlassCard style={cardStyle}>
             {children}
-          </BlurView>
+          </GlassCard>
         </TouchableOpacity>
       </Animated.View>
     );

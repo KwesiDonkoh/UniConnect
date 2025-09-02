@@ -13,8 +13,8 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
-import { BlurView } from 'expo-blur';
 import { useApp } from '../context/AppContext';
+import BlurViewCompat from '../components/BlurViewCompat';
 import { useTheme } from '../components/ThemeProvider';
 import { ModernButton, ModernInput, ModernCard } from '../components/ModernUI';
 import { Colors, Typography, Spacing, BorderRadius, Shadows, Animations } from '../themes/modernTheme';
