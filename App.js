@@ -50,13 +50,11 @@ import authService from './services/authService';
 
 // Import the new Ultimate screens
 import UltimateAmazingStudentDashboard from './screens/UltimateAmazingStudentDashboard';
-// UltimateAmazingLecturerDashboard deleted due to errors - using original LecturerDashboard
+import UltimateAmazingLecturerDashboard from './screens/UltimateAmazingLecturerDashboard';
 import UltimateAmazingProfileScreen from './screens/UltimateAmazingProfileScreen';
 
-// Import messaging screens with calling features
+// Import safe messaging screen (no calling features)
 import SafeMessagingScreen from './screens/SafeMessagingScreen';
-import MessagingWithCallsScreen from './screens/MessagingWithCallsScreen';
-import SimpleCallHistoryScreen from './screens/SimpleCallHistoryScreen';
 
 const Stack = createStackNavigator();
 const Tab = createBottomTabNavigator();
@@ -102,7 +100,7 @@ function StudentTabs() {
       <Tab.Screen name="Home" component={UltimateAmazingStudentDashboard} />
       <Tab.Screen name="Chat" component={GroupChatScreen} />
       <Tab.Screen name="Upload" component={UploadNotesScreen} />
-      <Tab.Screen name="Profile" component={ProfileScreen} />
+      <Tab.Screen name="Profile" component={UltimateAmazingProfileScreen} />
     </Tab.Navigator>
   );
 }
@@ -131,10 +129,10 @@ function LecturerTabs() {
         headerShown: false,
       })}
     >
-      <Tab.Screen name="Dashboard" component={LecturerDashboard} />
+      <Tab.Screen name="Dashboard" component={UltimateAmazingLecturerDashboard} />
       <Tab.Screen name="Students" component={StudentsManagementScreen} />
       <Tab.Screen name="Materials" component={UploadNotesScreen} />
-      <Tab.Screen name="Profile" component={ProfileScreen} />
+      <Tab.Screen name="Profile" component={UltimateAmazingProfileScreen} />
     </Tab.Navigator>
   );
 }
@@ -313,16 +311,6 @@ function AppContent() {
                   <Stack.Screen
                     name="SafeMessaging"
                     component={SafeMessagingScreen}
-                    options={{ headerShown: false }}
-                  />
-                  <Stack.Screen
-                    name="MessagingWithCalls"
-                    component={MessagingWithCallsScreen}
-                    options={{ headerShown: false }}
-                  />
-                  <Stack.Screen
-                    name="CallHistory"
-                    component={SimpleCallHistoryScreen}
                     options={{ headerShown: false }}
                   />
                    <Stack.Screen

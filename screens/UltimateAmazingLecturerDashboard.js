@@ -26,6 +26,7 @@ import AIQuizGenerator from '../components/AIQuizGenerator';
 import SmartLectureRecorder from '../components/SmartLectureRecorder';
 import VirtualClassroom from '../components/VirtualClassroom';
 import AIPerformancePrediction from '../components/AIPerformancePrediction';
+import AIPlagiarismDetector from '../components/AIPlagiarismDetector';
 
 const { width, height } = Dimensions.get('window');
 
@@ -74,6 +75,7 @@ export default function UltimateAmazingLecturerDashboard({ navigation }) {
   const [showLectureRecorder, setShowLectureRecorder] = useState(false);
   const [showVirtualClassroom, setShowVirtualClassroom] = useState(false);
   const [showPerformancePrediction, setShowPerformancePrediction] = useState(false);
+  const [showPlagiarismDetector, setShowPlagiarismDetector] = useState(false);
 
   // Early return if user data is not available
   if (!user) {
@@ -151,6 +153,14 @@ export default function UltimateAmazingLecturerDashboard({ navigation }) {
       icon: 'videocam-outline',
       gradient: [Colors.primary[700], Colors.primary[600]],
       onPress: () => setShowLectureRecorder(true),
+    },
+    {
+      id: 'plagiarism-detector',
+      title: 'AI Plagiarism Detector',
+      subtitle: 'Advanced plagiarism detection',
+      icon: 'shield-checkmark-outline',
+      gradient: [Colors.error[600], Colors.error[500]],
+      onPress: () => setShowPlagiarismDetector(true),
     },
   ];
 
@@ -444,6 +454,15 @@ export default function UltimateAmazingLecturerDashboard({ navigation }) {
         <AIPerformancePrediction
           visible={showPerformancePrediction}
           onClose={() => setShowPerformancePrediction(false)}
+          user={user}
+          course={csModules[0]}
+        />
+      )}
+
+      {showPlagiarismDetector && (
+        <AIPlagiarismDetector
+          visible={showPlagiarismDetector}
+          onClose={() => setShowPlagiarismDetector(false)}
           user={user}
           course={csModules[0]}
         />

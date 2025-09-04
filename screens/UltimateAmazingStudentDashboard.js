@@ -81,6 +81,7 @@ export default function UltimateAmazingStudentDashboard({ navigation }) {
   const [showScheduleOptimizer, setShowScheduleOptimizer] = useState(false);
   const [showARStudy, setShowARStudy] = useState(false);
   const [showVirtualClassroom, setShowVirtualClassroom] = useState(false);
+  const [showGamifiedProgress, setShowGamifiedProgress] = useState(false);
 
   // Early return if user data is not available
   if (!user) {
@@ -145,7 +146,7 @@ export default function UltimateAmazingStudentDashboard({ navigation }) {
       id: 'content-generator', 
       title: 'Content Generator', 
       icon: 'document-text', 
-      color: Colors.info[500],
+      color: Colors.secondary[500],
       onPress: () => setShowContentGenerator(true)
     },
     { 
@@ -183,8 +184,15 @@ export default function UltimateAmazingStudentDashboard({ navigation }) {
       id: 'virtual-classroom', 
       title: 'Virtual Classroom', 
       icon: 'videocam', 
-      color: Colors.info[600],
+      color: Colors.primary[600],
       onPress: () => setShowVirtualClassroom(true)
+    },
+    { 
+      id: 'gamified-progress', 
+      title: 'Gamified Progress', 
+      icon: 'trophy', 
+      color: Colors.warning[600],
+      onPress: () => setShowGamifiedProgress(true)
     },
   ];
 
@@ -265,38 +273,22 @@ export default function UltimateAmazingStudentDashboard({ navigation }) {
           />
         </View>
 
-        {/* Communication & Calls */}
+        {/* Enhanced Communication */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>📞 Communication & Calls</Text>
-          <View style={styles.communicationGrid}>
-            <TouchableOpacity 
-              style={styles.commAction}
-              onPress={() => navigation.navigate('MessagingWithCalls')}
+          <Text style={styles.sectionTitle}>💬 Enhanced Communication</Text>
+          <TouchableOpacity 
+            style={styles.commAction}
+            onPress={() => navigation.navigate('GroupChat')}
+          >
+            <LinearGradient
+              colors={[Colors.primary[500], Colors.primary[600]]}
+              style={styles.commGradient}
             >
-              <LinearGradient
-                colors={[Colors.info[500], Colors.info[600]]}
-                style={styles.commGradient}
-              >
-                <Ionicons name="chatbubble-ellipses" size={24} color="white" />
-                <Text style={styles.commText}>Chat & Calls</Text>
-                <Text style={styles.commSubtext}>Voice • Video • Files</Text>
-              </LinearGradient>
-            </TouchableOpacity>
-            
-            <TouchableOpacity 
-              style={styles.commAction}
-              onPress={() => navigation.navigate('CallHistory')}
-            >
-              <LinearGradient
-                colors={[Colors.secondary[500], Colors.secondary[600]]}
-                style={styles.commGradient}
-              >
-                <Ionicons name="call" size={24} color="white" />
-                <Text style={styles.commText}>Call History</Text>
-                <Text style={styles.commSubtext}>Voice & Video Calls</Text>
-              </LinearGradient>
-            </TouchableOpacity>
-          </View>
+              <Ionicons name="chatbubble-ellipses" size={24} color="white" />
+              <Text style={styles.commText}>Group Discussions</Text>
+              <Text style={styles.commSubtext}>Connect with classmates</Text>
+            </LinearGradient>
+          </TouchableOpacity>
         </View>
 
         {/* Gamified Progress */}
@@ -349,6 +341,11 @@ export default function UltimateAmazingStudentDashboard({ navigation }) {
       <VirtualClassroom
         visible={showVirtualClassroom}
         onClose={() => setShowVirtualClassroom(false)}
+      />
+      
+      <GamifiedProgress
+        visible={showGamifiedProgress}
+        onClose={() => setShowGamifiedProgress(false)}
       />
     </SafeAreaView>
   );
