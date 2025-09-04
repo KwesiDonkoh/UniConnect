@@ -87,7 +87,7 @@ const criticalDeps = [
   'react',
   'react-native',
   'firebase',
-  'expo-av',
+  'expo-audio',
   'expo-camera',
   'expo-file-system',
   '@react-native-async-storage/async-storage'

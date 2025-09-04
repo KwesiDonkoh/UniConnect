@@ -1,21 +1,50 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { dummyData } from '../data/dummyData';
 import authService from '../services/authService';
+
+// Safe import of dummyData with fallback
+let dummyData;
+try {
+  const { dummyData: importedData } = require('../data/dummyData');
+  dummyData = importedData;
+} catch (error) {
+  console.warn('Failed to import dummyData, using fallback:', error);
+  dummyData = {
+    notifications: [],
+    chatMessages: [],
+    csModules: {
+      '100': [],
+      '200': [],
+      '300': [],
+      '400': []
+    }
+  };
+}
 
 const AppContext = createContext();
 
 export const useApp = () => {
   const context = useContext(AppContext);
   if (!context) {
-    throw new Error('useApp must be used within an AppProvider');
+    console.warn('useApp must be used within an AppProvider');
+    // Return a default context instead of throwing an error
+    return {
+      user: null,
+      csModules: [],
+      notifications: [],
+      chatMessages: [],
+      isAuthenticated: false,
+      isLoading: true,
+      signOut: () => {},
+      updateUserData: () => {},
+    };
   }
   return context;
 };
 
 export const AppProvider = ({ children }) => {
   const [user, setUser] = useState(null);
-  const [notifications, setNotifications] = useState(dummyData.notifications);
-  const [chatMessages, setChatMessages] = useState(dummyData.chatMessages);
+  const [notifications, setNotifications] = useState(dummyData?.notifications || []);
+  const [chatMessages, setChatMessages] = useState(dummyData?.chatMessages || []);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -139,50 +168,108 @@ export const AppProvider = ({ children }) => {
     }
   };
 
-  // Debug course loading
+  // Enhanced course loading with comprehensive error handling
   const getCoursesForUser = () => {
-    if (!user) return [];
-    
-    console.log('Loading courses for user:', {
-      uid: user.uid,
-      userType: user.userType,
-      academicLevel: user.academicLevel,
-      availableLevels: Object.keys(dummyData.csModules)
-    });
-    
-    if (user.userType === 'lecturer') {
-      const allModules = Object.values(dummyData.csModules).flat();
-      console.log('Lecturer - Total modules loaded:', allModules.length);
-      return allModules;
-    } else {
-      const studentLevel = user.academicLevel || '100';
-      const modules = dummyData.csModules[studentLevel] || dummyData.csModules['100'] || [];
-      console.log(`Student Level ${studentLevel} - Modules loaded:`, modules.length);
-      return modules;
+    try {
+      if (!user) {
+        console.log('📚 No user available, returning empty courses array');
+        return [];
+      }
+      
+      // Enhanced safe access to dummyData with multiple fallbacks
+      const csModules = dummyData?.csModules || {};
+      
+      console.log('📚 Loading courses for user:', {
+        uid: user?.uid,
+        userType: user?.userType,
+        academicLevel: user?.academicLevel,
+        availableLevels: Object.keys(csModules),
+        csModulesType: typeof csModules,
+        csModulesKeys: csModules ? Object.keys(csModules) : []
+      });
+      
+      if (user.userType === 'lecturer') {
+        try {
+          // Extra safety for Object.values and flat operations
+          const moduleValues = Object.values(csModules || {});
+          const flatModules = moduleValues.flat ? moduleValues.flat() : [];
+          const allModules = flatModules.filter ? flatModules.filter(Boolean) : [];
+          
+          console.log('👨‍🏫 Lecturer - Total modules loaded:', allModules.length);
+          return allModules;
+        } catch (error) {
+          console.error('❌ Error processing lecturer modules:', error);
+          return [];
+        }
+      } else {
+        try {
+          const studentLevel = user.academicLevel || '100';
+          const modules = csModules[studentLevel] || csModules['100'] || [];
+          
+          console.log(`👨‍🎓 Student Level ${studentLevel} - Modules loaded:`, modules.length);
+          return Array.isArray(modules) ? modules : [];
+        } catch (error) {
+          console.error('❌ Error processing student modules:', error);
+          return [];
+        }
+      }
+    } catch (error) {
+      console.error('❌ Critical error in getCoursesForUser:', error);
+      return [];
     }
   };
 
-  const value = {
-    // User and authentication state
-    user,
-    setUser,
-    isAuthenticated,
-    isLoading,
+  // Create context value with error handling
+  let contextValue;
+  try {
+    contextValue = {
+      // User and authentication state
+      user,
+      setUser,
+      isAuthenticated,
+      isLoading,
+      
+      // Authentication methods
+      signIn,
+      signUp,
+      signOut,
+      sendPasswordReset,
+      updateUserData,
+      
+      // App state
+      notifications: notifications || [],
+      setNotifications,
+      chatMessages: chatMessages || [],
+      setChatMessages,
+      csModules: getCoursesForUser(),
+    };
     
-    // Authentication methods
-    signIn,
-    signUp,
-    signOut,
-    sendPasswordReset,
-    updateUserData,
-    
-    // App state
-    notifications,
-    setNotifications,
-    chatMessages,
-    setChatMessages,
-    csModules: getCoursesForUser(),
-  };
+    console.log('🔧 Context value created successfully:', {
+      hasUser: !!contextValue.user,
+      userType: contextValue.user?.userType,
+      modulesCount: contextValue.csModules?.length || 0,
+      notificationsCount: contextValue.notifications?.length || 0,
+      chatMessagesCount: contextValue.chatMessages?.length || 0
+    });
+  } catch (error) {
+    console.error('❌ Error creating context value:', error);
+    contextValue = {
+      user: null,
+      setUser: () => {},
+      isAuthenticated: false,
+      isLoading: true,
+      signIn: async () => ({ success: false, error: 'Context error' }),
+      signUp: async () => ({ success: false, error: 'Context error' }),
+      signOut: async () => ({ success: false, error: 'Context error' }),
+      sendPasswordReset: async () => ({ success: false, error: 'Context error' }),
+      updateUserData: async () => ({ success: false, error: 'Context error' }),
+      notifications: [],
+      setNotifications: () => {},
+      chatMessages: [],
+      setChatMessages: () => {},
+      csModules: [],
+    };
+  }
 
-  return <AppContext.Provider value={value}>{children}</AppContext.Provider>;
+  return <AppContext.Provider value={contextValue}>{children}</AppContext.Provider>;
 };

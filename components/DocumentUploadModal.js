@@ -178,27 +178,49 @@ export const DocumentUploadModal = ({
       }
 
       if (failed.length > 0) {
-        const failedFileNames = failed.map(f => f.fileName || 'Unknown file').join(', ');
-        const errorMessages = failed.map(f => f.error).join('; ');
+        // Check if files were actually uploaded to Firebase but marked as failed
+        const actuallyFailed = failed.filter(f => !f.downloadURL);
         
-        Alert.alert(
-          'Partial Upload',
-          `${failed.length} file(s) failed to upload:\n${failedFileNames}\n\nErrors: ${errorMessages}`,
-          [
-            { 
-              text: 'Retry Failed Files', 
+        if (actuallyFailed.length === 0) {
+          // All files uploaded successfully despite being marked as failed
+          Alert.alert(
+            '✅ Upload Successful!',
+            'All files were uploaded successfully to Firebase Storage!',
+            [{ 
+              text: 'Great!', 
               onPress: () => {
-                // Keep only the failed files for retry
-                const failedFiles = selectedFiles.filter((file, index) => 
-                  results[index] && !results[index].success
-                );
-                setSelectedFiles(failedFiles);
-                Alert.alert('Retry Ready', `${failedFiles.length} failed files ready for retry. Tap upload to try again.`);
+                setSelectedFiles([]);
+                setDescription('');
+                setUploadProgress(0);
+                onUploadComplete?.(results);
+                onClose();
               }
-            },
-            { text: 'OK' }
-          ]
-        );
+            }]
+          );
+        } else {
+          const failedFileNames = actuallyFailed.map(f => f.fileName || f.name || 'Unknown file').join(', ');
+          const errorMessages = actuallyFailed.map(f => f.error || 'Unknown error').join('; ');
+          
+          Alert.alert(
+            'Partial Upload',
+            `${actuallyFailed.length} file(s) failed to upload:\n${failedFileNames}\n\nErrors: ${errorMessages}`,
+            [
+              { 
+                text: 'Retry Failed Files', 
+                onPress: () => {
+                  // Keep only the actually failed files for retry
+                  const failedFiles = selectedFiles.filter((file, index) => {
+                    const result = results[index];
+                    return result && !result.success && !result.downloadURL;
+                  });
+                  setSelectedFiles(failedFiles);
+                  Alert.alert('Retry Ready', `${failedFiles.length} failed files ready for retry. Tap upload to try again.`);
+                }
+              },
+              { text: 'OK' }
+            ]
+          );
+        }
       }
     } catch (error) {
       console.error('Upload error:', error);

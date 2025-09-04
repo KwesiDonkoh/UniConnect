@@ -17,10 +17,14 @@
     ],
     "ios": {
       "supportsTablet": true,
+      "bundleIdentifier": "com.yourcompany.uniconnect",
+      "buildNumber": "1",
       "infoPlist": {
         "NSCameraUsageDescription": "This app needs access to camera for video calls and taking photos.",
         "NSMicrophoneUsageDescription": "This app needs access to microphone for voice messages and calls.",
-        "NSPhotoLibraryUsageDescription": "This app needs access to photo library to share images and videos."
+        "NSPhotoLibraryUsageDescription": "This app needs access to photo library to share images and videos.",
+        "NSDocumentPickerUsageDescription": "This app needs access to documents for file sharing and uploads.",
+        "NSLocationWhenInUseUsageDescription": "This app uses location for enhanced learning features."
       }
     },
     "android": {
@@ -43,7 +47,6 @@
     },
     "plugins": [
       "expo-font",
-      "expo-av",
       "expo-camera",
       [
         "expo-document-picker",
@@ -57,8 +60,10 @@
           "photosPermission": "The app accesses your photos to let you share them with other users.",
           "cameraPermission": "The app accesses your camera to let you take photos to share with other users."
         }
-      ]
+      ],
+      "expo-audio",
+      "expo-video"
     ],
     "scheme": "uniconnect"
   }
-} 
+}

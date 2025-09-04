@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { StatusBar, Appearance } from 'react-native';
+import { Appearance } from 'react-native';
+import { StatusBar } from 'expo-status-bar'; // Fix: Use expo-status-bar instead
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { LightTheme, DarkTheme } from '../themes/modernTheme';
 

@@ -46,7 +46,7 @@ const checkAndFix = () => {
     'expo',
     'react',
     'react-native',
-    'expo-av',
+    'expo-audio',
     'expo-camera',
     'expo-file-system',
     'expo-document-picker',

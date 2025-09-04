@@ -20,6 +20,14 @@ import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useApp } from '../context/AppContext';
 import achievementsService from '../services/achievementsService';
+import AIStudyAssistant from '../components/AIStudyAssistant';
+import SmartNoteTaking from '../components/SmartNoteTaking';
+import GamifiedProgress from '../components/GamifiedProgress';
+import ARStudyMode from '../components/ARStudyMode';
+import EnhancedVoiceCall from '../components/EnhancedVoiceCall';
+import AIQuizGenerator from '../components/AIQuizGenerator';
+import SmartScheduleOptimizer from '../components/SmartScheduleOptimizer';
+import FeatureWelcomeGuide from '../components/FeatureWelcomeGuide';
 
 const { width, height } = Dimensions.get('window');
 
@@ -48,6 +56,18 @@ export default function ModernHomeDashboard({ navigation }) {
   const [weeklyProgress, setWeeklyProgress] = useState(0.6);
   const [isDark, setIsDark] = useState(false);
   const [achievements, setAchievements] = useState([]);
+  
+  // New feature modals
+  const [showAIAssistant, setShowAIAssistant] = useState(false);
+  const [showSmartNotes, setShowSmartNotes] = useState(false);
+  const [showProgress, setShowProgress] = useState(false);
+  const [showARMode, setShowARMode] = useState(false);
+  const [showVoiceCall, setShowVoiceCall] = useState(false);
+  const [selectedCourse, setSelectedCourse] = useState(null);
+  const [callParticipant, setCallParticipant] = useState(null);
+  const [showQuizGenerator, setShowQuizGenerator] = useState(false);
+  const [showScheduleOptimizer, setShowScheduleOptimizer] = useState(false);
+  const [showWelcomeGuide, setShowWelcomeGuide] = useState(false);
   const [achievementProgress, setAchievementProgress] = useState({
     total: 0,
     earned: 0,
@@ -418,6 +438,14 @@ export default function ModernHomeDashboard({ navigation }) {
               
               <View style={styles.headerActions}>
                 <TouchableOpacity 
+                  style={styles.discoverButton}
+                  onPress={() => setShowWelcomeGuide(true)}
+                >
+                  <Ionicons name="sparkles" size={20} color="#FFFFFF" />
+                  <Text style={styles.discoverButtonText}>Discover</Text>
+                </TouchableOpacity>
+                
+                <TouchableOpacity 
                   style={styles.themeToggle}
                   onPress={toggleTheme}
                 >
@@ -483,6 +511,122 @@ export default function ModernHomeDashboard({ navigation }) {
             </View>
             
             <View style={styles.quickActionsGrid}>
+              {/* AI Study Assistant - The WOW Factor! */}
+              <TouchableOpacity 
+                style={styles.quickActionCard}
+                onPress={() => setShowAIAssistant(true)}
+                activeOpacity={0.8}
+              >
+                <LinearGradient
+                  colors={['#667eea', '#764ba2']}
+                  style={styles.quickActionGradient}
+                >
+                  <Ionicons name="sparkles" size={32} color="#FFFFFF" />
+                </LinearGradient>
+                <Text style={[styles.quickActionText, isDark && styles.darkText]}>AI Tutor</Text>
+                <Text style={styles.quickActionSubtext}>Smart study buddy</Text>
+              </TouchableOpacity>
+
+              {/* Smart Note Taking */}
+              <TouchableOpacity 
+                style={styles.quickActionCard}
+                onPress={() => setShowSmartNotes(true)}
+                activeOpacity={0.8}
+              >
+                <LinearGradient
+                  colors={['#4facfe', '#00f2fe']}
+                  style={styles.quickActionGradient}
+                >
+                  <Ionicons name="document-text" size={32} color="#FFFFFF" />
+                </LinearGradient>
+                <Text style={[styles.quickActionText, isDark && styles.darkText]}>Smart Notes</Text>
+                <Text style={styles.quickActionSubtext}>AI auto-summary</Text>
+              </TouchableOpacity>
+
+              {/* AR Study Mode */}
+              <TouchableOpacity 
+                style={styles.quickActionCard}
+                onPress={() => setShowARMode(true)}
+                activeOpacity={0.8}
+              >
+                <LinearGradient
+                  colors={['#fa709a', '#fee140']}
+                  style={styles.quickActionGradient}
+                >
+                  <Ionicons name="cube" size={32} color="#FFFFFF" />
+                </LinearGradient>
+                <Text style={[styles.quickActionText, isDark && styles.darkText]}>AR Learning</Text>
+                <Text style={styles.quickActionSubtext}>3D interactive</Text>
+              </TouchableOpacity>
+
+              {/* Progress Tracker */}
+              <TouchableOpacity 
+                style={styles.quickActionCard}
+                onPress={() => setShowProgress(true)}
+                activeOpacity={0.8}
+              >
+                <LinearGradient
+                  colors={['#a8edea', '#fed6e3']}
+                  style={styles.quickActionGradient}
+                >
+                  <Ionicons name="trophy" size={32} color="#FFFFFF" />
+                </LinearGradient>
+                <Text style={[styles.quickActionText, isDark && styles.darkText]}>Progress</Text>
+                <Text style={styles.quickActionSubtext}>XP & achievements</Text>
+              </TouchableOpacity>
+
+              {/* Enhanced Voice Call */}
+              <TouchableOpacity 
+                style={styles.quickActionCard}
+                onPress={() => {
+                  setCallParticipant({ name: 'Study Partner', userType: 'Student' });
+                  setShowVoiceCall(true);
+                }}
+                activeOpacity={0.8}
+              >
+                <LinearGradient
+                  colors={['#ffecd2', '#fcb69f']}
+                  style={styles.quickActionGradient}
+                >
+                  <Ionicons name="call" size={32} color="#FFFFFF" />
+                </LinearGradient>
+                <Text style={[styles.quickActionText, isDark && styles.darkText]}>HD Calls</Text>
+                <Text style={styles.quickActionSubtext}>AI noise reduction</Text>
+              </TouchableOpacity>
+
+              {/* AI Quiz Generator */}
+              <TouchableOpacity 
+                style={styles.quickActionCard}
+                onPress={() => setShowQuizGenerator(true)}
+                activeOpacity={0.8}
+              >
+                <LinearGradient
+                  colors={['#ff6b6b', '#ee5a52']}
+                  style={styles.quickActionGradient}
+                >
+                  <Ionicons name="help-circle" size={32} color="#FFFFFF" />
+                </LinearGradient>
+                <Text style={[styles.quickActionText, isDark && styles.darkText]}>AI Quiz</Text>
+                <Text style={styles.quickActionSubtext}>Smart testing</Text>
+              </TouchableOpacity>
+
+              {/* Smart Schedule */}
+              <TouchableOpacity 
+                style={styles.quickActionCard}
+                onPress={() => setShowScheduleOptimizer(true)}
+                activeOpacity={0.8}
+              >
+                <LinearGradient
+                  colors={['#74b9ff', '#0984e3']}
+                  style={styles.quickActionGradient}
+                >
+                  <Ionicons name="calendar" size={32} color="#FFFFFF" />
+                </LinearGradient>
+                <Text style={[styles.quickActionText, isDark && styles.darkText]}>Schedule</Text>
+                <Text style={styles.quickActionSubtext}>AI optimized</Text>
+              </TouchableOpacity>
+
+              {/* Group Chat */}
               <TouchableOpacity 
                 style={styles.quickActionCard}
                 onPress={() => navigation.navigate('Chat')}
@@ -496,36 +640,6 @@ export default function ModernHomeDashboard({ navigation }) {
                 </LinearGradient>
                 <Text style={[styles.quickActionText, isDark && styles.darkText]}>Chat</Text>
                 <Text style={styles.quickActionSubtext}>Group discussions</Text>
-              </TouchableOpacity>
-
-              <TouchableOpacity 
-                style={styles.quickActionCard}
-                onPress={() => navigation.navigate('Notifications')}
-                activeOpacity={0.8}
-              >
-                <LinearGradient
-                  colors={['#10B981', '#059669']}
-                  style={styles.quickActionGradient}
-                >
-                  <Ionicons name="notifications" size={32} color="#FFFFFF" />
-                </LinearGradient>
-                <Text style={[styles.quickActionText, isDark && styles.darkText]}>Alerts</Text>
-                <Text style={styles.quickActionSubtext}>Stay updated</Text>
-              </TouchableOpacity>
-
-              <TouchableOpacity 
-                style={styles.quickActionCard}
-                onPress={() => navigation.navigate('StudyScreen')}
-                activeOpacity={0.8}
-              >
-                <LinearGradient
-                  colors={['#F59E0B', '#EF4444']}
-                  style={styles.quickActionGradient}
-                >
-                  <Ionicons name="library" size={32} color="#FFFFFF" />
-                </LinearGradient>
-                <Text style={[styles.quickActionText, isDark && styles.darkText]}>Study Center</Text>
-                <Text style={styles.quickActionSubtext}>Materials & timer</Text>
               </TouchableOpacity>
 
                             <TouchableOpacity
@@ -940,6 +1054,61 @@ export default function ModernHomeDashboard({ navigation }) {
           <Ionicons name="add" size={28} color="#FFFFFF" />
         </LinearGradient>
       </TouchableOpacity>
+
+      {/* Amazing New Features Modals */}
+      <AIStudyAssistant 
+        visible={showAIAssistant}
+        onClose={() => setShowAIAssistant(false)}
+        course={selectedCourse}
+      />
+
+      <SmartNoteTaking
+        visible={showSmartNotes}
+        onClose={() => setShowSmartNotes(false)}
+        course={selectedCourse}
+      />
+
+      <GamifiedProgress
+        visible={showProgress}
+        onClose={() => setShowProgress(false)}
+        user={user}
+        courses={csModules}
+      />
+
+      <ARStudyMode
+        visible={showARMode}
+        onClose={() => setShowARMode(false)}
+        course={selectedCourse}
+        topic="Interactive Learning"
+      />
+
+      <EnhancedVoiceCall
+        visible={showVoiceCall}
+        onClose={() => setShowVoiceCall(false)}
+        participant={callParticipant}
+        onCallEnd={() => setShowVoiceCall(false)}
+      />
+
+      <AIQuizGenerator
+        visible={showQuizGenerator}
+        onClose={() => setShowQuizGenerator(false)}
+        course={selectedCourse}
+        topic="AI-Generated Questions"
+      />
+
+      <SmartScheduleOptimizer
+        visible={showScheduleOptimizer}
+        onClose={() => setShowScheduleOptimizer(false)}
+        user={user}
+        courses={csModules}
+      />
+
+      {/* 🌟 Welcome Guide for Discovering Amazing Features */}
+      <FeatureWelcomeGuide
+        visible={showWelcomeGuide}
+        onClose={() => setShowWelcomeGuide(false)}
+        userType="student"
+      />
     </SafeAreaView>
   );
 }
@@ -1048,6 +1217,20 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 12,
+  },
+  discoverButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 20,
+  },
+  discoverButtonText: {
+    fontSize: 12,
+    color: '#FFFFFF',
+    fontWeight: '600',
+    marginLeft: 4,
   },
   themeToggle: {
     width: 44,
