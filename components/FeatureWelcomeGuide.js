@@ -208,11 +208,11 @@ export const FeatureWelcomeGuide = ({ visible, onClose, userType = 'student' }) 
                   🚀 Welcome to the Future of {userType === 'lecturer' ? 'Teaching' : 'Learning'}!
                 </Text>
                 <Text style={styles.headerSubtitle}>
-                  Discover amazing AI-powered features that will transform your experience
+                  Discover amazing AI-powered features that will transform your university experience
                 </Text>
               </View>
               <TouchableOpacity onPress={skipGuide} style={styles.skipButton}>
-                <Text style={styles.skipButtonText}>Skip</Text>
+                <Ionicons name="close-circle" size={24} color="#FFFFFF" />
               </TouchableOpacity>
             </View>
           </LinearGradient>
@@ -233,7 +233,7 @@ export const FeatureWelcomeGuide = ({ visible, onClose, userType = 'student' }) 
           </View>
 
           {/* Feature Content */}
-          <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
+          <ScrollView style={styles.content} contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
             <View style={styles.featureContainer}>
               {/* Feature Icon */}
               <View style={styles.featureIconContainer}>
@@ -346,7 +346,7 @@ const styles = StyleSheet.create({
   },
   container: {
     width: width * 0.9,
-    maxHeight: height * 0.85,
+    height: height * 0.85,
     backgroundColor: '#fff',
     borderRadius: 25,
     overflow: 'hidden',
@@ -417,7 +417,10 @@ const styles = StyleSheet.create({
   // Content
   content: {
     flex: 1,
+  },
+  scrollContent: {
     padding: 20,
+    paddingBottom: 40,
   },
   featureContainer: {
     alignItems: 'center',

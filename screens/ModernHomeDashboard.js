@@ -17,6 +17,7 @@ import {
   ActivityIndicator,
   Modal,
   Pressable,
+  PanResponder,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -38,12 +39,16 @@ import SemesterModules from '../components/SemesterModules';
 import GameCenter from '../components/GameCenter';
 import FocusMode from '../components/FocusMode';
 import WeekendActivities from '../components/WeekendActivities';
+import MindMap from '../components/MindMap';
+import KnowledgeTree from '../components/KnowledgeTree';
+import GlobalUniversityHub from '../components/GlobalUniversityHub';
+import PeerCommunityHub from '../components/PeerCommunityHub';
 
 const { width, height } = Dimensions.get('window');
 
 export default function ModernHomeDashboard({ navigation }) {
   const { csModules, notifications, user } = useApp();
-  const { isDark: themeIsDark, toggleTheme: toggleGlobalTheme } = useTheme();
+  const { isDark, toggleTheme: toggleGlobalTheme } = useTheme();
   
   // Debug logging
   console.log('ModernHomeDashboard - User:', user?.uid, user?.userType);
@@ -65,7 +70,6 @@ export default function ModernHomeDashboard({ navigation }) {
   const [studyStreak, setStudyStreak] = useState(7);
   const [dailyGoal, setDailyGoal] = useState(0.75);
   const [weeklyProgress, setWeeklyProgress] = useState(0.6);
-  const [isDark, setIsDark] = useState(themeIsDark);
   const [achievements, setAchievements] = useState([]);
   
   // New feature modals
@@ -94,6 +98,14 @@ export default function ModernHomeDashboard({ navigation }) {
   const [showQuickActionsModal, setShowQuickActionsModal] = useState(false);
   const [showStudyGroupPicker, setShowStudyGroupPicker] = useState(false);
   const [showReminderPicker, setShowReminderPicker] = useState(false);
+  const [showIdModal, setShowIdModal] = useState(false);
+  const [showHubDetail, setShowHubDetail] = useState(false);
+  const [selectedHubCategory, setSelectedHubCategory] = useState(null);
+  const [showGlobalHub, setShowGlobalHub] = useState(false);
+  const [showPeerHub, setShowPeerHub] = useState(false);
+  const [showResourceDetail, setShowResourceDetail] = useState(false);
+  const [selectedResource, setSelectedResource] = useState(null);
+  const [pulseMessage, setPulseMessage] = useState("University News: New research grant announced for CS students...");
   const [achievementProgress, setAchievementProgress] = useState({
     total: 0,
     earned: 0,
@@ -112,6 +124,27 @@ export default function ModernHomeDashboard({ navigation }) {
   const slideAnim = useRef(new Animated.Value(50)).current;
   const scaleAnim = useRef(new Animated.Value(0.8)).current;
   const bounceAnim = useRef(new Animated.Value(0)).current;
+  
+  // Draggable Floating Buttons
+  const pan = useRef(new Animated.ValueXY({ x: 0, y: 0 })).current;
+  const panResponder = useRef(
+    PanResponder.create({
+      onMoveShouldSetPanResponder: () => true,
+      onPanResponderGrant: () => {
+        pan.setOffset({
+          x: pan.x._value,
+          y: pan.y._value
+        });
+      },
+      onPanResponderMove: Animated.event(
+        [null, { dx: pan.x, dy: pan.y }],
+        { useNativeDriver: false }
+      ),
+      onPanResponderRelease: () => {
+        pan.flattenOffset();
+      }
+    })
+  ).current;
   
   const currentLevelModules = user?.academicLevel ? (csModules?.[user.academicLevel] || []) : (csModules?.['100'] || []);
   const unreadNotifications = (notifications || []).filter(n => !n.read).length;
@@ -249,11 +282,11 @@ export default function ModernHomeDashboard({ navigation }) {
       <View style={[styles.loadingContainer, isDark && styles.darkContainer]}>
         <Animated.View style={{ transform: [{ scale: scaleAnim }] }}>
           <LinearGradient
-            colors={isDark ? ['#1A1A2E', '#16213E'] : ['#6366F1', '#8B5CF6']}
+            colors={isDark ? ['#020617', '#1E1B4B'] : ['#4F46E5', '#818CF8']}
             style={styles.loadingCard}
           >
             <Ionicons name="school" size={48} color="#FFFFFF" />
-            <Text style={styles.loadingText}>Loading UniConnect...</Text>
+            <Text style={styles.loadingText}>UniConnect</Text>
           </LinearGradient>
         </Animated.View>
       </View>
@@ -267,8 +300,37 @@ export default function ModernHomeDashboard({ navigation }) {
     Vibration.vibrate(50);
   };
 
-  const toggleTheme = () => {
+  const toggleLocalTheme = () => {
     toggleGlobalTheme();
+    Vibration.vibrate(50);
+  };
+
+  // Global Pulse simulation
+  useEffect(() => {
+    const pulses = [
+      "University News: New research grant announced for CS students...",
+      "Global: 1,240 students are currently studying worldwide 🌎",
+      "Ama shared 'Operating Systems' notes in Level 300 Hub",
+      "Tech Alert: International Cybersecurity Summit starts in 2 days",
+      "Achievement: 450 students completed the 'AI Ethics' quiz today",
+    ];
+    let index = 0;
+    const interval = setInterval(() => {
+      index = (index + 1) % pulses.length;
+      setPulseMessage(pulses[index]);
+    }, 5000);
+    return () => clearInterval(interval);
+  }, []);
+
+  const openHubDetail = (category) => {
+    setSelectedHubCategory(category);
+    setShowHubDetail(true);
+    Vibration.vibrate(50);
+  };
+
+  const openResourceDetail = (resource) => {
+    setSelectedResource(resource);
+    setShowResourceDetail(true);
     Vibration.vibrate(50);
   };
 
@@ -380,7 +442,7 @@ export default function ModernHomeDashboard({ navigation }) {
         >
           {/* Modern Header with Gradient */}
           <LinearGradient
-            colors={isDark ? ['#1A1A2E', '#16213E'] : ['#6366F1', '#8B5CF6']}
+            colors={isDark ? ['#020617', '#0F172A'] : ['#4F46E5', '#6366F1']}
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 1 }}
             style={styles.modernHeader}
@@ -388,58 +450,113 @@ export default function ModernHomeDashboard({ navigation }) {
             <View style={styles.headerContent}>
               <View style={styles.userInfo}>
                 <TouchableOpacity 
-                  style={styles.avatarContainer}
-                  onPress={() => navigation.navigate('Profile')}
+                  style={styles.idCardContainer}
+                  onPress={() => setShowIdModal(true)}
+                  activeOpacity={0.9}
                 >
-                  <View style={styles.avatar}>
-                    <Text style={styles.avatarText}>
-                      {user.name.charAt(0).toUpperCase()}
-                    </Text>
-                  </View>
-                  <View style={styles.onlineIndicator} />
-                </TouchableOpacity>
-                
-                <View style={styles.userDetails}>
-                  <View style={styles.greetingSection}>
-                    <Text style={styles.welcomeText} numberOfLines={1}>
-                      Welcome back, <Text style={styles.userName}>{user.name}</Text>
-                    </Text>
-                    <View style={styles.credentialsSection}>
-                      <View style={styles.credentialGrid}>
-                        <View style={styles.credentialRow}> 
-                          <View style={styles.credentialItem}>
-                            <Ionicons name="person" size={14} color="rgba(255, 255, 255, 0.7)" />
-                            <Text style={styles.credentialText} numberOfLines={1}>{user.name}</Text>
-                          </View>
+                  <LinearGradient
+                    colors={isDark ? ['#1E293B', '#0F172A'] : ['#FFFFFF', '#F8FAFC']}
+                    style={styles.idCard}
+                  >
+                    {/* ID Card Decorative Elements */}
+                    <View style={styles.idCardChip} />
+                    <View style={styles.idCardStrip} />
+                    
+                    <View style={styles.idCardHeader}>
+                      <View style={styles.uniBranding}>
+                        <View style={styles.uniLogoContainer}>
+                          <Ionicons name="school" size={14} color="#FFFFFF" />
                         </View>
-                        <View style={styles.credentialRow}>
-                          <View style={styles.credentialItem}>
-                            <Ionicons name="school" size={14} color="rgba(255, 255, 255, 0.7)" />
-                            <Text style={styles.credentialText}>Level {user.academicLevel}</Text>
-                          </View>
-                          <Text style={styles.credentialSeparator}>•</Text>
-                          <View style={styles.credentialItem}>
-                            <Ionicons name="id-card" size={14} color="rgba(255, 255, 255, 0.7)" />
-                            <Text style={styles.credentialText}>ID: {user.studentId || 'CST2024001'}</Text>
-                          </View>
+                        <View>
+                          <Text style={[styles.uniName, isDark && styles.darkText]}>UNIVERSITY CONNECT</Text>
+                          <Text style={[styles.uniTagline, isDark && styles.darkTextSecondary]}>Excellence in Connectivity</Text>
                         </View>
-                        <View style={styles.credentialRow}>
-                          <View style={styles.credentialItem}>
-                            <Ionicons name="mail" size={14} color="rgba(255, 255, 255, 0.7)" />
-                            <Text style={styles.credentialText} numberOfLines={1}>{user.email || 'student@university.edu'}</Text>
+                      </View>
+                      <View style={styles.verifiedBadge}>
+                        <Ionicons name="shield-checkmark" size={10} color="#10B981" />
+                        <Text style={styles.verifiedText}>OFFICIAL ID</Text>
+                      </View>
+                    </View>
+
+                    <View style={styles.idCardBody}>
+                      <View style={styles.idCardLeft}>
+                        <View style={styles.idAvatarWrapper}>
+                          {user.photoURL || user.profileImage || user.avatar ? (
+                            <Image 
+                              source={{ uri: user.photoURL || user.profileImage || user.avatar }} 
+                              style={styles.idAvatar} 
+                            />
+                          ) : (
+                            <View style={styles.idAvatarPlaceholder}>
+                              <Text style={styles.idAvatarLetter}>
+                                {user.name ? user.name.charAt(0).toUpperCase() : 'S'}
+                              </Text>
+                            </View>
+                          )}
+                          <TouchableOpacity 
+                            style={styles.idCameraBadge}
+                            onPress={(e) => {
+                              e.stopPropagation();
+                              Alert.alert('Update Profile Photo', 'Would you like to change your profile picture?', [
+                                { text: 'Cancel', style: 'cancel' },
+                                { text: 'Choose from Gallery', onPress: () => Alert.alert('Simulated', 'Image picker would open here.') },
+                                { text: 'Take Photo', onPress: () => Alert.alert('Simulated', 'Camera would open here.') },
+                                { text: 'Remove Photo', style: 'destructive', onPress: () => Alert.alert('Simulated', 'Photo would be removed.') }
+                              ]);
+                            }}
+                          >
+                            <Ionicons name="camera" size={10} color="#FFFFFF" />
+                          </TouchableOpacity>
+                        </View>
+                      </View>
+
+                      <View style={styles.idCardRight}>
+                        <Text style={[styles.idName, isDark && styles.darkText]} numberOfLines={1}>
+                          {user.name?.toUpperCase() || 'STUDENT NAME'}
+                        </Text>
+                        
+                        <View style={styles.idInfoGrid}>
+                          <View style={styles.idInfoItem}>
+                            <Text style={[styles.idInfoLabel, isDark && styles.darkTextSecondary]}>IDENTIFICATION NO.</Text>
+                            <Text style={[styles.idInfoValue, isDark && styles.darkText]}>{user.studentId || 'CST-2024-001'}</Text>
+                          </View>
+                          
+                          <View style={styles.idInfoRow}>
+                            <View style={[styles.idInfoItem, { flex: 1 }]}>
+                              <Text style={[styles.idInfoLabel, isDark && styles.darkTextSecondary]}>LEVEL</Text>
+                              <Text style={[styles.idInfoValue, isDark && styles.darkText]}>{user.academicLevel || '100'}</Text>
+                            </View>
+                            <View style={[styles.idInfoItem, { flex: 1 }]}>
+                              <Text style={[styles.idInfoLabel, isDark && styles.darkTextSecondary]}>STATUS</Text>
+                              <Text style={[styles.idInfoValue, { color: '#10B981', fontWeight: '800' }]}>ACTIVE</Text>
+                            </View>
+                          </View>
+
+                          <View style={styles.idInfoItem}>
+                            <Text style={[styles.idInfoLabel, isDark && styles.darkTextSecondary]}>PROGRAM OF STUDY</Text>
+                            <Text style={[styles.idInfoValue, isDark && styles.darkText]} numberOfLines={1}>
+                              {user.department || 'BSc. Computer Science'}
+                            </Text>
                           </View>
                         </View>
                       </View>
                     </View>
-                  </View>
-                  
-                  <View style={styles.onlineStatus}>
-                    <View style={styles.onlineIndicator} />
-                    <Text style={styles.onlineText} numberOfLines={1}>
-                      {Math.floor(Math.random() * 50) + 20} people online
-                    </Text>
-                  </View>
-                </View>
+
+                    <View style={styles.idCardFooter}>
+                      <View style={styles.barcodeContainer}>
+                        <View style={[styles.barcodeLine, isDark && styles.darkBarcode]} />
+                        <View style={[styles.barcodeLine, { width: 2, marginHorizontal: 1 }, isDark && styles.darkBarcode]} />
+                        <View style={[styles.barcodeLine, { width: 4, marginHorizontal: 2 }, isDark && styles.darkBarcode]} />
+                        <View style={[styles.barcodeLine, isDark && styles.darkBarcode]} />
+                        <View style={[styles.barcodeLine, { width: 3, marginHorizontal: 1 }, isDark && styles.darkBarcode]} />
+                        <View style={[styles.barcodeLine, { width: 1, marginHorizontal: 3 }, isDark && styles.darkBarcode]} />
+                        <View style={[styles.barcodeLine, { width: 5, marginHorizontal: 1 }, isDark && styles.darkBarcode]} />
+                        <View style={[styles.barcodeLine, isDark && styles.darkBarcode]} />
+                      </View>
+                      <Text style={[styles.expiryText, isDark && styles.darkText]}>VALID THRU: 08/2026</Text>
+                    </View>
+                  </LinearGradient>
+                </TouchableOpacity>
               </View>
               
               <View style={styles.headerActions}>
@@ -453,7 +570,7 @@ export default function ModernHomeDashboard({ navigation }) {
                 
                 <TouchableOpacity 
                   style={styles.themeToggle}
-                  onPress={toggleTheme}
+                  onPress={toggleLocalTheme}
                 >
                   <Ionicons 
                     name={isDark ? 'sunny' : 'moon'} 
@@ -476,6 +593,135 @@ export default function ModernHomeDashboard({ navigation }) {
                   )}
                 </TouchableOpacity>
               </View>
+            </View>
+
+            {/* University Global Pulse Feed */}
+            <View style={styles.pulseSection}>
+              <View style={styles.pulseRow}>
+                <View style={styles.pulseIndicator} />
+                <Text style={styles.pulseText}>{pulseMessage}</Text>
+              </View>
+            </View>
+
+            {/* University Global Hub - New Section */}
+            <View style={styles.hubSection}>
+              <View style={styles.hubHeaderRow}>
+                <View style={styles.sectionTitleRow}>
+                  <Ionicons name="globe" size={20} color={isDark ? '#818CF8' : '#4F46E5'} />
+                  <Text style={[styles.sectionTitle, isDark && styles.darkSectionTitle, { marginBottom: 0 }]}>Global University Hub</Text>
+                </View>
+                <TouchableOpacity onPress={() => navigation.navigate('AcademicOverview')}>
+                  <Text style={styles.seeAllText}>Explore Hub</Text>
+                </TouchableOpacity>
+              </View>
+              
+              <ScrollView 
+                horizontal 
+                showsHorizontalScrollIndicator={false}
+                contentContainerStyle={styles.hubScroll}
+              >
+                <TouchableOpacity 
+                  style={styles.hubCard}
+                  onPress={() => openHubDetail('News')}
+                >
+                  <LinearGradient
+                    colors={['#6366F1', '#4F46E5']}
+                    style={styles.hubCardGradient}
+                  >
+                    <Ionicons name="newspaper" size={24} color="#FFFFFF" />
+                    <Text style={styles.hubCardTitle}>Global News</Text>
+                    <Text style={styles.hubCardSub}>Academic AI trends 2024</Text>
+                  </LinearGradient>
+                </TouchableOpacity>
+
+                <TouchableOpacity 
+                  style={styles.hubCard}
+                  onPress={() => openHubDetail('Events')}
+                >
+                  <LinearGradient
+                    colors={['#10B981', '#059669']}
+                    style={styles.hubCardGradient}
+                  >
+                    <Ionicons name="calendar" size={24} color="#FFFFFF" />
+                    <Text style={styles.hubCardTitle}>Campus Events</Text>
+                    <Text style={styles.hubCardSub}>Tech Innovation Summit</Text>
+                  </LinearGradient>
+                </TouchableOpacity>
+
+                <TouchableOpacity 
+                  style={styles.hubCard}
+                  onPress={() => openHubDetail('Groups')}
+                >
+                  <LinearGradient
+                    colors={['#F59E0B', '#D97706']}
+                    style={styles.hubCardGradient}
+                  >
+                    <Ionicons name="people" size={24} color="#FFFFFF" />
+                    <Text style={styles.hubCardTitle}>Global Groups</Text>
+                    <Text style={styles.hubCardSub}>Connect with scholars</Text>
+                  </LinearGradient>
+                </TouchableOpacity>
+              </ScrollView>
+            </View>
+
+            {/* Peer Community Hub - New Section */}
+            <View style={styles.hubSection}>
+              <View style={styles.hubHeaderRow}>
+                <View style={styles.sectionTitleRow}>
+                  <Ionicons name="people" size={20} color={isDark ? '#34D399' : '#059669'} />
+                  <Text style={[styles.sectionTitle, isDark && styles.darkSectionTitle, { marginBottom: 0 }]}>Peer Community Hub</Text>
+                </View>
+                <TouchableOpacity onPress={() => setShowPeerHub(true)}>
+                  <Text style={[styles.seeAllText, { color: '#059669' }]}>Browse Notes</Text>
+                </TouchableOpacity>
+              </View>
+              
+              <Text style={styles.communitySub}>New materials from Level {user.academicLevel} peers</Text>
+
+              <ScrollView 
+                horizontal 
+                showsHorizontalScrollIndicator={false}
+                contentContainerStyle={styles.hubScroll}
+              >
+                <TouchableOpacity 
+                  style={styles.resourceCard}
+                  onPress={() => openResourceDetail({ title: 'Operating Systems', author: 'Kwesi', time: '2h ago', icon: 'document-text', color: '#6366F1' })}
+                >
+                  <View style={[styles.resourceIcon, { backgroundColor: 'rgba(99, 102, 241, 0.1)' }]}>
+                    <Ionicons name="document-text" size={20} color="#6366F1" />
+                  </View>
+                  <View style={styles.resourceInfo}>
+                    <Text style={[styles.resourceTitle, isDark && styles.darkText]} numberOfLines={1}>Operating Systems</Text>
+                    <Text style={styles.resourceMeta}>by Kwesi • 2h ago</Text>
+                  </View>
+                </TouchableOpacity>
+
+                <TouchableOpacity 
+                  style={styles.resourceCard}
+                  onPress={() => openResourceDetail({ title: 'React Native Guide', author: 'Ama', time: '5h ago', icon: 'code-slash', color: '#10B981' })}
+                >
+                  <View style={[styles.resourceIcon, { backgroundColor: 'rgba(16, 185, 129, 0.1)' }]}>
+                    <Ionicons name="code-slash" size={20} color="#10B981" />
+                  </View>
+                  <View style={styles.resourceInfo}>
+                    <Text style={[styles.resourceTitle, isDark && styles.darkText]} numberOfLines={1}>React Native Guide</Text>
+                    <Text style={styles.resourceMeta}>by Ama • 5h ago</Text>
+                  </View>
+                </TouchableOpacity>
+
+                <TouchableOpacity 
+                  style={styles.resourceCard}
+                  onPress={() => openResourceDetail({ title: 'Data Structures', author: 'Kofi', time: '1d ago', icon: 'flask', color: '#F59E0B' })}
+                >
+                  <View style={[styles.resourceIcon, { backgroundColor: 'rgba(245, 158, 11, 0.1)' }]}>
+                    <Ionicons name="flask" size={20} color="#F59E0B" />
+                  </View>
+                  <View style={styles.resourceInfo}>
+                    <Text style={[styles.resourceTitle, isDark && styles.darkText]} numberOfLines={1}>Data Structures</Text>
+                    <Text style={styles.resourceMeta}>by Kofi • 1d ago</Text>
+                  </View>
+                </TouchableOpacity>
+              </ScrollView>
             </View>
 
             {/* Study Streak and Progress */}
@@ -670,10 +916,7 @@ export default function ModernHomeDashboard({ navigation }) {
               <View style={styles.quickActionRow}>
                 <TouchableOpacity 
                   style={[styles.quickActionCard, isDark && styles.darkCard]}
-                onPress={() => {
-                  setCallParticipant({ name: 'Study Partner', userType: 'Student' });
-                  setShowVoiceCall(true);
-                }}
+                onPress={() => navigation.navigate('CallHistory')}
                 activeOpacity={0.8}
               >
                 <LinearGradient
@@ -682,8 +925,8 @@ export default function ModernHomeDashboard({ navigation }) {
                 >
                     <Ionicons name="call" size={22} color="#FFFFFF" />
                 </LinearGradient>
-                <Text style={[styles.quickActionText, isDark && styles.darkText]}>HD Calls</Text>
-                <Text style={styles.quickActionSubtext}>AI noise reduction</Text>
+                <Text style={[styles.quickActionText, isDark && styles.darkText]}>Voice Calls</Text>
+                <Text style={styles.quickActionSubtext}>Make HD calls</Text>
               </TouchableOpacity>
 
               <TouchableOpacity 
@@ -758,14 +1001,49 @@ export default function ModernHomeDashboard({ navigation }) {
                   colors={['#10B981', '#059669']}
                   style={styles.quickActionGradient}
                 >
-                    <Ionicons name="trophy" size={22} color="#FFFFFF" />
+                    <Ionicons name="analytics" size={22} color="#FFFFFF" />
                 </LinearGradient>
                 <Text style={[styles.quickActionText, isDark && styles.darkText]}>Results</Text>
-                  <Text style={styles.quickActionSubtext}>Academic performance</Text>
+                <Text style={styles.quickActionSubtext}>Grades & GPA</Text>
               </TouchableOpacity>
               </View>
 
-              {/* Row 6: Progress & Modules */}
+              {/* Row 6: Communication Tools */}
+              <View style={styles.quickActionRow}>
+                <TouchableOpacity 
+                  style={[styles.quickActionCard, isDark && styles.darkCard]}
+                  onPress={() => setShowVoiceRecorder(true)}
+                  activeOpacity={0.8}
+                >
+                  <LinearGradient
+                    colors={['#8E2DE2', '#4A00E0']}
+                    style={styles.quickActionGradient}
+                  >
+                      <Ionicons name="mic" size={22} color="#FFFFFF" />
+                  </LinearGradient>
+                  <Text style={[styles.quickActionText, isDark && styles.darkText]}>Voice Record</Text>
+                  <Text style={styles.quickActionSubtext}>Send audio</Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity 
+                  style={[styles.quickActionCard, isDark && styles.darkCard]}
+                  onPress={() => navigation.navigate('MessagingWithCalls')}
+                  activeOpacity={0.8}
+                >
+                  <LinearGradient
+                    colors={['#f12711', '#f5af19']}
+                    style={styles.quickActionGradient}
+                  >
+                      <Ionicons name="document-attach" size={22} color="#FFFFFF" />
+                  </LinearGradient>
+                  <Text style={[styles.quickActionText, isDark && styles.darkText]}>Send Files</Text>
+                  <Text style={styles.quickActionSubtext}>Share documents</Text>
+                </TouchableOpacity>
+
+                <View style={[styles.quickActionCard, { backgroundColor: 'transparent', elevation: 0, borderWidth: 0 }]} />
+              </View>
+
+              {/* Row 7: Progress & Modules */}
               <View style={styles.quickActionRow}>
               <TouchableOpacity
                   style={[styles.quickActionCard, isDark && styles.darkCard]}
@@ -819,55 +1097,55 @@ export default function ModernHomeDashboard({ navigation }) {
           <View style={[styles.section, isDark && styles.darkSection]}>
             <Text style={[styles.sectionTitle, isDark && styles.darkText]}>📚 Academic Tools</Text>
             <View style={styles.additionalFeaturesGrid}>
-              <TouchableOpacity 
+                <TouchableOpacity 
                 style={[styles.additionalFeatureCard, isDark && styles.darkCard]}
-                onPress={() => navigation.navigate('GroupDiscussion')}
+                onPress={() => setShowMindMap(true)}
               >
                 <LinearGradient
                   colors={['#EC4899', '#BE185D']}
                   style={styles.additionalFeatureGradient}
                 >
-                  <Ionicons name="people-circle" size={24} color="#FFFFFF" />
-                  <Text style={styles.additionalFeatureText}>Group Discussion</Text>
+                  <Ionicons name="git-network" size={24} color="#FFFFFF" />
+                  <Text style={styles.additionalFeatureText}>Mind Maps</Text>
                 </LinearGradient>
               </TouchableOpacity>
 
-              <TouchableOpacity 
+                <TouchableOpacity 
                 style={[styles.additionalFeatureCard, isDark && styles.darkCard]}
-                onPress={() => navigation.navigate('StayUpdated')}
+                onPress={() => setShowKnowledgeTree(true)}
               >
                 <LinearGradient
                   colors={['#10B981', '#059669']}
                   style={styles.additionalFeatureGradient}
                 >
-                  <Ionicons name="notifications-circle" size={24} color="#FFFFFF" />
-                  <Text style={styles.additionalFeatureText}>Stay Updated</Text>
+                  <Ionicons name="leaf" size={24} color="#FFFFFF" />
+                  <Text style={styles.additionalFeatureText}>Knowledge Tree</Text>
                 </LinearGradient>
               </TouchableOpacity>
 
-              <TouchableOpacity 
+                <TouchableOpacity 
                 style={[styles.additionalFeatureCard, isDark && styles.darkCard]}
-                onPress={() => navigation.navigate('MaterialsAndTime')}
+                onPress={() => setShowWeekendActivities(true)}
               >
                 <LinearGradient
                   colors={['#F59E0B', '#D97706']}
                   style={styles.additionalFeatureGradient}
                 >
-                  <Ionicons name="time" size={24} color="#FFFFFF" />
-                  <Text style={styles.additionalFeatureText}>Materials & Time</Text>
+                  <Ionicons name="calendar-outline" size={24} color="#FFFFFF" />
+                  <Text style={styles.additionalFeatureText}>Weekend</Text>
                 </LinearGradient>
               </TouchableOpacity>
 
-              <TouchableOpacity 
+                <TouchableOpacity 
                 style={[styles.additionalFeatureCard, isDark && styles.darkCard]}
-                onPress={() => navigation.navigate('GradeBook')}
+                onPress={() => setShowGameCenter(true)}
               >
                 <LinearGradient
                   colors={['#8B5CF6', '#7C3AED']}
                   style={styles.additionalFeatureGradient}
                 >
-                  <Ionicons name="book" size={24} color="#FFFFFF" />
-                  <Text style={styles.additionalFeatureText}>Grade Book</Text>
+                  <Ionicons name="game-controller" size={24} color="#FFFFFF" />
+                  <Text style={styles.additionalFeatureText}>Game Center</Text>
                 </LinearGradient>
               </TouchableOpacity>
             </View>
@@ -1071,7 +1349,7 @@ export default function ModernHomeDashboard({ navigation }) {
 
                 <View style={[styles.academicStatCard, isDark && styles.darkCard]}>
                   <LinearGradient colors={['#F59E0B', '#D97706']} style={styles.academicStatGradient}>
-                    <Ionicons name="trending-outline" size={24} color="#FFFFFF" />
+                    <Ionicons name="trending-up-outline" size={24} color="#FFFFFF" />
                     <Text style={styles.academicStatNumber}>3.45</Text>
                     <Text style={styles.academicStatLabel}>CGPA</Text>
                   </LinearGradient>
@@ -1230,7 +1508,7 @@ export default function ModernHomeDashboard({ navigation }) {
         </Pressable>
       </Modal>
 
-      {/* Study Group Picker Modal — choose course to create group */}
+      {/* Study Group Picker Modal */}
       <Modal visible={showStudyGroupPicker} transparent animationType="fade">
         <Pressable style={styles.quickActionsOverlay} onPress={() => setShowStudyGroupPicker(false)}>
           <View style={[styles.studyGroupPickerCard, isDark && styles.quickActionsSheetDark]} onStartShouldSetResponder={() => true}>
@@ -1293,122 +1571,165 @@ export default function ModernHomeDashboard({ navigation }) {
         </Pressable>
       </Modal>
 
-      {/* Amazing New Features Modals */}
-      <AIStudyAssistant 
-        visible={showAIAssistant}
-        onClose={() => setShowAIAssistant(false)}
-        course={selectedCourse}
-      />
+      {/* Feature Modals */}
+      <AIStudyAssistant visible={showAIAssistant} onClose={() => setShowAIAssistant(false)} course={selectedCourse} />
+      <SmartNoteTaking visible={showSmartNotes} onClose={() => setShowSmartNotes(false)} course={selectedCourse} />
+      <GamifiedProgress visible={showProgress} onClose={() => setShowProgress(false)} user={user} courses={csModules} />
+      <ARStudyMode visible={showARMode} onClose={() => setShowARMode(false)} course={selectedCourse} topic="Interactive Learning" />
+      <EnhancedVoiceCall visible={showVoiceCall} onClose={() => setShowVoiceCall(false)} participant={callParticipant} onCallEnd={() => setShowVoiceCall(false)} />
+      <AIQuizGenerator visible={showQuizGenerator} onClose={() => setShowQuizGenerator(false)} course={selectedCourse} topic="AI-Generated Questions" />
+      <SmartScheduleOptimizer visible={showScheduleOptimizer} onClose={() => setShowScheduleOptimizer(false)} user={user} courses={csModules} />
+      <FeatureWelcomeGuide visible={showWelcomeGuide} onClose={() => setShowWelcomeGuide(false)} userType="student" />
+      <VoiceRecorder visible={showVoiceRecorder} onClose={() => setShowVoiceRecorder(false)} onSend={(data) => Alert.alert('Success', 'Voice recording sent!')} courseCode={selectedCourse?.code} />
+      <TextEditor visible={showTextEditor} onClose={() => setShowTextEditor(false)} onSave={(data) => Alert.alert('Success', 'Text saved!')} courseCode={selectedCourse?.code} />
+      <ProgressTracker visible={showProgressTracker} onClose={() => setShowProgressTracker(false)} user={user} courses={csModules} />
+      <SemesterModules visible={showSemesterModules} onClose={() => setShowSemesterModules(false)} user={user} courses={csModules} />
+      <GameCenter visible={showGameCenter} onClose={() => setShowGameCenter(false)} user={user} />
+      <FocusMode visible={showFocusMode} onClose={() => setShowFocusMode(false)} user={user} />
+      <WeekendActivities visible={showWeekendActivities} onClose={() => setShowWeekendActivities(false)} user={user} />
+      <MindMap visible={showMindMap} onClose={() => setShowMindMap(false)} user={user} />
+      <KnowledgeTree visible={showKnowledgeTree} onClose={() => setShowKnowledgeTree(false)} user={user} />
+      <GlobalUniversityHub visible={showGlobalHub} onClose={() => setShowGlobalHub(false)} user={user} />
+      <PeerCommunityHub visible={showPeerHub} onClose={() => setShowPeerHub(false)} user={user} />
 
-      <SmartNoteTaking
-        visible={showSmartNotes}
-        onClose={() => setShowSmartNotes(false)}
-        course={selectedCourse}
-      />
+      {/* New Interactive Identity Modal */}
+      <Modal visible={showIdModal} transparent animationType="fade" onRequestClose={() => setShowIdModal(false)}>
+        <View style={styles.fullModalOverlay}>
+          <TouchableOpacity style={styles.modalBlur} activeOpacity={1} onPress={() => setShowIdModal(false)} />
+          <Animated.View style={styles.idModalContent}>
+            <LinearGradient colors={['#4F46E5', '#3730A3']} style={styles.idModalGradient}>
+              <View style={styles.idModalHeader}>
+                <Text style={styles.idModalTitle}>Digital Student Identity</Text>
+                <TouchableOpacity onPress={() => setShowIdModal(false)}>
+                  <Ionicons name="close-circle" size={28} color="#FFFFFF" />
+                </TouchableOpacity>
+              </View>
+              <View style={styles.qrContainer}>
+                <View style={styles.qrCode}>
+                   <Ionicons name="qr-code" size={180} color="#1E293B" />
+                   <View style={styles.qrScanLine} />
+                </View>
+                <Text style={styles.qrHint}>Scan at University Entry Points</Text>
+              </View>
+              <View style={styles.idModalDetails}>
+                <View style={styles.idModalRow}>
+                  <Text style={styles.idModalLabel}>HOLDER</Text>
+                  <Text style={styles.idModalValue}>{user.name}</Text>
+                </View>
+                <View style={styles.idModalRow}>
+                  <Text style={styles.idModalLabel}>UNIVERSITY ID</Text>
+                  <Text style={styles.idModalValue}>{user.studentId}</Text>
+                </View>
+                <View style={styles.idModalStatus}>
+                   <View style={styles.statusDotActive} />
+                   <Text style={styles.statusTextActive}>ACTIVE SESSION</Text>
+                </View>
+              </View>
+            </LinearGradient>
+          </Animated.View>
+        </View>
+      </Modal>
 
-      <GamifiedProgress
-        visible={showProgress}
-        onClose={() => setShowProgress(false)}
-        user={user}
-        courses={csModules}
-      />
+      {/* Hub Detail Modal */}
+      <Modal visible={showHubDetail} transparent animationType="slide" onRequestClose={() => setShowHubDetail(false)}>
+        <View style={styles.fullModalOverlay}>
+          <View style={[styles.hubDetailContent, isDark && styles.darkHubDetail]}>
+            <View style={styles.hubModalHeader}>
+              <Text style={[styles.hubModalTitle, isDark && styles.darkText]}>University {selectedHubCategory}</Text>
+              <TouchableOpacity onPress={() => setShowHubDetail(false)}>
+                <Ionicons name="close-circle" size={28} color={isDark ? '#FFFFFF' : '#64748B'} />
+              </TouchableOpacity>
+            </View>
+            <ScrollView contentContainerStyle={styles.hubDetailScroll}>
+              {[1, 2, 3].map((_, i) => (
+                <View key={i} style={[styles.hubDetailItem, isDark && styles.darkHubItem]}>
+                  <View style={styles.hubDetailIcon}>
+                    <Ionicons name={selectedHubCategory === 'News' ? 'newspaper' : 'calendar'} size={24} color="#6366F1" />
+                  </View>
+                  <View style={styles.hubDetailInfo}>
+                    <Text style={[styles.hubItemTitle, isDark && styles.darkText]}>
+                      {selectedHubCategory === 'News' ? `Update on AI Research #${i+1}` : `Tech Talk Event Group #${i+1}`}
+                    </Text>
+                    <Text style={styles.hubItemSub}>Posted by University Admin • 1h ago</Text>
+                  </View>
+                </View>
+              ))}
+            </ScrollView>
+          </View>
+        </View>
+      </Modal>
 
-      <ARStudyMode
-        visible={showARMode}
-        onClose={() => setShowARMode(false)}
-        course={selectedCourse}
-        topic="Interactive Learning"
-      />
+      {/* Resource Detail Modal */}
+      <Modal visible={showResourceDetail} transparent animationType="slide" onRequestClose={() => setShowResourceDetail(false)}>
+        <View style={styles.fullModalOverlay}>
+          <View style={[styles.resourceDetailContent, isDark && styles.darkResourceContent]}>
+            {selectedResource && (
+              <>
+                <View style={[styles.resourceDetailHeader, { backgroundColor: selectedResource.color }]}>
+                  <Ionicons name={selectedResource.icon} size={48} color="#FFFFFF" />
+                  <Text style={styles.resourceDetailTitle}>{selectedResource.title}</Text>
+                  <Text style={styles.resourceDetailMeta}>Shared by {selectedResource.author}</Text>
+                </View>
+                <View style={styles.resourceActions}>
+                  <TouchableOpacity style={styles.actionBtn}>
+                    <Ionicons name="eye" size={20} color="#6366F1" />
+                    <Text style={styles.actionBtnText}>Preview</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity style={[styles.actionBtn, { backgroundColor: '#6366F1' }]}>
+                    <Ionicons name="download" size={20} color="#FFFFFF" />
+                    <Text style={[styles.actionBtnText, { color: '#FFFFFF' }]}>Download</Text>
+                  </TouchableOpacity>
+                </View>
+                <TouchableOpacity style={styles.closeResourceBtn} onPress={() => setShowResourceDetail(false)}>
+                  <Text style={styles.closeResourceText}>Close</Text>
+                </TouchableOpacity>
+              </>
+            )}
+          </View>
+        </View>
+      </Modal>
+      {/* Restore Plus Button (Fixed) */}
+      <TouchableOpacity 
+        style={styles.floatingPlusButtonFixed}
+        onPress={() => setShowQuickActionsModal(true)}
+        activeOpacity={0.8}
+      >
+        <LinearGradient
+          colors={["#10B981", "#059669"]}
+          style={styles.floatingPlusGradient}
+        >
+          <Ionicons name="add" size={32} color="#FFFFFF" />
+        </LinearGradient>
+      </TouchableOpacity>
 
-      <EnhancedVoiceCall
-        visible={showVoiceCall}
-        onClose={() => setShowVoiceCall(false)}
-        participant={callParticipant}
-        onCallEnd={() => setShowVoiceCall(false)}
-      />
-
-      <AIQuizGenerator
-        visible={showQuizGenerator}
-        onClose={() => setShowQuizGenerator(false)}
-        course={selectedCourse}
-        topic="AI-Generated Questions"
-      />
-
-      <SmartScheduleOptimizer
-        visible={showScheduleOptimizer}
-        onClose={() => setShowScheduleOptimizer(false)}
-        user={user}
-        courses={csModules}
-      />
-
-      {/* 🌟 Welcome Guide for Discovering Amazing Features */}
-      <FeatureWelcomeGuide
-        visible={showWelcomeGuide}
-        onClose={() => setShowWelcomeGuide(false)}
-        userType="student"
-      />
-
-      {/* 🎤 Voice Recorder Modal */}
-      <VoiceRecorder
-        visible={showVoiceRecorder}
-        onClose={() => setShowVoiceRecorder(false)}
-        onSend={(voiceData) => {
-          console.log('Voice message sent:', voiceData);
-          Alert.alert('Success!', 'Voice message recorded and sent successfully!');
-        }}
-        courseCode={selectedCourse?.code}
-      />
-
-      {/* ✏️ Smart Text Editor Modal */}
-      <TextEditor
-        visible={showTextEditor}
-        onClose={() => setShowTextEditor(false)}
-        onSave={(textData) => {
-          console.log('Text saved:', textData);
-          Alert.alert('Success!', 'Text saved and sent successfully!');
-        }}
-        courseCode={selectedCourse?.code}
-      />
-
-      {/* 🎯 Progress Tracker Modal */}
-      <ProgressTracker
-        visible={showProgressTracker}
-        onClose={() => setShowProgressTracker(false)}
-        user={user}
-        courses={csModules}
-      />
-
-      {/* 📚 Semester Modules Modal */}
-      <SemesterModules
-        visible={showSemesterModules}
-        onClose={() => setShowSemesterModules(false)}
-        user={user}
-        courses={csModules}
-      />
-
-      {/* 🎮 Game Center Modal */}
-      <GameCenter
-        visible={showGameCenter}
-        onClose={() => setShowGameCenter(false)}
-        user={user}
-      />
-
-      {/* 🎯 Focus Mode Modal */}
-      <FocusMode
-        visible={showFocusMode}
-        onClose={() => setShowFocusMode(false)}
-        user={user}
-      />
-
-      {/* 🌅 Weekend Activities Modal */}
-      <WeekendActivities
-        visible={showWeekendActivities}
-        onClose={() => setShowWeekendActivities(false)}
-        user={user}
-      />
+      {/* Standalone Draggable AI Assistant */}
+      <Animated.View 
+        style={[
+          styles.draggableContainer,
+          {
+            transform: [{ translateX: pan.x }, { translateY: pan.y }]
+          }
+        ]}
+        {...panResponder.panHandlers}
+      >
+        <TouchableOpacity 
+          style={styles.floatingAIButton}
+          onPress={() => setShowAIAssistant(true)}
+          activeOpacity={0.8}
+        >
+          <LinearGradient
+            colors={["#6366F1", "#8B5CF6"]}
+            style={styles.floatingAIButtonGradient}
+          >
+            <Ionicons name="sparkles" size={28} color="#FFFFFF" />
+            <Text style={styles.floatingAIText}>Ask AI</Text>
+          </LinearGradient>
+        </TouchableOpacity>
+      </Animated.View>
     </SafeAreaView>
   );
 }
+
 
 const styles = StyleSheet.create({
   container: {
@@ -1485,102 +1806,296 @@ const styles = StyleSheet.create({
     position: 'relative',
     marginRight: 16,
   },
-  avatar: {
-    width: 60,
-    height: 60,
-    borderRadius: 30,
+  idCardContainer: {
+    padding: 1,
+    borderRadius: 20,
     backgroundColor: 'rgba(255, 255, 255, 0.2)',
-    justifyContent: 'center',
-    alignItems: 'center',
-    borderWidth: 3,
-    borderColor: 'rgba(255, 255, 255, 0.3)',
+    width: width - 40,
   },
-  avatarText: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#FFFFFF',
+  idCard: {
+    padding: 18,
+    borderRadius: 20,
+    elevation: 10,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 5 },
+    shadowOpacity: 0.15,
+    shadowRadius: 10,
+    overflow: 'hidden',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.5)',
   },
-  onlineIndicator: {
+  idCardChip: {
     position: 'absolute',
-    bottom: 2,
-    right: 2,
-    width: 18,
-    height: 18,
-    borderRadius: 9,
-    backgroundColor: '#10B981',
-    borderWidth: 3,
-    borderColor: '#FFFFFF',
+    top: 60,
+    left: 20,
+    width: 35,
+    height: 25,
+    backgroundColor: '#FFD700',
+    borderRadius: 4,
+    opacity: 0.8,
+    borderWidth: 1,
+    borderColor: 'rgba(0,0,0,0.1)',
   },
-  userDetails: {
-    flex: 1,
+  idCardStrip: {
+    position: 'absolute',
+    top: 50,
+    right: -20,
+    width: 100,
+    height: 100,
+    backgroundColor: 'rgba(99, 102, 241, 0.05)',
+    borderRadius: 50,
   },
-  welcomeText: {
-    fontSize: 18,
-    color: '#FFFFFF',
-    fontWeight: '600',
-    marginBottom: 6,
-    textShadowColor: 'rgba(0, 0, 0, 0.2)',
-    textShadowOffset: { width: 0, height: 1 },
-    textShadowRadius: 2,
-  },
-  userName: {
-    fontSize: 20,
-    fontWeight: '700',
-    color: '#FCD34D',
-    textShadowColor: 'rgba(0, 0, 0, 0.3)',
-    textShadowOffset: { width: 0, height: 1 },
-    textShadowRadius: 2,
-  },
-
-  greetingSection: {
-    marginBottom: 12,
-  },
-  credentialsSection: {
-    marginTop: 8,
-  },
-  credentialRow: {
+  idCardHeader: {
     flexDirection: 'row',
-    alignItems: 'center',
     justifyContent: 'space-between',
-    flexWrap: 'wrap',
-    paddingHorizontal: 0,
+    alignItems: 'center',
+    marginBottom: 16,
+    paddingBottom: 10,
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(0,0,0,0.05)',
   },
-  credentialItem: {
+  uniBranding: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
-    flexShrink: 1,
   },
-  credentialText: {
-    fontSize: 13,
-    color: 'rgba(255, 255, 255, 0.9)',
+  uniName: {
+    fontSize: 10,
+    fontWeight: '900',
+    color: '#1E293B',
+    letterSpacing: 1.5,
+  },
+  idInfoLabel: {
+    fontSize: 6.5,
+    color: '#64748B',
+    fontWeight: '700',
+    letterSpacing: 0.3,
+    marginBottom: 0,
+  },
+  idInfoValue: {
+    fontSize: 9,
+    fontWeight: '700',
+    color: '#1E293B',
+  },
+  idDetailLabel: {
+    fontSize: 8,
+    fontWeight: '700',
+    color: '#64748B',
+    letterSpacing: 0.5,
+    marginBottom: 2,
+  },
+  idDetailValue: {
+    fontSize: 12,
+    fontWeight: '800',
+    color: '#334155',
+  },
+  darkTextSecondary: {
+    color: '#94A3B8',
+  },
+  darkBarcode: {
+    backgroundColor: '#F8FAFC',
+  },
+  verifiedBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(16, 185, 129, 0.1)',
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: 10,
+    gap: 4,
+  },
+  verifiedText: {
+    fontSize: 7,
+    fontWeight: '900',
+    color: '#10B981',
+    marginLeft: 3,
+  },
+  uniLogoContainer: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    backgroundColor: '#4F46E5',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 8,
+  },
+  uniTagline: {
+    fontSize: 7,
+    color: '#64748B',
     fontWeight: '600',
-    lineHeight: 18,
   },
-  credentialSeparator: {
-    fontSize: 14,
-    color: 'rgba(255, 255, 255, 0.35)',
-    marginHorizontal: 8,
-    fontWeight: '400',
-    marginTop: 1,
+  idCameraBadge: {
+    position: 'absolute',
+    bottom: -5,
+    right: -5,
+    backgroundColor: '#6366F1',
+    width: 22,
+    height: 22,
+    borderRadius: 11,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 2,
+    borderColor: '#FFFFFF',
   },
-
+  idInfoGrid: {
+    gap: 4,
+  },
+  idInfoItem: {
+    marginBottom: 1,
+  },
+  idInfoRow: {
+    flexDirection: 'row',
+    gap: 8,
+  },
+  idInfoLabel: {
+    fontSize: 6.5,
+    color: '#64748B',
+    fontWeight: '700',
+    letterSpacing: 0.3,
+    marginBottom: 0,
+  },
+  idInfoValue: {
+    fontSize: 9,
+    fontWeight: '700',
+    color: '#1E293B',
+  },
+  idCardFooter: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-end',
+    marginTop: 12,
+    borderTopWidth: 1,
+    borderTopColor: 'rgba(226, 232, 240, 0.5)',
+    paddingTop: 8,
+  },
+  barcodeContainer: {
+    flexDirection: 'row',
+    height: 10,
+    alignItems: 'center',
+  },
+  barcodeLine: {
+    width: 1,
+    height: '100%',
+    backgroundColor: '#1E293B',
+    marginHorizontal: 0.5,
+  },
+  expiryText: {
+    fontSize: 6.5,
+    fontWeight: '700',
+    color: '#64748B',
+  },
+  idCardBody: {
+    flexDirection: 'row',
+    gap: 16,
+  },
+  idCardLeft: {
+    justifyContent: 'flex-start',
+  },
+  idAvatarWrapper: {
+    width: 80,
+    height: 80,
+    borderRadius: 12,
+    borderWidth: 3,
+    borderColor: '#FFFFFF',
+    elevation: 4,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    overflow: 'visible',
+  },
+  idAvatar: {
+    width: '100%',
+    height: '100%',
+    borderRadius: 9,
+  },
+  idAvatarPlaceholder: {
+    width: '100%',
+    height: '100%',
+    borderRadius: 9,
+    backgroundColor: '#6366F1',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  idAvatarLetter: {
+    color: '#FFFFFF',
+    fontSize: 32,
+    fontWeight: 'bold',
+  },
+  idAvatarBadge: {
+    position: 'absolute',
+    bottom: -6,
+    right: -6,
+    backgroundColor: '#1E293B',
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 2,
+    borderColor: '#FFFFFF',
+  },
+  idCardRight: {
+    flex: 1,
+    justifyContent: 'center',
+  },
+  idName: {
+    fontSize: 18,
+    fontWeight: '800',
+    color: '#1E293B',
+    marginBottom: 8,
+  },
+  idDetailsGrid: {
+    flexDirection: 'row',
+    gap: 16,
+    marginBottom: 8,
+  },
+  idDetailItem: {
+    flex: 0,
+  },
+  idDetailLabel: {
+    fontSize: 8,
+    fontWeight: '700',
+    color: '#64748B',
+    letterSpacing: 0.5,
+    marginBottom: 2,
+  },
+  idDetailValue: {
+    fontSize: 12,
+    fontWeight: '800',
+    color: '#334155',
+  },
+  idDeptItem: {
+    marginTop: 4,
+  },
+  darkText: {
+    color: '#F8FAFC',
+  },
   onlineStatus: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginTop: 8,
+    marginTop: 12,
+    backgroundColor: 'rgba(52, 211, 153, 0.15)',
+    alignSelf: 'flex-start',
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: 'rgba(52, 211, 153, 0.2)',
   },
   onlineIndicator: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
+    width: 6,
+    height: 6,
+    borderRadius: 3,
     backgroundColor: '#10B981',
     marginRight: 6,
   },
   onlineText: {
-    fontSize: 12,
-    color: 'rgba(255, 255, 255, 0.8)',
-    fontWeight: '500',
+    fontSize: 10,
+    color: '#10B981',
+    fontWeight: '800',
+    textTransform: 'uppercase',
+    letterSpacing: 1,
   },
   headerActions: {
     flexDirection: 'row',
@@ -1590,12 +2105,15 @@ const styles = StyleSheet.create({
   discoverButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: 'rgba(255, 255, 255, 0.25)',
+    backgroundColor: '#10B981', // Solid Emerald
     paddingHorizontal: 16,
     paddingVertical: 10,
     borderRadius: 24,
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.3)',
+    elevation: 4,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
   },
   discoverButtonText: {
     fontSize: 14,
@@ -1606,22 +2124,139 @@ const styles = StyleSheet.create({
     textShadowOffset: { width: 0, height: 1 },
     textShadowRadius: 2,
   },
+  hubSection: {
+    marginTop: 25,
+    paddingHorizontal: 20,
+  },
+  hubHeaderRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 15,
+  },
+  seeAllText: {
+    fontSize: 12,
+    color: '#6366F1',
+    fontWeight: '700',
+  },
+  hubScroll: {
+    paddingRight: 20,
+  },
+  hubCard: {
+    width: width * 0.4,
+    height: 110,
+    marginRight: 15,
+    borderRadius: 20,
+    overflow: 'hidden',
+    elevation: 4,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 10,
+  },
+  hubCardGradient: {
+    flex: 1,
+    padding: 16,
+    justifyContent: 'center',
+  },
+  hubCardTitle: {
+    fontSize: 14,
+    fontWeight: '800',
+    color: '#FFFFFF',
+    marginTop: 8,
+  },
+  hubCardSub: {
+    fontSize: 10,
+    color: 'rgba(255, 255, 255, 0.8)',
+    marginTop: 2,
+  },
+  communitySub: {
+    fontSize: 12,
+    color: '#94A3B8',
+    marginBottom: 12,
+  },
+  resourceCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(255, 255, 255, 0.05)',
+    padding: 12,
+    borderRadius: 16,
+    marginRight: 12,
+    width: 200,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.1)',
+  },
+  resourceIcon: {
+    width: 40,
+    height: 40,
+    borderRadius: 10,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  resourceInfo: {
+    marginLeft: 12,
+    flex: 1,
+  },
+  resourceTitle: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: '#1E293B',
+  },
+  resourceMeta: {
+    fontSize: 10,
+    color: '#94A3B8',
+    marginTop: 2,
+  },
+  pulseSection: {
+    backgroundColor: 'rgba(99, 102, 241, 0.1)',
+    paddingVertical: 8,
+    paddingHorizontal: 20,
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(99, 102, 241, 0.2)',
+  },
+  pulseRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  pulseIndicator: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: '#10B981',
+  },
+  pulseText: {
+    fontSize: 11,
+    fontWeight: '700',
+    color: '#6366F1',
+    letterSpacing: 0.3,
+  },
   themeToggle: {
     width: 44,
     height: 44,
     borderRadius: 22,
-    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    backgroundColor: '#F59E0B', // Solid Amber
     justifyContent: 'center',
     alignItems: 'center',
+    elevation: 4,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
   },
   notificationButton: {
     width: 44,
     height: 44,
     borderRadius: 22,
-    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    backgroundColor: '#6366F1', // Solid Indigo
     justifyContent: 'center',
     alignItems: 'center',
     position: 'relative',
+    elevation: 4,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
   },
   notificationBadge: {
     position: 'absolute',
@@ -2316,5 +2951,67 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     marginTop: 6,
     textAlign: 'center',
+  },
+  floatingAIButton: {
+    width: 65,
+    height: 65,
+    borderRadius: 32.5,
+    elevation: 12,
+    shadowColor: "#6366F1",
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.4,
+    shadowRadius: 10,
+  },
+  floatingAIButtonGradient: {
+    width: "100%",
+    height: "100%",
+    borderRadius: 32.5,
+    justifyContent: "center",
+    alignItems: "center",
+    borderWidth: 2,
+    borderColor: "rgba(255, 255, 255, 0.3)",
+  },
+  floatingAIText: {
+    fontSize: 9,
+    color: "#FFFFFF",
+    fontWeight: "900",
+    marginTop: -2,
+    textTransform: "uppercase",
+  },
+  draggableContainer: {
+    position: 'absolute',
+    bottom: 50,
+    right: 20,
+    zIndex: 10000,
+  },
+  floatingPlusButtonFixed: {
+    position: 'absolute',
+    bottom: 130,
+    right: 20,
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    elevation: 8,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 6,
+    zIndex: 9999,
+  },
+  floatingPlusButton: {
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    elevation: 8,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 6,
+  },
+  floatingPlusGradient: {
+    flex: 1,
+    borderRadius: 30,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
 });

@@ -18,7 +18,9 @@ import analyticsService from '../services/analyticsService';
 const { width } = Dimensions.get('window');
 
 export default function AnalyticsDashboard({ navigation, route }) {
-  const { courseCode, courseName } = route.params;
+  // Add safety check for route.params to prevent crashes
+  const params = route?.params || {};
+  const { courseCode = 'GENERAL', courseName = 'Overall Portfolio' } = params;
   
   const [analytics, setAnalytics] = useState(null);
   const [timeRange, setTimeRange] = useState('30d');

@@ -8,8 +8,8 @@ import * as Permissions from 'expo-permissions';
 export class AudioCompat {
   static async requestPermissionsAsync() {
     try {
-      // Use expo-permissions for audio recording permission
-      const { status } = await Permissions.askAsync(Permissions.AUDIO_RECORDING);
+      // Use Audio.requestPermissionsAsync() directly instead of deprecated expo-permissions
+      const { status } = await Audio.requestPermissionsAsync();
       
       const granted = status === 'granted';
       console.log('Audio permission status:', status, 'granted:', granted);
@@ -131,3 +131,5 @@ export class AudioCompat {
 
 // Initialize compatibility layer
 AudioCompat.suppressDeprecationWarnings();
+
+export default AudioCompat;

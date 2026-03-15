@@ -1,7 +1,7 @@
 import React, { useState, useRef } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, Alert, Modal } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { Audio } from 'expo-av';
+import AudioCompat from '../utils/audioCompat';
 import * as FileSystem from 'expo-file-system';
 
 export default function VoiceNoteRecorder({ onSend, courseCode, visible, onClose }) {
@@ -16,7 +16,7 @@ export default function VoiceNoteRecorder({ onSend, courseCode, visible, onClose
   // Request permissions
   const requestPermissions = async () => {
     try {
-      const { status } = await Audio.requestPermissionsAsync();
+      const { status } = await AudioCompat.requestPermissionsAsync();
       if (status !== 'granted') {
         Alert.alert('Permission needed', 'Please grant microphone permission to record voice notes.');
         return false;
@@ -34,16 +34,16 @@ export default function VoiceNoteRecorder({ onSend, courseCode, visible, onClose
       const hasPermission = await requestPermissions();
       if (!hasPermission) return;
 
-      await Audio.setAudioModeAsync({
+      await AudioCompat.setAudioModeAsync({
         allowsRecordingIOS: true,
         playsInSilentModeIOS: true,
       });
 
-      const { recording } = await Audio.Recording.createAsync(
-        Audio.RecordingOptionsPresets.HIGH_QUALITY
-      );
+      const newRecording = new AudioCompat.Recording();
+      await newRecording.prepareToRecordAsync(AudioCompat.RecordingOptionsPresets.HIGH_QUALITY);
+      await newRecording.startAsync();
       
-      setRecording(recording);
+      setRecording(newRecording);
       setIsRecording(true);
       setRecordingDuration(0);
       
@@ -91,7 +91,7 @@ export default function VoiceNoteRecorder({ onSend, courseCode, visible, onClose
         await sound.unloadAsync();
       }
       
-      const { sound: newSound } = await Audio.Sound.createAsync({ uri: recordingUri });
+      const { sound: newSound } = await AudioCompat.Sound.createAsync({ uri: recordingUri });
       setSound(newSound);
       
       newSound.setOnPlaybackStatusUpdate((status) => {

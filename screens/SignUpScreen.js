@@ -1,82 +1,98 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import {
   View,
   Text,
-  TextInput,
   TouchableOpacity,
   StyleSheet,
   KeyboardAvoidingView,
   Platform,
   Alert,
   ScrollView,
+  Animated,
+  StatusBar,
+  Dimensions,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { LinearGradient } from 'expo-linear-gradient';
 import { useApp } from '../context/AppContext';
+import { useTheme } from '../components/ThemeProvider';
+import { ModernButton, ModernInput, ModernCard } from '../components/ModernUI';
+import { Colors, Typography, Spacing, BorderRadius, Shadows, Animations } from '../themes/modernTheme';
+
+const { width, height } = Dimensions.get('window');
 
 export default function SignUpScreen({ navigation }) {
+  const [step, setStep] = useState(1);
   const [formData, setFormData] = useState({
     fullName: '',
-    identifier: '', // Student ID or Staff ID
+    identifier: '',
     email: '',
     password: '',
     confirmPassword: '',
-    userType: '', // 'student' or 'lecturer'
-    academicLevel: '', // For students only
-    teachingCourses: [], // For lecturers only
+    userType: 'student',
+    academicLevel: '100',
+    teachingCourses: [],
   });
   const [showPassword, setShowPassword] = useState(false);
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const { signUp } = useApp();
+  const { isDark } = useTheme();
+
+  // Animation Refs
+  const fadeAnim = useRef(new Animated.Value(0)).current;
+  const slideAnim = useRef(new Animated.Value(30)).current;
+  const progressAnim = useRef(new Animated.Value(0.25)).current;
+
+  useEffect(() => {
+    startEntranceAnimation();
+  }, [step]);
+
+  const startEntranceAnimation = () => {
+    fadeAnim.setValue(0);
+    slideAnim.setValue(30);
+    
+    Animated.parallel([
+      Animated.timing(fadeAnim, {
+        toValue: 1,
+        duration: 500,
+        useNativeDriver: true,
+      }),
+      Animated.spring(slideAnim, {
+        toValue: 0,
+        tension: 50,
+        friction: 7,
+        useNativeDriver: true,
+      }),
+      Animated.timing(progressAnim, {
+        toValue: (step / 4),
+        duration: 300,
+        useNativeDriver: false,
+      })
+    ]).start();
+  };
 
   const userTypes = [
-    { id: 'student', title: 'Student', description: 'I am a student', icon: 'school' },
-    { id: 'lecturer', title: 'Lecturer', description: 'I am a lecturer/instructor', icon: 'library' },
+    { id: 'student', title: 'Student', icon: 'school-outline', desc: 'Join as a learner' },
+    { id: 'lecturer', title: 'Lecturer', icon: 'briefcase-outline', desc: 'Join as an educator' },
   ];
 
   const academicLevels = [
-    { id: '100', level: '100 Level', description: 'First Year - Foundation' },
-    { id: '200', level: '200 Level', description: 'Second Year - Core Fundamentals' },
-    { id: '300', level: '300 Level', description: 'Third Year - Specialization' },
-    { id: '400', level: '400 Level', description: 'Fourth Year - Advanced Studies' },
+    { id: '100', title: 'Level 100', icon: 'star-outline' },
+    { id: '200', title: 'Level 200', icon: 'ribbon-outline' },
+    { id: '300', title: 'Level 300', icon: 'medal-outline' },
+    { id: '400', title: 'Level 400', icon: 'trophy-outline' },
   ];
 
-  // Available courses for lecturers to teach (from all levels)
   const allCourses = [
-    // 100 Level
     { id: 'csm151', code: 'CSM151', name: 'Information Technology I', level: '100' },
-    { id: 'csm153', code: 'CSM153', name: 'Circuit Theory', level: '100' },
-    { id: 'csm157', code: 'CSM157', name: 'Introduction to Structured Program Design', level: '100' },
-    { id: 'math163', code: 'MATH163', name: 'Discrete Mathematics I', level: '100' },
-    { id: 'csm152', code: 'CSM152', name: 'Information Technology II', level: '100' },
-    { id: 'csm158', code: 'CSM158', name: 'Programming with C++', level: '100' },
-    
-    // 200 Level
-    { id: 'csm251', code: 'CSM251', name: 'Introductory Electronics', level: '200' },
-    { id: 'csm281', code: 'CSM281', name: 'Object Oriented Programming with JAVA', level: '200' },
-    { id: 'csm255', code: 'CSM255', name: 'Open Source Operating Systems', level: '200' },
-    { id: 'csm297', code: 'CSM297', name: 'Database Concepts and Technologies I', level: '200' },
-    { id: 'csm254', code: 'CSM254', name: 'Programming with Assembly Language', level: '200' },
-    { id: 'csm264', code: 'CSM264', name: 'Programming with VISUAL BASIC', level: '200' },
-    
-    // 300 Level
-    { id: 'csm387', code: 'CSM387', name: 'Data Structures I', level: '300' },
-    { id: 'csm395', code: 'CSM395', name: 'Introduction to Artificial Intelligence', level: '300' },
-    { id: 'csm357', code: 'CSM357', name: 'Human Computer Interaction', level: '300' },
-    { id: 'csm399', code: 'CSM399', name: 'Web-Based Concept and Development', level: '300' },
-    { id: 'csm352', code: 'CSM352', name: 'Computer Architecture', level: '300' },
-    { id: 'csm388', code: 'CSM388', name: 'Data Structures II', level: '300' },
-    
-    // 400 Level
-    { id: 'csm477', code: 'CSM477', name: 'Data Communications', level: '400' },
-    { id: 'csm481', code: 'CSM481', name: 'Information Systems I', level: '400' },
-    { id: 'csm483', code: 'CSM483', name: 'Operating Systems', level: '400' },
-    { id: 'csm489', code: 'CSM489', name: 'Project I', level: '400' },
-    { id: 'csm495', code: 'CSM495', name: 'Introduction to Software Engineering', level: '400' },
+    { id: 'csm157', code: 'CSM157', name: 'Structured Program Design', level: '100' },
+    { id: 'csm281', code: 'CSM281', name: 'Java Programming', level: '200' },
+    { id: 'csm395', code: 'CSM395', name: 'Artificial Intelligence', level: '300' },
+    { id: 'csm495', code: 'CSM495', name: 'Software Engineering', level: '400' },
     { id: 'csm478', code: 'CSM478', name: 'Computer Networks', level: '400' },
   ];
 
-  const toggleCourseSelection = (courseId) => {
+  const toggleCourse = (courseId) => {
     setFormData(prev => ({
       ...prev,
       teachingCourses: prev.teachingCourses.includes(courseId)
@@ -85,514 +101,352 @@ export default function SignUpScreen({ navigation }) {
     }));
   };
 
-  const validateForm = () => {
-    const { fullName, identifier, email, password, confirmPassword, userType, academicLevel, teachingCourses } = formData;
-
-    if (!fullName.trim()) {
-      Alert.alert('Error', 'Please enter your full name');
-      return false;
+  const nextStep = () => {
+    if (step === 1 && !formData.fullName) {
+      Alert.alert('Incomplete', 'Please tell us your name.');
+      return;
     }
-
-    if (!userType) {
-      Alert.alert('Error', 'Please select if you are a student or lecturer');
-      return false;
+    if (step === 2 && !formData.identifier) {
+      Alert.alert('Incomplete', 'Identification is required.');
+      return;
     }
-
-    if (!identifier.trim()) {
-      Alert.alert('Error', userType === 'student' ? 'Please enter your student ID' : 'Please enter your staff ID');
-      return false;
-    }
-
-    if (!email.trim()) {
-      Alert.alert('Error', 'Please enter your email address');
-      return false;
-    }
-
-    if (!email.includes('@') || !email.includes('.')) {
-      Alert.alert('Error', 'Please enter a valid email address');
-      return false;
-    }
-
-    if (userType === 'student' && !academicLevel) {
-      Alert.alert('Error', 'Please select your academic level');
-      return false;
-    }
-
-    if (userType === 'lecturer' && teachingCourses.length === 0) {
-      Alert.alert('Error', 'Please select at least one course you teach');
-      return false;
-    }
-
-    if (password.length < 6) {
-      Alert.alert('Error', 'Password must be at least 6 characters long');
-      return false;
-    }
-
-    if (password !== confirmPassword) {
-      Alert.alert('Error', 'Passwords do not match');
-      return false;
-    }
-
-    return true;
+    setStep(s => s + 1);
   };
 
   const handleSignUp = async () => {
-    if (!validateForm()) return;
-
+    if (formData.password !== formData.confirmPassword) {
+      Alert.alert('Error', 'Passwords do not match.');
+      return;
+    }
     setIsLoading(true);
-
     try {
-      const userData = {
-        fullName: formData.fullName.trim(),
-        identifier: formData.identifier.trim(),
-        userType: formData.userType,
-        ...(formData.userType === 'student' 
-          ? { academicLevel: formData.academicLevel }
-          : { teachingCourses: formData.teachingCourses }
-        ),
-      };
-
-      const result = await signUp(formData.email.trim(), formData.password, userData);
-
+      const result = await signUp(formData.email.trim(), formData.password, formData);
       if (result.success) {
-        // Success! Firebase auth state will automatically trigger dashboard
-        Alert.alert(
-          '🎉 Welcome to UniConnect!',
-          'Your account has been created successfully!',
-          [{ text: 'Get Started', style: 'default' }]
-        );
+        Alert.alert('Success', 'Welcome to UniConnect!');
       } else {
-        Alert.alert('Registration Failed', result.error);
+        Alert.alert('Error', result.error);
       }
-    } catch (error) {
-      Alert.alert('Error', 'An unexpected error occurred. Please try again.');
+    } catch (e) {
+      Alert.alert('Error', 'Something went wrong.');
     } finally {
       setIsLoading(false);
     }
   };
 
-  const updateFormData = (field, value) => {
-    setFormData(prev => ({ ...prev, [field]: value }));
-  };
+  const renderStepIndicator = () => (
+    <View style={styles.progressContainer}>
+      <Animated.View style={[styles.progressBar, { width: progressAnim.interpolate({
+        inputRange: [0, 1],
+        outputRange: ['0%', '100%']
+      }) }]} />
+    </View>
+  );
 
-  return (
-    <KeyboardAvoidingView
-      style={styles.container}
-      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-    >
-      <ScrollView contentContainerStyle={styles.scrollContainer} showsVerticalScrollIndicator={false}>
-        <View style={styles.header}>
-          <TouchableOpacity
-            style={styles.backButton}
-            onPress={() => navigation.goBack()}
-          >
-            <Ionicons name="arrow-back" size={24} color="#4F46E5" />
-          </TouchableOpacity>
-          <Ionicons name="person-add" size={60} color="#4F46E5" />
-          <Text style={styles.title}>Create Account</Text>
-          <Text style={styles.subtitle}>Join the UniConnect community</Text>
-        </View>
-
-        <View style={styles.form}>
-          <View style={styles.inputContainer}>
-            <Ionicons name="person-outline" size={20} color="#64748B" style={styles.inputIcon} />
-            <TextInput
-              style={styles.input}
-              placeholder="Full Name"
+  const renderStep = () => {
+    switch (step) {
+      case 1:
+        return (
+          <Animated.View style={{ opacity: fadeAnim, transform: [{ translateY: slideAnim }] }}>
+            <Text style={styles.stepTitle}>Let's start with the basics</Text>
+            <Text style={styles.stepSubtitle}>How should we call you and what's your role?</Text>
+            
+            <ModernInput
+              label="Full Name"
               value={formData.fullName}
-              onChangeText={(value) => updateFormData('fullName', value)}
-              autoCapitalize="words"
+              onChangeText={(val) => setFormData(p => ({ ...p, fullName: val }))}
+              icon="person-outline"
+              variant="glass"
             />
-          </View>
 
-          {/* User Type Selection */}
-          <View style={styles.userTypeSection}>
-            <Text style={styles.sectionTitle}>I am a...</Text>
-            <View style={styles.userTypeGrid}>
-              {userTypes.map((type) => (
+            <View style={styles.typeGrid}>
+              {userTypes.map(type => (
                 <TouchableOpacity
                   key={type.id}
-                  style={[
-                    styles.userTypeCard,
-                    formData.userType === type.id && styles.userTypeCardSelected
-                  ]}
-                  onPress={() => updateFormData('userType', type.id)}
+                  onPress={() => setFormData(p => ({ ...p, userType: type.id }))}
+                  style={[styles.typeCard, formData.userType === type.id && styles.typeCardActive]}
                 >
-                  <View style={[
-                    styles.userTypeIcon,
-                    formData.userType === type.id && styles.userTypeIconSelected
-                  ]}>
-                    <Ionicons 
-                      name={type.icon} 
-                      size={24} 
-                      color={formData.userType === type.id ? '#FFFFFF' : '#64748B'} 
-                    />
-                  </View>
-                  <Text style={[
-                    styles.userTypeTitle,
-                    formData.userType === type.id && styles.userTypeTitleSelected
-                  ]}>
-                    {type.title}
-                  </Text>
-                  <Text style={[
-                    styles.userTypeDesc,
-                    formData.userType === type.id && styles.userTypeDescSelected
-                  ]}>
-                    {type.description}
-                  </Text>
-                  {formData.userType === type.id && (
-                    <View style={styles.checkmark}>
-                      <Ionicons name="checkmark-circle" size={20} color="#4F46E5" />
-                    </View>
-                  )}
+                  <Ionicons name={type.icon} size={32} color={formData.userType === type.id ? '#FFFFFF' : '#6366F1'} />
+                  <Text style={[styles.typeName, formData.userType === type.id && styles.textWhite]}>{type.title}</Text>
+                  <Text style={[styles.typeDesc, formData.userType === type.id && styles.textWhite70]}>{type.desc}</Text>
                 </TouchableOpacity>
               ))}
             </View>
-          </View>
 
-          <View style={styles.inputContainer}>
-            <Ionicons 
-              name={formData.userType === 'lecturer' ? "briefcase-outline" : "school-outline"} 
-              size={20} 
-              color="#64748B" 
-              style={styles.inputIcon} 
-            />
-            <TextInput
-              style={styles.input}
-              placeholder={formData.userType === 'lecturer' ? "Staff ID" : "Student ID"}
+            <ModernButton onPress={nextStep} gradient={Colors.gradients.primary} style={styles.nextBtn}>
+              Continue
+            </ModernButton>
+          </Animated.View>
+        );
+
+      case 2:
+        return (
+          <Animated.View style={{ opacity: fadeAnim, transform: [{ translateY: slideAnim }] }}>
+            <Text style={styles.stepTitle}>Academic Identity</Text>
+            <Text style={styles.stepSubtitle}>Provide your university credentials</Text>
+
+            <ModernInput
+              label={formData.userType === 'student' ? "Student ID" : "Staff ID"}
               value={formData.identifier}
-              onChangeText={(value) => updateFormData('identifier', value)}
+              onChangeText={(val) => setFormData(p => ({ ...p, identifier: val }))}
+              icon="card-outline"
+              variant="glass"
               autoCapitalize="characters"
             />
-          </View>
 
-          <View style={styles.inputContainer}>
-            <Ionicons name="mail-outline" size={20} color="#64748B" style={styles.inputIcon} />
-            <TextInput
-              style={styles.input}
-              placeholder="University Email"
+            <ModernInput
+              label="University Email"
               value={formData.email}
-              onChangeText={(value) => updateFormData('email', value)}
+              onChangeText={(val) => setFormData(p => ({ ...p, email: val }))}
+              icon="mail-outline"
+              variant="glass"
               keyboardType="email-address"
-              autoCapitalize="none"
             />
-          </View>
 
-          {/* Conditional Content Based on User Type */}
-          {formData.userType === 'student' && (
-            <View style={styles.levelSection}>
-              <Text style={styles.sectionTitle}>Select Your Academic Level</Text>
+            <ModernButton onPress={nextStep} gradient={Colors.gradients.primary} style={styles.nextBtn}>
+              Continue
+            </ModernButton>
+          </Animated.View>
+        );
+
+      case 3:
+        return (
+          <Animated.View style={{ opacity: fadeAnim, transform: [{ translateY: slideAnim }] }}>
+            <Text style={styles.stepTitle}>{formData.userType === 'student' ? 'Academic Level' : 'Teaching Assignment'}</Text>
+            <Text style={styles.stepSubtitle}>{formData.userType === 'student' ? 'Which level are you in?' : 'Select courses you instruct'}</Text>
+
+            {formData.userType === 'student' ? (
               <View style={styles.levelGrid}>
-                {academicLevels.map((levelOption) => (
+                {academicLevels.map(lvl => (
                   <TouchableOpacity
-                    key={levelOption.id}
-                    style={[
-                      styles.levelCard,
-                      formData.academicLevel === levelOption.id && styles.levelCardSelected
-                    ]}
-                    onPress={() => updateFormData('academicLevel', levelOption.id)}
+                    key={lvl.id}
+                    onPress={() => setFormData(p => ({ ...p, academicLevel: lvl.id }))}
+                    style={[styles.levelCard, formData.academicLevel === lvl.id && styles.levelCardActive]}
                   >
-                    <View style={[
-                      styles.levelIcon,
-                      formData.academicLevel === levelOption.id && styles.levelIconSelected
-                    ]}>
-                      <Text style={[
-                        styles.levelNumber,
-                        formData.academicLevel === levelOption.id && styles.levelNumberSelected
-                      ]}>
-                        {levelOption.id}
-                      </Text>
-                    </View>
-                    <Text style={[
-                      styles.levelTitle,
-                      formData.academicLevel === levelOption.id && styles.levelTitleSelected
-                    ]}>
-                      {levelOption.level}
-                    </Text>
-                    <Text style={[
-                      styles.levelDescription,
-                      formData.academicLevel === levelOption.id && styles.levelDescriptionSelected
-                    ]}>
-                      {levelOption.description}
-                    </Text>
-                    {formData.academicLevel === levelOption.id && (
-                      <View style={styles.checkmark}>
-                        <Ionicons name="checkmark-circle" size={20} color="#4F46E5" />
-                      </View>
-                    )}
+                    <Ionicons name={lvl.icon} size={24} color={formData.academicLevel === lvl.id ? '#FFFFFF' : '#6366F1'} />
+                    <Text style={[styles.lvlText, formData.academicLevel === lvl.id && styles.textWhite]}>{lvl.title}</Text>
                   </TouchableOpacity>
                 ))}
               </View>
-            </View>
-          )}
-
-          {formData.userType === 'lecturer' && (
-            <View style={styles.coursesSection}>
-              <Text style={styles.sectionTitle}>Select Courses You Teach</Text>
-              <Text style={styles.sectionSubtitle}>You can select multiple courses across different levels</Text>
-              <ScrollView style={styles.coursesScrollView} nestedScrollEnabled>
-                {['100', '200', '300', '400'].map(level => (
-                  <View key={level} style={styles.levelGroup}>
-                    <Text style={styles.levelGroupTitle}>Level {level} Courses</Text>
-                    <View style={styles.coursesGrid}>
-                      {allCourses.filter(course => course.level === level).map(course => (
-                        <TouchableOpacity
-                          key={course.id}
-                          style={[
-                            styles.courseCard,
-                            formData.teachingCourses.includes(course.id) && styles.courseCardSelected
-                          ]}
-                          onPress={() => toggleCourseSelection(course.id)}
-                        >
-                          <Text style={[
-                            styles.courseCode,
-                            formData.teachingCourses.includes(course.id) && styles.courseCodeSelected
-                          ]}>
-                            {course.code}
-                          </Text>
-                          <Text style={[
-                            styles.courseName,
-                            formData.teachingCourses.includes(course.id) && styles.courseNameSelected
-                          ]} numberOfLines={2}>
-                            {course.name}
-                          </Text>
-                          {formData.teachingCourses.includes(course.id) && (
-                            <View style={styles.courseCheckmark}>
-                              <Ionicons name="checkmark-circle" size={16} color="#4F46E5" />
-                            </View>
-                          )}
-                        </TouchableOpacity>
-                      ))}
+            ) : (
+              <ScrollView style={styles.courseScroll} showsVerticalScrollIndicator={false}>
+                {allCourses.map(course => (
+                  <TouchableOpacity
+                    key={course.id}
+                    onPress={() => toggleCourse(course.id)}
+                    style={[styles.courseRow, formData.teachingCourses.includes(course.id) && styles.courseRowActive]}
+                  >
+                    <View>
+                      <Text style={[styles.courseCode, formData.teachingCourses.includes(course.id) && styles.textWhite]}>{course.code}</Text>
+                      <Text style={[styles.courseName, formData.teachingCourses.includes(course.id) && styles.textWhite70]}>{course.name}</Text>
                     </View>
-                  </View>
+                    {formData.teachingCourses.includes(course.id) && <Ionicons name="checkmark-circle" size={24} color="#FFFFFF" />}
+                  </TouchableOpacity>
                 ))}
               </ScrollView>
-            </View>
-          )}
+            )}
 
-          <View style={styles.inputContainer}>
-            <Ionicons name="lock-closed-outline" size={20} color="#64748B" style={styles.inputIcon} />
-            <TextInput
-              style={styles.input}
-              placeholder="Password"
+            <ModernButton onPress={nextStep} gradient={Colors.gradients.primary} style={styles.nextBtn}>
+              Almost there
+            </ModernButton>
+          </Animated.View>
+        );
+
+      case 4:
+        return (
+          <Animated.View style={{ opacity: fadeAnim, transform: [{ translateY: slideAnim }] }}>
+            <Text style={styles.stepTitle}>Secure your access</Text>
+            <Text style={styles.stepSubtitle}>Create a strong password for your account</Text>
+
+            <ModernInput
+              label="Password"
               value={formData.password}
-              onChangeText={(value) => updateFormData('password', value)}
+              onChangeText={(val) => setFormData(p => ({ ...p, password: val }))}
+              icon="lock-closed-outline"
               secureTextEntry={!showPassword}
-              autoCapitalize="none"
+              rightIcon={showPassword ? "eye-off-outline" : "eye-outline"}
+              onRightIconPress={() => setShowPassword(!showPassword)}
+              variant="glass"
             />
-            <TouchableOpacity
-              style={styles.eyeIcon}
-              onPress={() => setShowPassword(!showPassword)}
-            >
-              <Ionicons 
-                name={showPassword ? "eye" : "eye-off"} 
-                size={20} 
-                color="#64748B" 
-              />
-            </TouchableOpacity>
-          </View>
 
-          <View style={styles.inputContainer}>
-            <Ionicons name="lock-closed-outline" size={20} color="#64748B" style={styles.inputIcon} />
-            <TextInput
-              style={styles.input}
-              placeholder="Confirm Password"
+            <ModernInput
+              label="Confirm Password"
               value={formData.confirmPassword}
-              onChangeText={(value) => updateFormData('confirmPassword', value)}
-              secureTextEntry={!showConfirmPassword}
-              autoCapitalize="none"
+              onChangeText={(val) => setFormData(p => ({ ...p, confirmPassword: val }))}
+              icon="shield-checkmark-outline"
+              secureTextEntry={true}
+              variant="glass"
             />
-            <TouchableOpacity
-              style={styles.eyeIcon}
-              onPress={() => setShowConfirmPassword(!showConfirmPassword)}
+
+            <ModernButton 
+              onPress={handleSignUp} 
+              gradient={Colors.gradients.primary} 
+              loading={isLoading}
+              style={styles.nextBtn}
             >
-              <Ionicons 
-                name={showConfirmPassword ? "eye" : "eye-off"} 
-                size={20} 
-                color="#64748B" 
-              />
-            </TouchableOpacity>
+              Finish Registration
+            </ModernButton>
+          </Animated.View>
+        );
+    }
+  };
+
+  return (
+    <LinearGradient
+      colors={isDark ? ['#020617', '#1E1B4B'] : ['#F8FAFC', '#E2E8F0']}
+      style={styles.container}
+    >
+      <StatusBar barStyle={isDark ? 'light-content' : 'dark-content'} translucent backgroundColor="transparent" />
+      
+      <TouchableOpacity 
+        style={styles.backBtn} 
+        onPress={() => step > 1 ? setStep(s => s - 1) : navigation.goBack()}
+      >
+        <Ionicons name="chevron-back" size={28} color={isDark ? '#FFFFFF' : '#1E293B'} />
+      </TouchableOpacity>
+
+      <KeyboardAvoidingView 
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        style={styles.inner}
+      >
+        <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
+          <View style={styles.headerArea}>
+            <View style={styles.logoRing}>
+              <LinearGradient colors={['#6366F1', '#A855F7']} style={styles.logoGradient}>
+                <Ionicons name="school" size={40} color="#FFFFFF" />
+              </LinearGradient>
+            </View>
+            <Text style={[styles.brandTitle, isDark && styles.textWhite]}>UniConnect</Text>
+            {renderStepIndicator()}
           </View>
 
-          <TouchableOpacity
-            style={[styles.signUpButton, isLoading && styles.buttonDisabled]}
-            onPress={handleSignUp}
-            disabled={isLoading}
-          >
-            <Text style={styles.signUpButtonText}>
-              {isLoading ? 'Creating Account...' : 'Create Account'}
-            </Text>
-          </TouchableOpacity>
+          <ModernCard variant="glass" style={styles.formContent}>
+            {renderStep()}
+          </ModernCard>
 
-          <View style={styles.loginPrompt}>
-            <Text style={styles.loginPromptText}>Already have an account? </Text>
-            <TouchableOpacity onPress={() => navigation.navigate('Login')}>
-              <Text style={styles.loginLink}>Sign In</Text>
+          {step === 1 && (
+            <TouchableOpacity style={styles.loginHint} onPress={() => navigation.navigate('Login')}>
+              <Text style={styles.hintText}>Already a member? <Text style={styles.linkText}>Sign In</Text></Text>
             </TouchableOpacity>
-          </View>
-        </View>
-      </ScrollView>
-    </KeyboardAvoidingView>
+          )}
+        </ScrollView>
+      </KeyboardAvoidingView>
+    </LinearGradient>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#FFFFFF',
   },
-  scrollContainer: {
-    flexGrow: 1,
-    justifyContent: 'center',
-    paddingHorizontal: 24,
-    paddingVertical: 40,
+  inner: {
+    flex: 1,
   },
-  header: {
-    alignItems: 'center',
-    marginBottom: 40,
-  },
-  backButton: {
+  backBtn: {
     position: 'absolute',
-    top: -20,
-    left: 0,
-    padding: 8,
+    top: StatusBar.currentHeight + 10,
+    left: 20,
+    zIndex: 10,
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: 'rgba(255,255,255,0.1)',
+    justifyContent: 'center',
+    alignItems: 'center',
   },
-  title: {
-    fontSize: 28,
-    fontWeight: 'bold',
+  scrollContent: {
+    paddingTop: 80,
+    paddingHorizontal: 24,
+    paddingBottom: 40,
+  },
+  headerArea: {
+    alignItems: 'center',
+    marginBottom: 32,
+  },
+  logoRing: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    padding: 3,
+    backgroundColor: 'rgba(99, 102, 241, 0.2)',
+    marginBottom: 16,
+  },
+  logoGradient: {
+    flex: 1,
+    borderRadius: 37,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  brandTitle: {
+    fontSize: 32,
+    fontWeight: '900',
     color: '#1E293B',
+    letterSpacing: -1,
+  },
+  progressContainer: {
+    width: 120,
+    height: 4,
+    backgroundColor: 'rgba(0,0,0,0.05)',
+    borderRadius: 2,
     marginTop: 16,
+    overflow: 'hidden',
   },
-  subtitle: {
-    fontSize: 16,
-    color: '#64748B',
-    marginTop: 8,
-    textAlign: 'center',
+  progressBar: {
+    height: '100%',
+    backgroundColor: '#6366F1',
+    borderRadius: 2,
   },
-  form: {
-    width: '100%',
-  },
-  inputContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
+  formContent: {
+    padding: 24,
+    borderRadius: 32,
     borderWidth: 1,
-    borderColor: '#E2E8F0',
-    borderRadius: 12,
-    backgroundColor: '#F8FAFC',
-    marginBottom: 16,
-    paddingHorizontal: 16,
-    height: 56,
+    borderColor: 'rgba(255,255,255,0.2)',
   },
-  inputIcon: {
-    marginRight: 12,
-  },
-  input: {
-    flex: 1,
-    fontSize: 16,
+  stepTitle: {
+    fontSize: 24,
+    fontWeight: '800',
     color: '#1E293B',
-  },
-  eyeIcon: {
-    padding: 4,
-  },
-  signUpButton: {
-    backgroundColor: '#4F46E5',
-    borderRadius: 12,
-    height: 56,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginTop: 8,
-    marginBottom: 24,
-  },
-  buttonDisabled: {
-    backgroundColor: '#94A3B8',
-  },
-  signUpButtonText: {
-    color: '#FFFFFF',
-    fontSize: 16,
-    fontWeight: 'bold',
-  },
-  loginPrompt: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  loginPromptText: {
-    fontSize: 14,
-    color: '#64748B',
-  },
-  loginLink: {
-    fontSize: 14,
-    color: '#4F46E5',
-    fontWeight: 'bold',
-  },
-  userTypeSection: {
-    marginBottom: 24,
-  },
-  sectionTitle: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#1E293B',
-    marginBottom: 16,
-    textAlign: 'center',
-  },
-  sectionSubtitle: {
-    fontSize: 13,
-    color: '#64748B',
-    marginBottom: 12,
-    textAlign: 'center',
-    lineHeight: 18,
-  },
-  userTypeGrid: {
-    flexDirection: 'row',
-    gap: 12,
-  },
-  userTypeCard: {
-    flex: 1,
-    backgroundColor: '#F8FAFC',
-    borderRadius: 12,
-    padding: 16,
-    borderWidth: 2,
-    borderColor: '#E2E8F0',
-    alignItems: 'center',
-    position: 'relative',
-  },
-  userTypeCardSelected: {
-    backgroundColor: '#EEF2FF',
-    borderColor: '#4F46E5',
-  },
-  userTypeIcon: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    backgroundColor: '#E2E8F0',
-    justifyContent: 'center',
-    alignItems: 'center',
     marginBottom: 8,
   },
-  userTypeIconSelected: {
-    backgroundColor: '#4F46E5',
+  stepSubtitle: {
+    fontSize: 15,
+    color: '#64748B',
+    marginBottom: 24,
+    lineHeight: 22,
   },
-  userTypeTitle: {
-    fontSize: 14,
-    fontWeight: '600',
+  typeGrid: {
+    flexDirection: 'row',
+    gap: 12,
+    marginTop: 16,
+  },
+  typeCard: {
+    flex: 1,
+    padding: 16,
+    borderRadius: 20,
+    backgroundColor: 'rgba(255,255,255,0.4)',
+    borderWidth: 1,
+    borderColor: 'rgba(99, 102, 241, 0.1)',
+    alignItems: 'center',
+  },
+  typeCardActive: {
+    backgroundColor: '#6366F1',
+    borderColor: '#6366F1',
+    elevation: 8,
+    shadowColor: '#6366F1',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+  },
+  typeName: {
+    fontSize: 15,
+    fontWeight: '700',
     color: '#1E293B',
-    marginBottom: 4,
-    textAlign: 'center',
+    marginTop: 12,
   },
-  userTypeTitleSelected: {
-    color: '#4F46E5',
-  },
-  userTypeDesc: {
+  typeDesc: {
     fontSize: 11,
     color: '#64748B',
     textAlign: 'center',
-    lineHeight: 14,
-  },
-  userTypeDescSelected: {
-    color: '#6366F1',
-  },
-  levelSection: {
-    marginBottom: 24,
+    marginTop: 4,
   },
   levelGrid: {
     flexDirection: 'row',
@@ -600,120 +454,68 @@ const styles = StyleSheet.create({
     gap: 12,
   },
   levelCard: {
-    flex: 1,
-    minWidth: '45%',
-    backgroundColor: '#F8FAFC',
-    borderRadius: 12,
+    width: (width - 100) / 2,
     padding: 16,
-    borderWidth: 2,
-    borderColor: '#E2E8F0',
-    alignItems: 'center',
-    position: 'relative',
-  },
-  levelCardSelected: {
-    backgroundColor: '#EEF2FF',
-    borderColor: '#4F46E5',
-  },
-  levelIcon: {
-    width: 40,
-    height: 40,
     borderRadius: 20,
-    backgroundColor: '#E2E8F0',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginBottom: 8,
-  },
-  levelIconSelected: {
-    backgroundColor: '#4F46E5',
-  },
-  levelNumber: {
-    fontSize: 14,
-    fontWeight: 'bold',
-    color: '#64748B',
-  },
-  levelNumberSelected: {
-    color: '#FFFFFF',
-  },
-  levelTitle: {
-    fontSize: 12,
-    fontWeight: '600',
-    color: '#1E293B',
-    marginBottom: 4,
-    textAlign: 'center',
-  },
-  levelTitleSelected: {
-    color: '#4F46E5',
-  },
-  levelDescription: {
-    fontSize: 10,
-    color: '#64748B',
-    textAlign: 'center',
-    lineHeight: 14,
-  },
-  levelDescriptionSelected: {
-    color: '#6366F1',
-  },
-  checkmark: {
-    position: 'absolute',
-    top: 8,
-    right: 8,
-  },
-  coursesSection: {
-    marginBottom: 24,
-  },
-  coursesScrollView: {
-    maxHeight: 200,
-    borderRadius: 12,
-    backgroundColor: '#F8FAFC',
-    padding: 12,
-  },
-  levelGroup: {
-    marginBottom: 16,
-  },
-  levelGroupTitle: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#1E293B',
-    marginBottom: 8,
-  },
-  coursesGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 8,
-  },
-  courseCard: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 8,
-    padding: 8,
+    backgroundColor: 'rgba(255,255,255,0.4)',
     borderWidth: 1,
-    borderColor: '#E2E8F0',
-    minWidth: '30%',
-    position: 'relative',
+    borderColor: 'rgba(99, 102, 241, 0.1)',
+    alignItems: 'center',
   },
-  courseCardSelected: {
-    backgroundColor: '#EEF2FF',
-    borderColor: '#4F46E5',
+  levelCardActive: {
+    backgroundColor: '#6366F1',
+    borderColor: '#6366F1',
+  },
+  lvlText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#1E293B',
+    marginTop: 8,
+  },
+  courseScroll: {
+    maxHeight: 300,
+  },
+  courseRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    padding: 16,
+    borderRadius: 16,
+    backgroundColor: 'rgba(255,255,255,0.4)',
+    marginBottom: 8,
+    borderWidth: 1,
+    borderColor: 'rgba(99, 102, 241, 0.1)',
+  },
+  courseRowActive: {
+    backgroundColor: '#6366F1',
+    borderColor: '#6366F1',
   },
   courseCode: {
-    fontSize: 11,
-    fontWeight: '600',
-    color: '#64748B',
-    marginBottom: 2,
-  },
-  courseCodeSelected: {
-    color: '#4F46E5',
+    fontSize: 14,
+    fontWeight: '700',
+    color: '#1E293B',
   },
   courseName: {
-    fontSize: 9,
+    fontSize: 12,
     color: '#64748B',
-    lineHeight: 12,
   },
-  courseNameSelected: {
+  nextBtn: {
+    marginTop: 32,
+    borderRadius: 20,
+  },
+  loginHint: {
+    marginTop: 32,
+    alignItems: 'center',
+  },
+  hintText: {
+    color: '#64748B',
+    fontSize: 15,
+  },
+  linkText: {
     color: '#6366F1',
+    fontWeight: '800',
   },
-  courseCheckmark: {
-    position: 'absolute',
-    top: 2,
-    right: 2,
-  },
-}); 
+  textWhite: { color: '#FFFFFF' },
+  textWhite70: { color: 'rgba(255,255,255,0.7)' },
+});
+ 

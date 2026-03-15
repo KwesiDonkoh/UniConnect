@@ -226,8 +226,7 @@ class AchievementsService {
       const achievementsRef = collection(db, 'achievements');
       const q = query(
         achievementsRef, 
-        where('userId', '==', userId),
-        orderBy('earnedAt', 'desc')
+        where('userId', '==', userId)
       );
       
       const snapshot = await getDocs(q);
@@ -236,9 +235,13 @@ class AchievementsService {
       snapshot.forEach((doc) => {
         userAchievements.push({
           id: doc.id,
-          ...doc.data()
+          ...doc.data(),
+          earnedAt: doc.data().earnedAt?.toDate?.() || new Date(doc.data().earnedAt) || new Date()
         });
       });
+
+      // Sort in-memory to avoid needing a Firestore composite index
+      userAchievements.sort((a, b) => b.earnedAt - a.earnedAt);
 
       // Always return an array, even if empty
       return userAchievements || [];

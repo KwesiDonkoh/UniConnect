@@ -14,6 +14,7 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { BlurView } from 'expo-blur';
+import claudeAiService from '../services/claudeAiService';
 
 const { width, height } = Dimensions.get('window');
 
@@ -22,7 +23,7 @@ export const AIStudyAssistant = ({ visible, onClose, course }) => {
     {
       id: 1,
       type: 'ai',
-      text: `Hi! I'm your AI Study Assistant 🤖✨ I'm here to help you master ${course?.name || 'your studies'}! Ask me anything - from explaining complex concepts to creating practice questions!`,
+      text: `Hi! I'm your Claude-powered AI Study Assistant 🤖✨ I'm here to help you master ${course?.name || 'your studies'}! Ask me anything - from "What is Science?" to deep technical breakdowns!`,
       timestamp: new Date(),
     }
   ]);
@@ -302,18 +303,38 @@ Want to dive deeper or move to a related topic? I'm excited to keep learning wit
     setInputText('');
     setIsThinking(true);
 
-    // Simulate AI thinking time
-    setTimeout(() => {
+    try {
+      const response = await claudeAiService.generateResponse(inputText.trim(), {
+        userType: 'student',
+        course: course,
+        academicLevel: user?.academicLevel || '100'
+      });
+
       const aiResponse = {
         id: Date.now() + 1,
         type: 'ai',
-        text: getAIResponse(inputText.trim()),
+        text: response,
         timestamp: new Date(),
       };
 
       setMessages(prev => [...prev, aiResponse]);
+      
+      // Log the interaction for premium analytics
+      if (user?.uid) {
+        claudeAiService.logInteraction(user.uid, inputText.trim(), response);
+      }
+    } catch (error) {
+      console.error('Claude AI Error:', error);
+      const errorMsg = {
+        id: Date.now() + 1,
+        type: 'ai',
+        text: "I apologize, but I encountered a momentary disconnection from the knowledge hub. Please try asking again. 📡",
+        timestamp: new Date(),
+      };
+      setMessages(prev => [...prev, errorMsg]);
+    } finally {
       setIsThinking(false);
-    }, 1500 + Math.random() * 1000); // Random delay for realism
+    }
   };
 
   const quickActions = [
@@ -355,9 +376,9 @@ Want to dive deeper or move to a related topic? I'm excited to keep learning wit
                 <Ionicons name="sparkles" size={24} color="#fff" />
               </View>
               <View style={styles.headerText}>
-                <Text style={styles.headerTitle}>AI Study Assistant</Text>
+                <Text style={styles.headerTitle}>Claude AI Assistant</Text>
                 <Text style={styles.headerSubtitle}>
-                  {isThinking ? 'Thinking...' : 'Ready to help you learn!'}
+                  {isThinking ? 'Processing deep knowledge...' : 'Supercharged by Claude 3.5 Sonnet'}
                 </Text>
               </View>
               <TouchableOpacity onPress={onClose} style={styles.closeButton}>
@@ -407,7 +428,7 @@ Want to dive deeper or move to a related topic? I'm excited to keep learning wit
                   {message.type === 'ai' && (
                     <View style={styles.aiMessageHeader}>
                       <Ionicons name="sparkles" size={16} color="#667eea" />
-                      <Text style={styles.aiLabel}>AI Assistant</Text>
+                      <Text style={styles.aiLabel}>Claude AI Assistant</Text>
                     </View>
                   )}
                   <Text style={[
@@ -428,7 +449,7 @@ Want to dive deeper or move to a related topic? I'm excited to keep learning wit
                 <View style={[styles.message, styles.aiMessage]}>
                   <View style={styles.aiMessageHeader}>
                     <Ionicons name="sparkles" size={16} color="#667eea" />
-                    <Text style={styles.aiLabel}>AI Assistant</Text>
+                    <Text style={styles.aiLabel}>Claude AI Assistant</Text>
                   </View>
                   <View style={styles.thinkingContainer}>
                     <Animated.View style={[styles.thinkingDot, { opacity: typingDots }]} />

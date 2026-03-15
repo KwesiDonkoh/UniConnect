@@ -421,40 +421,13 @@ export default function NotificationsScreen({ navigation }) {
     <SafeAreaView style={[styles.container, isDark && styles.darkContainer]}>
       {/* Enhanced Header */}
       <View style={[styles.header, isDark && styles.darkHeader]}>
-        <View style={styles.headerLeft}>
-          <Text style={[styles.headerTitle, isDark && styles.darkHeaderTitle]}>Notifications</Text>
-          {unreadCount > 0 && (
-            <Text style={[styles.subtitle, isDark && styles.darkSubtitle]}>{unreadCount} unread</Text>
-          )}
-        </View>
-        <View style={styles.headerActions}>
-          {/* Left side - Mark all read */}
-          {unreadCount > 0 && (
-            <TouchableOpacity style={styles.markAllButton} onPress={markAllAsRead}>
-              <Ionicons name="checkmark-done" size={20} color="#4F46E5" />
-              <Text style={styles.markAllText}>Mark all read</Text>
-            </TouchableOpacity>
-          )}
-          
-          {/* Center - Quick Action Buttons */}
-          <View style={styles.quickActionsCenter}>
-            <TouchableOpacity 
-              style={styles.quickActionButton}
-              onPress={() => navigation.navigate('Materials')}
-            >
-              <Ionicons name="book" size={18} color="#4F46E5" />
-              <Text style={styles.quickActionText}>Materials</Text>
-            </TouchableOpacity>
-            
-            <TouchableOpacity 
-              style={styles.quickActionButton}
-              onPress={() => navigation.navigate('Schedule')}
-            >
-              <Ionicons name="calendar" size={18} color="#4F46E5" />
-              <Text style={styles.quickActionText}>Schedule</Text>
-            </TouchableOpacity>
+        <View style={styles.headerTopRow}>
+          <View style={styles.headerLeft}>
+            <Text style={[styles.headerTitle, isDark && styles.darkHeaderTitle]}>Notifications</Text>
+            {unreadCount > 0 && (
+              <Text style={[styles.subtitle, isDark && styles.darkSubtitle]}>{unreadCount} unread message{unreadCount > 1 ? 's' : ''}</Text>
+            )}
           </View>
-          
           {/* Right side - Create and Filter */}
           <View style={styles.rightActions}>
             {user?.userType === 'lecturer' && (
@@ -472,6 +445,37 @@ export default function NotificationsScreen({ navigation }) {
               onPress={() => setShowFilterModal(true)}
             >
               <Ionicons name="options" size={20} color="#4F46E5" />
+            </TouchableOpacity>
+          </View>
+        </View>
+
+        <View style={styles.headerBottomRow}>
+          {/* Left side - Mark all read */}
+          {unreadCount > 0 ? (
+            <TouchableOpacity style={styles.markAllButton} onPress={markAllAsRead}>
+              <Ionicons name="checkmark-done" size={20} color="#4F46E5" />
+              <Text style={styles.markAllText}>Mark all read</Text>
+            </TouchableOpacity>
+          ) : <View style={{ width: 10 }} />}
+          
+          <View style={{ flex: 1 }} />
+          
+          {/* Center - Quick Action Buttons */}
+          <View style={styles.quickActionsCenter}>
+            <TouchableOpacity 
+              style={styles.quickActionButton}
+              onPress={() => navigation.navigate('Materials')}
+            >
+              <Ionicons name="book" size={16} color="#4F46E5" />
+              <Text style={styles.quickActionText}>Materials</Text>
+            </TouchableOpacity>
+            
+            <TouchableOpacity 
+              style={styles.quickActionButton}
+              onPress={() => navigation.navigate('Schedule')}
+            >
+              <Ionicons name="calendar" size={16} color="#4F46E5" />
+              <Text style={styles.quickActionText}>Schedule</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -804,20 +808,29 @@ const styles = StyleSheet.create({
     backgroundColor: '#0F172A',
   },
   header: {
+    flexDirection: 'column',
+    paddingHorizontal: 20,
+    paddingTop: 16,
+    paddingBottom: 24,
+    backgroundColor: '#FFFFFF',
+    borderBottomLeftRadius: 30,
+    borderBottomRightRadius: 30,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 12,
+    elevation: 8,
+  },
+  headerTopRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingHorizontal: 20,
-    paddingTop: 10,
-    paddingBottom: 20,
-    backgroundColor: '#FFFFFF',
-    borderBottomLeftRadius: 24,
-    borderBottomRightRadius: 24,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 5,
+    marginBottom: 16,
+  },
+  headerBottomRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
   },
   darkHeader: {
     backgroundColor: '#1E293B',
@@ -827,21 +840,27 @@ const styles = StyleSheet.create({
   headerLeft: {
     flex: 1,
   },
-  headerActions: {
+  rightActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  quickActionsCenter: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
   },
   headerTitle: {
-    fontSize: 26,
-    fontWeight: 'bold',
+    fontSize: 32,
+    fontWeight: '800',
+    letterSpacing: 0.5,
     color: '#1E293B',
   },
   darkHeaderTitle: {
     color: '#FFFFFF',
   },
   title: {
-    fontSize: 26,
+    fontSize: 18,
     fontWeight: 'bold',
     color: '#1E293B',
   },

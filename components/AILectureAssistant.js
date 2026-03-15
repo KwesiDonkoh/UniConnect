@@ -14,6 +14,7 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { BlurView } from 'expo-blur';
+import claudeAiService from '../services/claudeAiService';
 
 const { width, height } = Dimensions.get('window');
 
@@ -22,7 +23,7 @@ export const AILectureAssistant = ({ visible, onClose, course, user }) => {
     {
       id: 1,
       type: 'ai',
-      text: `Hello Professor ${user?.name || 'Smith'}! 👨‍🏫✨ I'm your AI Lecture Assistant, ready to help you create amazing ${course?.name || 'Computer Science'} lectures! I can help you with lesson planning, content generation, student engagement strategies, and much more!`,
+      text: `Hello Professor ${user?.name || 'Smith'}! 👨‍🏫✨ I'm your Claude-powered AI Lecture Assistant, ready to help you create amazing ${course?.name || 'Computer Science'} lectures! I can answer any academic question and assist with deep content generation.`,
       timestamp: new Date(),
     }
   ]);
@@ -474,18 +475,37 @@ I'm here to make your teaching more effective and engaging! What aspect would yo
     setInputText('');
     setIsTyping(true);
 
-    // Simulate AI thinking time
-    setTimeout(() => {
+    try {
+      const response = await claudeAiService.generateResponse(inputText.trim(), {
+        userType: 'lecturer',
+        course: course,
+        mode: selectedMode
+      });
+
       const aiResponse = {
         id: Date.now() + 1,
         type: 'ai',
-        text: getAIResponse(inputText.trim(), selectedMode),
+        text: response,
         timestamp: new Date(),
       };
 
       setMessages(prev => [...prev, aiResponse]);
+      
+      if (user?.uid) {
+        claudeAiService.logInteraction(user.uid, inputText.trim(), response);
+      }
+    } catch (error) {
+      console.error('Claude AI Error:', error);
+      const errorMsg = {
+        id: Date.now() + 1,
+        type: 'ai',
+        text: "I apologize, Professor. I encountered a momentary connection issue with the central knowledge core. Please try your request again. 📡",
+        timestamp: new Date(),
+      };
+      setMessages(prev => [...prev, errorMsg]);
+    } finally {
       setIsTyping(false);
-    }, 1500 + Math.random() * 1000);
+    }
   };
 
   const handleQuickAction = (action) => {
@@ -524,9 +544,9 @@ I'm here to make your teaching more effective and engaging! What aspect would yo
                   <Ionicons name="school" size={24} color="#fff" />
                 </View>
                 <View style={styles.headerText}>
-                  <Text style={styles.headerTitle}>AI Lecture Assistant</Text>
+                  <Text style={styles.headerTitle}>Claude Lecture Assistant</Text>
                   <Text style={styles.headerSubtitle}>
-                    {isTyping ? 'Preparing your teaching materials...' : 'Ready to enhance your lectures!'}
+                    {isTyping ? 'Synthesizing knowledge...' : 'Premium AI Assistance Enabled'}
                   </Text>
                 </View>
                 <TouchableOpacity onPress={onClose} style={styles.closeButton}>
@@ -604,7 +624,7 @@ I'm here to make your teaching more effective and engaging! What aspect would yo
                     {message.type === 'ai' && (
                       <View style={styles.aiMessageHeader}>
                         <Ionicons name="school" size={16} color="#667eea" />
-                        <Text style={styles.aiLabel}>AI Teaching Assistant</Text>
+                        <Text style={styles.aiLabel}>Claude AI Assistant</Text>
                       </View>
                     )}
                     <Text style={[
@@ -625,7 +645,7 @@ I'm here to make your teaching more effective and engaging! What aspect would yo
                   <View style={[styles.message, styles.aiMessage]}>
                     <View style={styles.aiMessageHeader}>
                       <Ionicons name="school" size={16} color="#667eea" />
-                      <Text style={styles.aiLabel}>AI Teaching Assistant</Text>
+                      <Text style={styles.aiLabel}>Claude AI Assistant</Text>
                     </View>
                     <View style={styles.thinkingContainer}>
                       <Animated.View style={[styles.thinkingDot, { opacity: typingDots }]} />

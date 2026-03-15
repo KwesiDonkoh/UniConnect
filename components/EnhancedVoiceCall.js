@@ -12,7 +12,7 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { BlurView } from 'expo-blur';
-import { AudioCompat } from '../utils/audioCompat';
+import AudioCompat from '../utils/audioCompat';
 
 const { width, height } = Dimensions.get('window');
 
@@ -78,7 +78,7 @@ export const EnhancedVoiceCall = ({ visible, onClose, participant, onCallEnd }) 
 
   const requestAudioPermissions = async () => {
     try {
-      const { status } = await Audio.requestPermissionsAsync();
+      const { status } = await AudioCompat.requestPermissionsAsync();
       if (status !== 'granted') {
         Alert.alert('Permission needed', 'Audio permission is required for voice calls');
       }
@@ -158,19 +158,20 @@ export const EnhancedVoiceCall = ({ visible, onClose, participant, onCallEnd }) 
     } else {
       // Start recording
       try {
-        const { recording: newRecording } = await Audio.Recording.createAsync({
+        const newRecording = new AudioCompat.Recording();
+        await newRecording.prepareToRecordAsync({
           android: {
             extension: '.m4a',
-            outputFormat: Audio.RECORDING_OPTION_ANDROID_OUTPUT_FORMAT_MPEG_4,
-            audioEncoder: Audio.RECORDING_OPTION_ANDROID_AUDIO_ENCODER_AAC,
+            outputFormat: AudioCompat.RecordingOptionsPresets.HIGH_QUALITY.android.outputFormat,
+            audioEncoder: AudioCompat.RecordingOptionsPresets.HIGH_QUALITY.android.audioEncoder,
             sampleRate: 44100,
             numberOfChannels: 2,
             bitRate: 128000,
           },
           ios: {
             extension: '.m4a',
-            outputFormat: Audio.RECORDING_OPTION_IOS_OUTPUT_FORMAT_MPEG4AAC,
-            audioQuality: Audio.RECORDING_OPTION_IOS_AUDIO_QUALITY_HIGH,
+            outputFormat: AudioCompat.RecordingOptionsPresets.HIGH_QUALITY.ios.outputFormat,
+            audioQuality: AudioCompat.RecordingOptionsPresets.HIGH_QUALITY.ios.audioQuality,
             sampleRate: 44100,
             numberOfChannels: 2,
             bitRate: 128000,
@@ -179,6 +180,7 @@ export const EnhancedVoiceCall = ({ visible, onClose, participant, onCallEnd }) 
             linearPCMIsFloat: false,
           },
         });
+        await newRecording.startAsync();
         setRecording(newRecording);
         setIsRecording(true);
         Alert.alert('Recording Started', 'Call is now being recorded');
