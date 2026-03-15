@@ -9,9 +9,8 @@ import { Ionicons } from '@expo/vector-icons';
 
 // Import screens
 import SplashScreen from './screens/SplashScreen';
-import LoginScreen from './screens/LoginScreen';
+import SimpleLoginScreen from './screens/SimpleLoginScreen';
 import TestLogin from './TestLogin';
-import SignUpScreen from './screens/SignUpScreen';
 import ForgotPasswordScreen from './screens/ForgotPasswordScreen';
 // import LevelSelectionScreen from './screens/LevelSelectionScreen'; // Removed - level selection now happens during signup
 import HomeDashboard from './screens/HomeDashboard';
@@ -27,6 +26,7 @@ import AcademicCalendarScreen from './screens/AcademicCalendarScreen';
 import GradebookScreen from './screens/GradebookScreen';
 import AnalyticsDashboard from './screens/AnalyticsDashboard';
 import StudentsManagementScreen from './screens/StudentsManagementScreen';
+import EnhancedStudentsManagementScreen from './screens/EnhancedStudentsManagementScreen';
 import CourseRegistrationScreen from './screens/CourseRegistrationScreen';
 import AcademicResultsScreen from './screens/AcademicResultsScreen';
 import WeekendStudyScreen from './screens/WeekendStudyScreen';
@@ -44,36 +44,29 @@ import platformHealth from './utils/platformHealth';
 
 // Import context
 import { AppProvider, useApp } from './context/AppContext';
+import { useTheme } from './components/ThemeProvider';
 
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import authService from './services/authService';
 
-// Import the new Ultimate screens
-import UltimateAmazingStudentDashboard from './screens/UltimateAmazingStudentDashboard';
-import UltimateAmazingLecturerDashboard from './screens/UltimateAmazingLecturerDashboard';
-import UltimateAmazingProfileScreen from './screens/UltimateAmazingProfileScreen';
+// Using original working dashboard components
 
-// Import safe messaging screen (no calling features)
+// Import messaging screens with calling features
 import SafeMessagingScreen from './screens/SafeMessagingScreen';
+import MessagingWithCallsScreen from './screens/MessagingWithCallsScreen';
+import SimpleCallHistoryScreen from './screens/SimpleCallHistoryScreen';
 
 const Stack = createStackNavigator();
 const Tab = createBottomTabNavigator();
 
-const theme = {
-  colors: {
-    primary: '#4F46E5',
-    accent: '#818CF8',
-    background: '#FFFFFF',
-    surface: '#F8FAFC',
-    text: '#1E293B',
-    placeholder: '#64748B',
-  },
-};
+// Theme will be provided by ThemeProvider
 
 // Use the original ProfileScreen that works
 
 
 function StudentTabs() {
+  const { isDark } = useTheme();
+  
   return (
     <Tab.Navigator
       screenOptions={({ route }) => ({
@@ -84,28 +77,55 @@ function StudentTabs() {
             iconName = focused ? 'home' : 'home-outline';
           } else if (route.name === 'Chat') {
             iconName = focused ? 'chatbubbles' : 'chatbubbles-outline';
-          } else if (route.name === 'Upload') {
-            iconName = focused ? 'cloud-upload' : 'cloud-upload-outline';
+          } else if (route.name === 'Materials') {
+            iconName = focused ? 'library' : 'library-outline';
+          } else if (route.name === 'Notifications') {
+            iconName = focused ? 'notifications' : 'notifications-outline';
+          } else if (route.name === 'Schedule') {
+            iconName = focused ? 'calendar' : 'calendar-outline';
           } else if (route.name === 'Profile') {
             iconName = focused ? 'person' : 'person-outline';
           }
 
           return <Ionicons name={iconName} size={size} color={color} />;
         },
-        tabBarActiveTintColor: '#6C63FF',
-        tabBarInactiveTintColor: 'gray',
+        tabBarActiveTintColor: isDark ? '#8B5CF6' : '#6366F1',
+        tabBarInactiveTintColor: isDark ? '#64748B' : '#94A3B8',
         headerShown: false,
+        tabBarStyle: {
+          height: 80,
+          backgroundColor: isDark ? '#1E293B' : '#FFFFFF',
+          borderTopWidth: 0,
+          borderTopColor: isDark ? '#334155' : '#E2E8F0',
+          shadowColor: '#000',
+          shadowOffset: { width: 0, height: -4 },
+          shadowOpacity: isDark ? 0.3 : 0.1,
+          shadowRadius: 12,
+          elevation: 8,
+          paddingBottom: 12,
+          paddingTop: 8,
+        },
+        tabBarLabelStyle: {
+          fontSize: 11,
+          fontWeight: '600',
+          marginTop: 4,
+          color: isDark ? '#F8FAFC' : '#1E293B',
+        },
       })}
     >
-      <Tab.Screen name="Home" component={UltimateAmazingStudentDashboard} />
-      <Tab.Screen name="Chat" component={GroupChatScreen} />
-      <Tab.Screen name="Upload" component={UploadNotesScreen} />
-      <Tab.Screen name="Profile" component={UltimateAmazingProfileScreen} />
+      <Tab.Screen name="Home" component={ModernHomeDashboard} options={{ title: 'Home' }} />
+      <Tab.Screen name="Chat" component={GroupChatScreen} options={{ title: 'Chat' }} />
+      <Tab.Screen name="Materials" component={UploadNotesScreen} options={{ title: 'Materials' }} />
+      <Tab.Screen name="Notifications" component={NotificationsScreen} options={{ title: 'Notifications' }} />
+      <Tab.Screen name="Schedule" component={ClassScheduleScreen} options={{ title: 'Schedule' }} />
+      <Tab.Screen name="Profile" component={ProfileScreen} options={{ title: 'Profile' }} />
     </Tab.Navigator>
   );
 }
 
 function LecturerTabs() {
+  const { isDark } = useTheme();
+  
   return (
     <Tab.Navigator
       screenOptions={({ route }) => ({
@@ -114,25 +134,52 @@ function LecturerTabs() {
 
           if (route.name === 'Dashboard') {
             iconName = focused ? 'grid' : 'grid-outline';
+          } else if (route.name === 'Chat') {
+            iconName = focused ? 'chatbubbles' : 'chatbubbles-outline';
+          } else if (route.name === 'Materials') {
+            iconName = focused ? 'library' : 'library-outline';
+          } else if (route.name === 'Notifications') {
+            iconName = focused ? 'notifications' : 'notifications-outline';
+          } else if (route.name === 'Schedule') {
+            iconName = focused ? 'calendar' : 'calendar-outline';
           } else if (route.name === 'Students') {
             iconName = focused ? 'people' : 'people-outline';
-          } else if (route.name === 'Materials') {
-            iconName = focused ? 'folder' : 'folder-outline';
           } else if (route.name === 'Profile') {
             iconName = focused ? 'person' : 'person-outline';
           }
 
           return <Ionicons name={iconName} size={size} color={color} />;
         },
-        tabBarActiveTintColor: '#6C63FF',
-        tabBarInactiveTintColor: 'gray',
+        tabBarActiveTintColor: isDark ? '#8B5CF6' : '#6366F1',
+        tabBarInactiveTintColor: isDark ? '#64748B' : '#94A3B8',
         headerShown: false,
+        tabBarStyle: {
+          height: 80,
+          backgroundColor: isDark ? '#1E293B' : '#FFFFFF',
+          borderTopWidth: 0,
+          shadowColor: isDark ? '#000' : '#000',
+          shadowOffset: { width: 0, height: -4 },
+          shadowOpacity: isDark ? 0.3 : 0.1,
+          shadowRadius: 12,
+          elevation: 8,
+          paddingBottom: 12,
+          paddingTop: 8,
+        },
+        tabBarLabelStyle: {
+          fontSize: 11,
+          fontWeight: '600',
+          marginTop: 4,
+          color: isDark ? '#FFFFFF' : '#1E293B',
+        },
       })}
     >
-      <Tab.Screen name="Dashboard" component={UltimateAmazingLecturerDashboard} />
-      <Tab.Screen name="Students" component={StudentsManagementScreen} />
-      <Tab.Screen name="Materials" component={UploadNotesScreen} />
-      <Tab.Screen name="Profile" component={UltimateAmazingProfileScreen} />
+      <Tab.Screen name="Dashboard" component={LecturerDashboard} options={{ title: 'Dashboard' }} />
+      <Tab.Screen name="Chat" component={GroupChatScreen} options={{ title: 'Course Chats' }} />
+      <Tab.Screen name="Materials" component={UploadNotesScreen} options={{ title: 'Materials' }} />
+      <Tab.Screen name="Notifications" component={NotificationsScreen} options={{ title: 'Notifications' }} />
+      <Tab.Screen name="Schedule" component={ClassScheduleScreen} options={{ title: 'Schedule' }} />
+      <Tab.Screen name="Students" component={EnhancedStudentsManagementScreen} options={{ title: 'Students' }} />
+      <Tab.Screen name="Profile" component={ProfileScreen} options={{ title: 'Profile' }} />
     </Tab.Navigator>
   );
 }
@@ -142,15 +189,9 @@ export default function App() {
   return (
     <ErrorBoundary>
       <ThemeProvider>
-        <PaperProvider theme={theme}>
-          <AppProvider>
-            <SafeAreaView style={{ flex: 1, backgroundColor: theme.colors.primary }}>
-              <View style={{ backgroundColor: theme.colors.primary, height: 0 }} />
-              <StatusBar style="light" />
-              <AppContent />
-            </SafeAreaView>
-          </AppProvider>
-        </PaperProvider>
+        <AppProvider>
+          <AppContent />
+        </AppProvider>
       </ThemeProvider>
     </ErrorBoundary>
   );
@@ -159,6 +200,7 @@ export default function App() {
 // Main App Content Component
 function AppContent() {
   const { isAuthenticated, isLoading, user } = useApp();
+  const { isDark } = useTheme();
   
   // ALL HOOKS MUST BE DECLARED AT THE TOP - BEFORE ANY CONDITIONAL LOGIC
   const [showSplash, setShowSplash] = useState(true);
@@ -235,8 +277,7 @@ function AppContent() {
           screenOptions={{ headerShown: false }}
           initialRouteName="Login"
         >
-          <Stack.Screen name="Login" component={LoginScreen} />
-          <Stack.Screen name="SignUp" component={SignUpScreen} />
+          <Stack.Screen name="Login" component={SimpleLoginScreen} />
           <Stack.Screen name="ForgotPassword" component={ForgotPasswordScreen} />
         </Stack.Navigator>
       ) : (
@@ -311,6 +352,16 @@ function AppContent() {
                   <Stack.Screen
                     name="SafeMessaging"
                     component={SafeMessagingScreen}
+                    options={{ headerShown: false }}
+                  />
+                  <Stack.Screen
+                    name="MessagingWithCalls"
+                    component={MessagingWithCallsScreen}
+                    options={{ headerShown: false }}
+                  />
+                  <Stack.Screen
+                    name="CallHistory"
+                    component={SimpleCallHistoryScreen}
                     options={{ headerShown: false }}
                   />
                    <Stack.Screen

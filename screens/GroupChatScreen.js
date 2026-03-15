@@ -24,6 +24,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { setStringAsync } from 'expo-clipboard';
 import { useApp } from '../context/AppContext';
+import { useTheme } from '../components/ThemeProvider';
 import chatService from '../services/chatService';
 import communicationService from '../services/communicationService';
 import VoiceMessagePlayer from '../components/VoiceMessagePlayer';
@@ -34,6 +35,7 @@ const { width, height } = Dimensions.get('window');
 
 export default function GroupChatScreen({ navigation }) {
   const { csModules, user } = useApp();
+  const { isDark } = useTheme();
   
   // Debug logging for student section issues
   console.log('GroupChatScreen - User:', user?.uid, user?.userType);
@@ -657,7 +659,7 @@ export default function GroupChatScreen({ navigation }) {
       return;
     }
 
-    // Check if message is within delete-for-everyone time limit (7 minutes)
+        // Check if message is within delete-for-everyone time limit (30 minutes)
     const messageTime = message.timestamp?.toDate?.() || new Date(0);
     const now = new Date();
     const minutesDiff = (now - messageTime) / (1000 * 60);
@@ -683,7 +685,7 @@ export default function GroupChatScreen({ navigation }) {
     ];
 
     // Add delete for everyone option if within time limit
-    if (minutesDiff <= 7) {
+    if (minutesDiff <= 30) {
       deleteOptions.push({
         text: 'Delete for Everyone',
           style: 'destructive',
@@ -695,7 +697,7 @@ export default function GroupChatScreen({ navigation }) {
               Vibration.vibrate(100);
               } else {
               Alert.alert('Error', result.error || 'Failed to delete message');
-              }
+            }
             } catch (error) {
               Alert.alert('Error', 'Could not delete message');
             }
@@ -705,9 +707,9 @@ export default function GroupChatScreen({ navigation }) {
 
     Alert.alert(
       'Delete Message',
-      minutesDiff <= 7 ? 
+      minutesDiff <= 30 ? 
         'Choose how you want to delete this message:' : 
-        'You can only delete this message for yourself (7 minute limit for everyone has passed):',
+        'You can only delete this message for yourself (30 minute limit for everyone has passed):',
       deleteOptions
     );
   };
@@ -1569,14 +1571,14 @@ export default function GroupChatScreen({ navigation }) {
   // Main render
   if (currentView === 'chatList') {
     return (
-      <SafeAreaView style={styles.container}>
-        <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" />
+      <SafeAreaView style={[styles.container, isDark && styles.darkContainer]}>
+        <StatusBar barStyle={isDark ? "light-content" : "dark-content"} backgroundColor={isDark ? "#0F172A" : "#FFFFFF"} />
         
         {/* Header */}
-        <View style={styles.header}>
+        <View style={[styles.header, isDark && styles.darkHeader]}>
           <View style={styles.headerContent}>
-            <Text style={styles.headerTitle}>Chat</Text>
-            <Text style={styles.headerSubtitle}>
+            <Text style={[styles.headerTitle, isDark && styles.darkHeaderTitle]}>{user?.userType === 'lecturer' ? 'Course Chats' : 'Chat'}</Text>
+            <Text style={[styles.headerSubtitle, isDark && styles.darkHeaderSubtitle]}>
               {user?.userType === 'lecturer' ? 'Teaching Courses' : `Level ${user?.academicLevel || '100'} Courses`}
             </Text>
           </View>
@@ -1614,9 +1616,9 @@ export default function GroupChatScreen({ navigation }) {
           data={searchText.length > 0 ? filteredCourses : sortedCourses}
           renderItem={renderChatListItem}
           keyExtractor={(item) => item.id}
-          style={styles.chatList}
+          style={[styles.chatList, isDark && styles.darkChatList]}
           showsVerticalScrollIndicator={false}
-          ItemSeparatorComponent={() => <View style={styles.listSeparator} />}
+          ItemSeparatorComponent={() => <View style={[styles.listSeparator, isDark && styles.darkListSeparator]} />}
           refreshing={isLoading}
           onRefresh={() => {
             loadSortedChatList();
@@ -1630,12 +1632,12 @@ export default function GroupChatScreen({ navigation }) {
 
   // Individual Chat View
   return (
-    <SafeAreaView style={styles.container}>
-      <View style={styles.keyboardAvoidingView}>
-        <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" />
+    <SafeAreaView style={[styles.container, isDark && styles.darkContainer]}>
+      <View style={[styles.keyboardAvoidingView, isDark && styles.darkKeyboardAvoidingView]}>
+        <StatusBar barStyle={isDark ? "light-content" : "dark-content"} backgroundColor={isDark ? "#0F172A" : "#FFFFFF"} />
         
         {/* Chat Header */}
-        <View style={styles.chatHeader}>
+        <View style={[styles.chatHeader, isDark && styles.darkChatHeader]}>
           <TouchableOpacity
             style={styles.backButton}
             onPress={() => setCurrentView('chatList')}
@@ -1644,10 +1646,10 @@ export default function GroupChatScreen({ navigation }) {
           </TouchableOpacity>
           
           <View style={styles.chatHeaderInfo}>
-            <Text style={styles.chatTitle} numberOfLines={1}>
+            <Text style={[styles.chatTitle, isDark && styles.darkChatTitle]} numberOfLines={1}>
               {selectedCourse?.name}
             </Text>
-            <Text style={styles.chatSubtitle}>
+            <Text style={[styles.chatSubtitle, isDark && styles.darkChatSubtitle]}>
               {onlineUsers.length > 0 ? `${onlineUsers.length + 1} online` : selectedCourse?.code}
             </Text>
           </View>
@@ -1680,7 +1682,7 @@ export default function GroupChatScreen({ navigation }) {
           data={messages}
           renderItem={renderMessage}
           keyExtractor={(item) => item.id}
-          style={styles.messagesList}
+          style={[styles.messagesList, isDark && styles.darkMessagesList]}
           showsVerticalScrollIndicator={false}
           inverted={false}
           onContentSizeChange={() => {
@@ -2170,9 +2172,17 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#FFFFFF',
   },
+  darkContainer: {
+    flex: 1,
+    backgroundColor: '#0F172A',
+  },
   keyboardAvoidingView: {
     flex: 1,
     backgroundColor: '#FFFFFF',
+  },
+  darkKeyboardAvoidingView: {
+    flex: 1,
+    backgroundColor: '#0F172A',
   },
   
   // Header Styles
@@ -2187,6 +2197,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
   },
+  darkHeader: {
+    backgroundColor: '#1E293B',
+    borderBottomColor: '#334155',
+  },
   headerContent: {
     flex: 1,
   },
@@ -2196,10 +2210,16 @@ const styles = StyleSheet.create({
     color: '#1E293B',
     marginBottom: 2,
   },
+  darkHeaderTitle: {
+    color: '#FFFFFF',
+  },
   headerSubtitle: {
     fontSize: 14,
     color: '#64748B',
     fontWeight: '500',
+  },
+  darkHeaderSubtitle: {
+    color: '#94A3B8',
   },
   searchButton: {
     width: 44,
@@ -2217,12 +2237,19 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#FFFFFF',
   },
+  darkChatList: {
+    flex: 1,
+    backgroundColor: '#0F172A',
+  },
   chatListItem: {
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: 20,
     paddingVertical: 16,
     backgroundColor: '#FFFFFF',
+  },
+  darkChatListItem: {
+    backgroundColor: '#1E293B',
   },
   chatItemLeft: {
     flex: 1,
@@ -2258,9 +2285,15 @@ const styles = StyleSheet.create({
     flex: 1,
     marginRight: 8,
   },
+  darkCourseName: {
+    color: '#FFFFFF',
+  },
   unreadCourseName: {
     fontWeight: '700',
     color: '#0F172A',
+  },
+  darkUnreadCourseName: {
+    color: '#F1F5F9',
   },
   lastMessageTime: {
     fontSize: 13,
@@ -2301,14 +2334,23 @@ const styles = StyleSheet.create({
     color: '#64748B',
     lineHeight: 18,
   },
+  darkLastMessage: {
+    color: '#94A3B8',
+  },
   unreadMessage: {
     color: '#1E293B',
     fontWeight: '500',
+  },
+  darkUnreadMessage: {
+    color: '#F1F5F9',
   },
   noMessages: {
     fontSize: 14,
     color: '#94A3B8',
     fontStyle: 'italic',
+  },
+  darkNoMessages: {
+    color: '#64748B',
   },
   chatItemRight: {
     alignItems: 'center',
@@ -2333,6 +2375,9 @@ const styles = StyleSheet.create({
     backgroundColor: '#F1F5F9',
     marginLeft: 92,
   },
+  darkListSeparator: {
+    backgroundColor: '#334155',
+  },
 
   // Chat Header (Individual Chat)
   chatHeader: {
@@ -2344,6 +2389,10 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 12,
+  },
+  darkChatHeader: {
+    backgroundColor: '#1E293B',
+    borderBottomColor: '#334155',
   },
   backButton: {
     width: 40,
@@ -2363,10 +2412,16 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: '#1E293B',
   },
+  darkChatTitle: {
+    color: '#FFFFFF',
+  },
   chatSubtitle: {
     fontSize: 13,
     color: '#64748B',
     marginTop: 1,
+  },
+  darkChatSubtitle: {
+    color: '#94A3B8',
   },
   chatMenuButton: {
     width: 40,
@@ -2385,6 +2440,9 @@ const styles = StyleSheet.create({
     backgroundColor: '#FAFAFA',
     paddingHorizontal: 16,
     paddingVertical: 8,
+  },
+  darkMessagesList: {
+    backgroundColor: '#0F172A',
   },
 
   // Message Styles

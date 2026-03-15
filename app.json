@@ -3,12 +3,12 @@
     "name": "UniConnect",
     "slug": "uniconnect",
     "version": "1.0.0",
+    "sdkVersion": "54.0.0",
     "orientation": "portrait",
-    "main": "./index.js",
-    "icon": "./public/placeholder-logo.png",
+    "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
     "splash": {
-      "image": "./public/placeholder-logo.png",
+      "image": "./assets/splash.png",
       "resizeMode": "contain",
       "backgroundColor": "#4F46E5"
     },
@@ -29,17 +29,28 @@
     },
     "android": {
       "adaptiveIcon": {
-        "foregroundImage": "./public/placeholder-logo.png",
+        "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#4F46E5"
       },
       "permissions": [
-        "CAMERA",
-        "RECORD_AUDIO",
-        "READ_EXTERNAL_STORAGE",
-        "WRITE_EXTERNAL_STORAGE",
-        "INTERNET",
-        "ACCESS_NETWORK_STATE"
-      ]
+        "android.permission.CAMERA",
+        "android.permission.RECORD_AUDIO",
+        "android.permission.READ_EXTERNAL_STORAGE",
+        "android.permission.WRITE_EXTERNAL_STORAGE",
+        "android.permission.INTERNET",
+        "android.permission.ACCESS_NETWORK_STATE",
+        "android.permission.CAMERA",
+        "android.permission.RECORD_AUDIO",
+        "android.permission.CAMERA",
+        "android.permission.RECORD_AUDIO",
+        "android.permission.READ_EXTERNAL_STORAGE",
+        "android.permission.WRITE_EXTERNAL_STORAGE",
+        "android.permission.INTERNET",
+        "android.permission.ACCESS_NETWORK_STATE",
+        "android.permission.CAMERA",
+        "android.permission.RECORD_AUDIO"
+      ],
+      "package": "com.yourcompany.uniconnect"
     },
     "web": {
       "favicon": "./public/placeholder-logo.png",
@@ -61,8 +72,9 @@
           "cameraPermission": "The app accesses your camera to let you take photos to share with other users."
         }
       ],
-      "expo-audio",
-      "expo-video"
+      "@react-native-community/datetimepicker",
+      "expo-video",
+      "expo-audio"
     ],
     "scheme": "uniconnect"
   }

@@ -10,24 +10,32 @@ import {
   Modal,
   TextInput,
   Dimensions,
+  FlatList,
+  Image,
+  StatusBar,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useApp } from '../context/AppContext';
-import AILectureAssistant from '../components/AILectureAssistant';
-import SmartGradingSystem from '../components/SmartGradingSystem';
-import LectureAnalyticsDashboard from '../components/LectureAnalyticsDashboard';
-import VirtualClassroom from '../components/VirtualClassroom';
-import AIContentGenerator from '../components/AIContentGenerator';
-import SmartLectureRecorder from '../components/SmartLectureRecorder';
-import AIPlagiarismDetector from '../components/AIPlagiarismDetector';
-import FeatureWelcomeGuide from '../components/FeatureWelcomeGuide';
-import AIPerformancePrediction from '../components/AIPerformancePrediction';
+import { useTheme } from '../components/ThemeProvider';
+import { AILectureAssistant } from '../components/AILectureAssistant';
+import { SmartGradingSystem } from '../components/SmartGradingSystem';
+import { LectureAnalyticsDashboard } from '../components/LectureAnalyticsDashboard';
+import { VirtualClassroom } from '../components/VirtualClassroom';
+import { AIContentGenerator } from '../components/AIContentGenerator';
+import { SmartLectureRecorder } from '../components/SmartLectureRecorder';
+import { AIPlagiarismDetector } from '../components/AIPlagiarismDetector';
+import { FeatureWelcomeGuide } from '../components/FeatureWelcomeGuide';
+import { AIPerformancePrediction } from '../components/AIPerformancePrediction';
+import VoiceRecorder from '../components/VoiceRecorder';
+import TextEditor from '../components/TextEditor';
+
 
 const { width } = Dimensions.get('window');
 
 export default function LecturerDashboard({ navigation }) {
   const { user, csModules, notifications } = useApp();
+  const { isDark } = useTheme();
   const [selectedPeriod, setSelectedPeriod] = useState('week'); // week, month, semester
   const [quickActionModal, setQuickActionModal] = useState(false);
   const [selectedAction, setSelectedAction] = useState(null);
@@ -42,6 +50,10 @@ export default function LecturerDashboard({ navigation }) {
   const [showLectureRecorder, setShowLectureRecorder] = useState(false);
   const [showPlagiarismDetector, setShowPlagiarismDetector] = useState(false);
   const [showPerformancePrediction, setShowPerformancePrediction] = useState(false);
+  const [showVoiceRecorder, setShowVoiceRecorder] = useState(false);
+  const [showTextEditor, setShowTextEditor] = useState(false);
+
+  const [showAILessonPlanner, setShowAILessonPlanner] = useState(false);
   const [showWelcomeGuide, setShowWelcomeGuide] = useState(false);
   const [selectedCourse, setSelectedCourse] = useState(null);
 
@@ -54,11 +66,21 @@ export default function LecturerDashboard({ navigation }) {
     );
   }
 
-  // Get lecturer's teaching data - csModules is already filtered in AppContext
+  // Get lecturer's teaching data - only courses they are actually teaching
   const courseDetails = Array.isArray(csModules) ? csModules : [];
   
+  // For lecturers, show only the courses they are assigned to teach
+  // In a real app, this would come from the user's teachingCourses array
+  const teachingCourses = user?.teachingCourses || [];
+  const actualTeachingCourses = courseDetails.filter(course => 
+    teachingCourses.includes(course.id) || teachingCourses.includes(course.code)
+  );
+  
+  // If no specific teaching courses assigned, show all courses (fallback)
+  const displayCourses = actualTeachingCourses.length > 0 ? actualTeachingCourses : courseDetails;
+  
   // Group courses by level for better organization
-  const coursesByLevel = courseDetails.reduce((acc, course) => {
+  const coursesByLevel = displayCourses.reduce((acc, course) => {
     // Determine level based on course code pattern or use semester as fallback
     const level = course.code?.startsWith('CSM1') ? '100' :
                   course.code?.startsWith('CSM2') ? '200' :
@@ -72,8 +94,8 @@ export default function LecturerDashboard({ navigation }) {
   }, {});
 
   // Calculate comprehensive statistics
-  const totalStudents = courseDetails.length * 35; // Assume avg 35 students per course
-  const totalMaterials = courseDetails.length * 8; // Assume avg 8 materials per course
+  const totalStudents = displayCourses.length * 35; // Assume avg 35 students per course
+  const totalMaterials = displayCourses.length * 8; // Assume avg 8 materials per course
   const levelsTeaching = Object.keys(coursesByLevel).length;
   const pendingAssignments = Math.floor(Math.random() * 15) + 5; // Simulated
   
@@ -87,10 +109,12 @@ export default function LecturerDashboard({ navigation }) {
     return `Good evening, ${title} ${firstName}`;
   };
 
+
+
   // 🚀 Handle AI-powered lecturer features
   const handleQuickAction = (action) => {
     // Set selected course for features that need it
-    setSelectedCourse(courseDetails[0] || { name: 'Computer Science', code: 'CSM101' });
+    setSelectedCourse(displayCourses[0] || { name: 'Computer Science', code: 'CSM101' });
     
     switch (action.id) {
       case 'ai-assistant':
@@ -99,14 +123,14 @@ export default function LecturerDashboard({ navigation }) {
       case 'smart-grading':
         setShowSmartGrading(true);
         break;
+      case 'lecture-analytics':
+        setShowLectureAnalytics(true);
+        break;
       case 'virtual-classroom':
         setShowVirtualClassroom(true);
         break;
       case 'content-generator':
         setShowContentGenerator(true);
-        break;
-      case 'analytics-dashboard':
-        setShowLectureAnalytics(true);
         break;
       case 'lecture-recorder':
         setShowLectureRecorder(true);
@@ -117,671 +141,751 @@ export default function LecturerDashboard({ navigation }) {
       case 'performance-prediction':
         setShowPerformancePrediction(true);
         break;
-      case 'upload':
-        navigation.navigate('Materials');
-        break;
-      case 'chat':
-        navigation.navigate('Chat');
-        break;
-      case 'schedule':
-        navigation.navigate('ClassSchedule');
+      case 'ai-lesson-planner':
+        setShowAILessonPlanner(true);
         break;
       default:
-        Alert.alert('Feature Ready!', `${action.title} is ready to revolutionize your teaching experience!`);
+        console.log('Unknown action:', action.id);
     }
   };
 
-  const renderStatCard = (icon, number, label, trend, color, gradient) => (
-    <TouchableOpacity style={styles.statCard} activeOpacity={0.8}>
-      <LinearGradient colors={gradient} style={styles.statGradient}>
-        <View style={styles.statIconContainer}>
-          <Ionicons name={icon} size={24} color="#FFFFFF" />
-        </View>
-        <View style={styles.statContent}>
-          <Text style={styles.statNumber}>{number}</Text>
-          <Text style={styles.statLabel}>{label}</Text>
-          {trend && (
-            <View style={styles.trendContainer}>
-              <Ionicons 
-                name={trend > 0 ? "trending-up" : "trending-down"} 
-                size={12} 
-                color={trend > 0 ? "#10B981" : "#EF4444"} 
-              />
-              <Text style={[styles.trendText, { color: trend > 0 ? "#10B981" : "#EF4444" }]}>
-                {Math.abs(trend)}%
-              </Text>
-            </View>
-          )}
-        </View>
-      </LinearGradient>
-    </TouchableOpacity>
-  );
 
-  const renderCourseCard = (course, level) => {
-    const studentCount = Math.floor(Math.random() * 20) + 25; // 25-45 students
-    const materials = Math.floor(Math.random() * 5) + 5; // 5-10 materials
-    const lastActivity = Math.floor(Math.random() * 24) + 1; // 1-24 hours ago
-
-    return (
-      <TouchableOpacity key={course.id} style={styles.courseCard} activeOpacity={0.9}>
-        <LinearGradient 
-          colors={['#FFFFFF', '#F8FAFC']} 
-          style={styles.courseCardGradient}
-        >
-          <View style={styles.courseHeader}>
-            <View style={styles.courseMainInfo}>
-              <View style={styles.courseTitleRow}>
-                <Text style={styles.courseCode}>{course.code}</Text>
-                <View style={[styles.levelBadge, { backgroundColor: getLevelColor(level) }]}>
-                  <Text style={styles.levelBadgeText}>L{level}</Text>
-                </View>
-              </View>
-              <Text style={styles.courseName} numberOfLines={2}>{course.name}</Text>
-              <View style={styles.courseMetrics}>
-                <View style={styles.metricItem}>
-                  <Ionicons name="people" size={14} color="#059669" />
-                  <Text style={styles.metricText}>{studentCount} students</Text>
-                </View>
-                <View style={styles.metricItem}>
-                  <Ionicons name="folder" size={14} color="#D97706" />
-                  <Text style={styles.metricText}>{materials} materials</Text>
-                </View>
-              </View>
-            </View>
-            <View style={styles.courseActions}>
-              <TouchableOpacity 
-                style={styles.courseActionBtn}
-                onPress={() => navigation.navigate('Chat')}
-              >
-                <Ionicons name="chatbubbles" size={18} color="#4F46E5" />
-              </TouchableOpacity>
-              <TouchableOpacity 
-                style={styles.courseActionBtn}
-                onPress={() => navigation.navigate('Materials')}
-              >
-                <Ionicons name="cloud-upload" size={18} color="#059669" />
-              </TouchableOpacity>
-            </View>
-          </View>
-          
-          <View style={styles.courseDivider} />
-          
-          <View style={styles.courseFooter}>
-            <View style={styles.activityIndicator}>
-              <View style={styles.activityDot} />
-              <Text style={styles.activityText}>Last activity {lastActivity}h ago</Text>
-            </View>
-            <TouchableOpacity style={styles.viewDetailsBtn}>
-              <Text style={styles.viewDetailsText}>View Details</Text>
-              <Ionicons name="chevron-forward" size={14} color="#4F46E5" />
-            </TouchableOpacity>
-          </View>
-        </LinearGradient>
-      </TouchableOpacity>
-    );
-  };
-
-  const getLevelColor = (level) => {
-    const colors = {
-      '100': '#3B82F6',
-      '200': '#10B981', 
-      '300': '#F59E0B',
-      '400': '#EF4444'
-    };
-    return colors[level] || '#6B7280';
-  };
-
-  // 🚀 AMAZING AI-POWERED LECTURER FEATURES - The WOW Factor!
-  const aiLecturerFeatures = [
-    { 
-      id: 'ai-assistant', 
-      title: '🤖 AI Lecture Assistant', 
-      icon: 'school', 
-      color: '#667eea', 
-      desc: 'Your intelligent teaching companion',
-      gradient: ['#667eea', '#764ba2'],
-      badge: 'AI-POWERED'
-    },
-    { 
-      id: 'smart-grading', 
-      title: '⚡ Smart Grading', 
-      icon: 'flash', 
-      color: '#4CAF50', 
-      desc: '94% accurate AI auto-grading',
-      gradient: ['#4CAF50', '#45a049'],
-      badge: 'TIME SAVER'
-    },
-    { 
-      id: 'virtual-classroom', 
-      title: '🌐 Virtual Classroom', 
-      icon: 'cube', 
-      color: '#FF9800', 
-      desc: 'AR/VR immersive teaching',
-      gradient: ['#FF9800', '#f57c00'],
-      badge: 'NEXT-GEN'
-    },
-    { 
-      id: 'content-generator', 
-      title: '🎨 AI Content Generator', 
-      icon: 'sparkles', 
-      color: '#9C27B0', 
-      desc: 'Instant slides, quizzes & more',
-      gradient: ['#9C27B0', '#7B1FA2'],
-      badge: 'INSTANT'
-    },
-    { 
-      id: 'plagiarism-detector', 
-      title: '🔍 Plagiarism Detector', 
-      icon: 'shield-checkmark', 
-      color: '#607D8B', 
-      desc: '96% accuracy AI detection',
-      gradient: ['#607D8B', '#455A64'],
-      badge: 'ADVANCED'
-    },
-    { 
-      id: 'analytics-dashboard', 
-      title: '📊 Teaching Analytics', 
-      icon: 'analytics', 
-      color: '#2196F3', 
-      desc: 'Deep learning insights',
-      gradient: ['#2196F3', '#1976D2'],
-      badge: 'INSIGHTS'
-    },
-    { 
-      id: 'performance-prediction', 
-      title: '🔮 AI Performance Prediction', 
-      icon: 'brain', 
-      color: '#E91E63', 
-      desc: '92% accurate ML predictions',
-      gradient: ['#E91E63', '#C2185B'],
-      badge: 'ML-POWERED'
-    },
-    { 
-      id: 'upload', 
-      title: '📚 Course Materials', 
-      icon: 'cloud-upload', 
-      color: '#4F46E5', 
-      desc: 'Smart file management',
-      gradient: ['#4F46E5', '#3730a3'],
-      badge: 'ENHANCED'
-    },
-    { 
-      id: 'chat', 
-      title: '💬 Course Discussions', 
-      icon: 'chatbubbles', 
-      color: '#059669', 
-      desc: 'AI-moderated chats',
-      gradient: ['#059669', '#047857'],
-      badge: 'SMART'
-    },
-    { 
-      id: 'lecture-recorder', 
-      title: '🎬 Smart Recording', 
-      icon: 'videocam', 
-      color: '#795548', 
-      desc: 'AI transcription & analysis',
-      gradient: ['#795548', '#5d4037'],
-      badge: 'SMART'
-    },
-    { 
-      id: 'schedule', 
-      title: '📅 Smart Schedule', 
-      icon: 'calendar', 
-      color: '#DC2626', 
-      desc: 'AI-optimized timetable',
-      gradient: ['#DC2626', '#b91c1c'],
-      badge: 'OPTIMIZED'
-    },
-  ];
-
-  const recentActivities = [
-    {
-      icon: 'cloud-upload',
-      color: '#4F46E5',
-      title: 'Uploaded Lecture 8 materials',
-      course: 'CSM387 - Data Structures',
-      time: '2 hours ago',
-      engagement: '23 views'
-    },
-    {
-      icon: 'chatbubbles',
-      color: '#059669', 
-      title: 'Answered 5 student questions',
-      course: 'CSM281 - Programming I',
-      time: '4 hours ago',
-      engagement: '12 replies'
-    },
-    {
-      icon: 'document-text',
-      color: '#D97706',
-      title: 'Created new assignment',
-      course: 'CSM495 - Final Project',
-      time: '1 day ago',
-      engagement: '45 submissions'
-    },
-    {
-      icon: 'school',
-      color: '#7C3AED',
-      title: 'Graded midterm exams',
-      course: 'CSM387 - Data Structures', 
-      time: '2 days ago',
-      engagement: '38 grades'
-    }
-  ];
 
   return (
-    <SafeAreaView style={styles.container}>
-      <ScrollView
-        showsVerticalScrollIndicator={false}
-        contentContainerStyle={styles.scrollContent}
-      >
-        {/* Welcome Message */}
-        {showWelcomeMessage && (
-          <View style={styles.welcomeCard}>
-            <LinearGradient
-              colors={['#10B981', '#059669']}
-              style={styles.welcomeGradient}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 1 }}
-            >
-              <TouchableOpacity 
-                style={styles.dismissButton}
-                onPress={() => setShowWelcomeMessage(false)}
-              >
-                <Ionicons name="close" size={20} color="#FFFFFF" />
-              </TouchableOpacity>
-              <Text style={styles.welcomeEmoji}>👋</Text>
-              <Text style={styles.welcomeTitle}>
-                Good {new Date().getHours() < 12 ? 'Morning' : new Date().getHours() < 18 ? 'Afternoon' : 'Evening'}, Professor!
-              </Text>
-              <Text style={styles.welcomeSubtitle}>
-                Ready to inspire and educate? Your students are excited to learn from you today! 🎓✨
-              </Text>
-              <View style={styles.welcomeActions}>
-                <TouchableOpacity 
-                  style={styles.welcomeActionButton}
-                  onPress={() => navigation.navigate('Chat')}
-                >
-                  <Ionicons name="chatbubbles" size={16} color="#FFFFFF" />
-                  <Text style={styles.welcomeActionText}>Start Teaching</Text>
-                </TouchableOpacity>
-              </View>
-            </LinearGradient>
-          </View>
-        )}
-
-        {/* Enhanced Header with Gradient */}
+    <SafeAreaView style={[styles.container, isDark && styles.darkContainer]}>
+      <StatusBar style={isDark ? 'light' : 'dark'} />
+      
+      {/* Header Section */}
         <LinearGradient 
-          colors={['#4F46E5', '#7C3AED']} 
-          style={styles.headerGradient}
-        >
-          <View style={styles.header}>
-            <View style={styles.userSection}>
-              <View style={styles.avatarContainer}>
-                <Text style={styles.avatarText}>
-                  {user?.name?.split(' ').map(n => n[0]).join('').toUpperCase() || 'DR'}
-                </Text>
-                <View style={styles.lecturerIndicator}>
-                  <Ionicons name="school" size={12} color="#FFFFFF" />
-                </View>
-              </View>
-              <View style={styles.userInfo}>
+          colors={isDark ? ['#1E293B', '#334155'] : ['#4F46E5', '#7C3AED']} 
+        style={styles.header}
+      >
+        <View style={styles.headerContent}>
+          <View style={styles.headerTop}>
+            <View style={styles.lecturerInfo}>
+              <View style={styles.greetingSection}>
                 <Text style={styles.greeting}>
-                  {getGreeting()} 👨‍🏫
+                  {getGreeting()}, <Text style={styles.lecturerName}>{user.name}</Text> • {user.title || 'Dr.'} • {user.department || 'Computer Science'} • ID: {user.lecturerId || 'LEC2024001'} • {user.email || 'lecturer@university.edu'}
                 </Text>
-                <Text style={styles.subtitle}>
-                  {user?.department || 'Computer Science Department'}
-                </Text>
-                <View style={styles.teachingBadge}>
-                  <Ionicons name="library" size={12} color="#C7D2FE" />
-                  <Text style={styles.teachingText}>
-                    Teaching {courseDetails.length} courses across {levelsTeaching} levels
+        </View>
+              
+              <Text style={styles.subtitle}>Ready to inspire today's learners?</Text>
+              
+              <View style={styles.onlineStatus}>
+                <View style={styles.onlineIndicator} />
+                <Text style={styles.onlineText}>
+                  {Math.floor(Math.random() * 30) + 15} students online
+              </Text>
+            </View>
+        </View>
+            <TouchableOpacity 
+              style={styles.notificationButton} 
+              onPress={() => navigation.navigate('Notifications')}
+            >
+            <Ionicons name="notifications" size={24} color="white" />
+            {notifications?.filter(n => !n.read).length > 0 && (
+                <View style={styles.notificationBadge}>
+                <Text style={styles.notificationBadgeText}>
+                    {notifications.filter(n => !n.read).length}
                   </Text>
+                </View>
+              )}
+    </TouchableOpacity>
+          </View>
+          
+          {/* Quick Stats Cards */}
+          <View style={styles.statsContainer}>
+            <View style={styles.statCard}>
+              <Ionicons name="people" size={24} color="#10B981" />
+              <Text style={styles.statNumber}>{totalStudents}</Text>
+              <Text style={styles.statLabel}>Students</Text>
+                </View>
+            <View style={styles.statCard}>
+              <Ionicons name="book" size={24} color="#F59E0B" />
+              <Text style={styles.statNumber}>{courseDetails.length}</Text>
+              <Text style={styles.statLabel}>Courses</Text>
+              </View>
+            <View style={styles.statCard}>
+              <Ionicons name="folder" size={24} color="#8B5CF6" />
+              <Text style={styles.statNumber}>{totalMaterials}</Text>
+              <Text style={styles.statLabel}>Materials</Text>
+                </View>
+            <View style={styles.statCard}>
+              <Ionicons name="checkmark-circle" size={24} color="#EF4444" />
+              <Text style={styles.statNumber}>{pendingAssignments}</Text>
+              <Text style={styles.statLabel}>Pending</Text>
                 </View>
               </View>
             </View>
-            <View style={styles.headerActions}>
+      </LinearGradient>
+
+      <ScrollView style={[styles.content, isDark && styles.darkContent]} showsVerticalScrollIndicator={false}>
+        {/* Quick Access: Course Chats, Materials, Notifications, Profile */}
+        <View style={[styles.section, isDark && styles.darkSection]}>
+          <Text style={[styles.sectionTitle, isDark && styles.darkSectionTitle]}>⚡ Quick Access</Text>
+          <View style={styles.quickAccessRow}>
+            <TouchableOpacity style={[styles.quickAccessCard, isDark && styles.darkQuickAccessCard]} onPress={() => navigation.navigate('Chat')}>
+              <LinearGradient colors={['#6366F1', '#8B5CF6']} style={styles.quickAccessGradient}>
+                <Ionicons name="chatbubbles" size={26} color="#FFFFFF" />
+                <Text style={styles.quickAccessLabel}>Course Chats</Text>
+              </LinearGradient>
+            </TouchableOpacity>
+            <TouchableOpacity style={[styles.quickAccessCard, isDark && styles.darkQuickAccessCard]} onPress={() => navigation.navigate('Materials')}>
+              <LinearGradient colors={['#10B981', '#059669']} style={styles.quickAccessGradient}>
+                <Ionicons name="library" size={26} color="#FFFFFF" />
+                <Text style={styles.quickAccessLabel}>Materials</Text>
+              </LinearGradient>
+            </TouchableOpacity>
+            <TouchableOpacity style={[styles.quickAccessCard, isDark && styles.darkQuickAccessCard]} onPress={() => navigation.navigate('Notifications')}>
+              <LinearGradient colors={['#F59E0B', '#D97706']} style={styles.quickAccessGradient}>
+                <Ionicons name="notifications" size={26} color="#FFFFFF" />
+                <Text style={styles.quickAccessLabel}>Notifications</Text>
+              </LinearGradient>
+            </TouchableOpacity>
+            <TouchableOpacity style={[styles.quickAccessCard, isDark && styles.darkQuickAccessCard]} onPress={() => navigation.navigate('Profile')}>
+              <LinearGradient colors={['#64748B', '#475569']} style={styles.quickAccessGradient}>
+                <Ionicons name="person" size={26} color="#FFFFFF" />
+                <Text style={styles.quickAccessLabel}>Profile</Text>
+              </LinearGradient>
+            </TouchableOpacity>
+          </View>
+        </View>
+
+        {/* Lecturer Info and Quick Start */}
+        <View style={[styles.section, isDark && styles.darkSection]}>
+          <Text style={[styles.sectionTitle, isDark && styles.darkSectionTitle]}>👨‍🏫 Lecturer Info</Text>
+          <Text style={[styles.sectionSubtitle, isDark && styles.darkSectionSubtitle]}>{getGreeting()}</Text>
+          <View style={{ flexDirection: 'row', gap: 12, marginTop: 12 }}>
+            <TouchableOpacity
+              onPress={() => {
+                setSelectedCourse(displayCourses[0] || { name: 'Computer Science', code: 'CSM101' });
+                setShowVirtualClassroom(true);
+              }}
+              style={{ flex: 1, backgroundColor: '#4F46E5', borderRadius: 12, paddingVertical: 12, alignItems: 'center' }}
+            >
+              <Text style={{ color: '#FFFFFF', fontWeight: '700' }}>Start Teaching</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              onPress={() => setShowAILessonPlanner(true)}
+              style={{ flex: 1, backgroundColor: '#EEF2FF', borderRadius: 12, paddingVertical: 12, alignItems: 'center' }}
+            >
+              <Text style={{ color: '#4F46E5', fontWeight: '700' }}>Plan Lesson</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+
+        {/* Teaching Impact Section */}
+        <View style={[styles.section, isDark && styles.darkSection]}>
+          <Text style={[styles.sectionTitle, isDark && styles.darkSectionTitle]}>🎯 Teaching Impact</Text>
+          <Text style={[styles.sectionSubtitle, isDark && styles.darkSectionSubtitle]}>Your influence on student success</Text>
+          
+          <View style={{ flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between' }}>
               <TouchableOpacity 
-                style={styles.discoverButton}
-                onPress={() => setShowWelcomeGuide(true)}
+              style={[styles.teachingImpactCardOuter, isDark && styles.darkTeachingImpactCardOuter]}
+              onPress={() => navigation.navigate('Analytics')}
+            >
+              <View style={{ padding: 14 }}>
+                <Ionicons name="trending-up" size={24} color="#059669" />
+                <Text style={[styles.teachingImpactCardTitle, isDark && styles.darkSectionTitle]}>Student Progress</Text>
+                <Text style={[styles.teachingImpactCardSub, isDark && styles.darkSectionSubtitle]}>Track learning outcomes</Text>
+              </View>
+              </TouchableOpacity>
+
+              <TouchableOpacity 
+              style={[styles.teachingImpactCardOuter, isDark && styles.darkTeachingImpactCardOuter]}
+              onPress={() => navigation.navigate('Analytics')}
+            >
+              <View style={{ padding: 14 }}>
+                <Ionicons name="heart" size={24} color="#D97706" />
+                <Text style={[styles.teachingImpactCardTitle, isDark && styles.darkSectionTitle]}>Engagement</Text>
+                <Text style={[styles.teachingImpactCardSub, isDark && styles.darkSectionSubtitle]}>Student participation</Text>
+              </View>
+              </TouchableOpacity>
+
+            <TouchableOpacity 
+              style={styles.teachingImpactCard}
+              onPress={() => navigation.navigate('Gradebook')}
+            >
+              <LinearGradient
+                colors={['#8B5CF6', '#7C3AED']}
+                style={styles.teachingImpactGradient}
               >
-                <Ionicons name="sparkles" size={20} color="#FFFFFF" />
-                <Text style={styles.discoverButtonText}>Discover</Text>
+                <Ionicons name="chatbubbles" size={24} color="#FFFFFF" />
+                <Text style={styles.teachingImpactTitle}>Feedback</Text>
+                <Text style={styles.teachingImpactSubtitle}>Student reviews</Text>
+              </LinearGradient>
+            </TouchableOpacity>
+
+            <TouchableOpacity 
+              style={styles.teachingImpactCard}
+              onPress={() => navigation.navigate('Analytics')}
+            >
+              <LinearGradient
+                colors={['#EC4899', '#BE185D']}
+                style={styles.teachingImpactGradient}
+              >
+                <Ionicons name="trophy" size={24} color="#FFFFFF" />
+                <Text style={styles.teachingImpactTitle}>Success Rate</Text>
+                <Text style={styles.teachingImpactSubtitle}>Academic achievements</Text>
+        </LinearGradient>
+      </TouchableOpacity>
+          </View>
+        </View>
+
+        
+
+        {/* AI Features Section */}
+        <View style={[styles.section, isDark && styles.darkSection]}>
+          <Text style={[styles.sectionTitle, isDark && styles.darkSectionTitle]}>🚀 AI-Powered Tools</Text>
+          <Text style={[styles.sectionSubtitle, isDark && styles.darkSectionSubtitle]}>Enhance your teaching with cutting-edge AI</Text>
+          
+          <View style={styles.modernAIGrid}>
+            <TouchableOpacity
+              style={styles.modernAICard}
+              onPress={() => {
+                setSelectedCourse(displayCourses[0] || { name: 'Computer Science', code: 'CSM101' });
+                setShowAILectureAssistant(true);
+              }}
+            >
+            <LinearGradient
+                colors={['#667eea', '#764ba2']}
+                style={styles.modernAIGradient}
+              >
+                <Ionicons name="sparkles" size={28} color="#FFFFFF" />
+                <Text style={styles.modernAITitle}>AI Assistant</Text>
+                <Text style={styles.modernAIDescription}>Smart lecture help</Text>
+              </LinearGradient>
+            </TouchableOpacity>
+
+              <TouchableOpacity 
+              style={styles.modernAICard}
+              onPress={() => {
+                setSelectedCourse(displayCourses[0] || { name: 'Computer Science', code: 'CSM101' });
+                setShowSmartGrading(true);
+              }}
+            >
+              <LinearGradient
+                colors={['#10B981', '#059669']}
+                style={styles.modernAIGradient}
+              >
+                <Ionicons name="analytics" size={28} color="#FFFFFF" />
+                <Text style={styles.modernAITitle}>Smart Grading</Text>
+                <Text style={styles.modernAIDescription}>Automated system</Text>
+              </LinearGradient>
+              </TouchableOpacity>
+
+                <TouchableOpacity 
+              style={styles.modernAICard}
+              onPress={() => {
+                setSelectedCourse(displayCourses[0] || { name: 'Computer Science', code: 'CSM101' });
+                setShowLectureAnalytics(true);
+              }}
+            >
+              <LinearGradient
+                colors={['#F59E0B', '#D97706']}
+                style={styles.modernAIGradient}
+              >
+                <Ionicons name="trending-up" size={28} color="#FFFFFF" />
+                <Text style={styles.modernAITitle}>Analytics</Text>
+                <Text style={styles.modernAIDescription}>Performance insights</Text>
+              </LinearGradient>
+                </TouchableOpacity>
+
+            <TouchableOpacity
+              style={styles.modernAICard}
+              onPress={() => {
+                setSelectedCourse(displayCourses[0] || { name: 'Computer Science', code: 'CSM101' });
+                setShowVirtualClassroom(true);
+              }}
+            >
+              <LinearGradient
+                colors={['#8B5CF6', '#7C3AED']}
+                style={styles.modernAIGradient}
+              >
+                <Ionicons name="school" size={28} color="#FFFFFF" />
+                <Text style={styles.modernAITitle}>Virtual Class</Text>
+                <Text style={styles.modernAIDescription}>Online environment</Text>
+            </LinearGradient>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={styles.modernAICard}
+              onPress={() => {
+                setSelectedCourse(displayCourses[0] || { name: 'Computer Science', code: 'CSM101' });
+                setShowContentGenerator(true);
+              }}
+            >
+        <LinearGradient 
+                colors={['#EC4899', '#BE185D']}
+                style={styles.modernAIGradient}
+              >
+                <Ionicons name="create" size={28} color="#FFFFFF" />
+                <Text style={styles.modernAITitle}>AI Content</Text>
+                <Text style={styles.modernAIDescription}>Generate materials</Text>
+              </LinearGradient>
+            </TouchableOpacity>
+
+              <TouchableOpacity 
+              style={styles.modernAICard}
+              onPress={() => {
+                setSelectedCourse(displayCourses[0] || { name: 'Computer Science', code: 'CSM101' });
+                setShowLectureRecorder(true);
+              }}
+            >
+              <LinearGradient
+                colors={['#06B6D4', '#0891B2']}
+                style={styles.modernAIGradient}
+              >
+                <Ionicons name="videocam" size={28} color="#FFFFFF" />
+                <Text style={styles.modernAITitle}>Smart Recorder</Text>
+                <Text style={styles.modernAIDescription}>Enhanced recording</Text>
+              </LinearGradient>
               </TouchableOpacity>
               
               <TouchableOpacity 
-                style={styles.notificationButton} 
-                onPress={() => navigation.navigate('Notifications')}
+              style={styles.modernAICard}
+              onPress={() => {
+                setSelectedCourse(displayCourses[0] || { name: 'Computer Science', code: 'CSM101' });
+                setShowPlagiarismDetector(true);
+              }}
+            >
+              <LinearGradient
+                colors={['#EF4444', '#DC2626']}
+                style={styles.modernAIGradient}
               >
-                <Ionicons name="notifications" size={24} color="#FFFFFF" />
-                {notifications.filter(n => !n.read).length > 0 && (
-                  <View style={styles.notificationBadge}>
-                    <Text style={styles.notificationCount}>
-                      {notifications.filter(n => !n.read).length}
-                    </Text>
-                  </View>
-                )}
+                <Ionicons name="shield-checkmark" size={28} color="#FFFFFF" />
+                <Text style={styles.modernAITitle}>Plagiarism Check</Text>
+                <Text style={styles.modernAIDescription}>Academic integrity</Text>
+              </LinearGradient>
               </TouchableOpacity>
-            </View>
-          </View>
-        </LinearGradient>
 
-        {/* Enhanced Statistics Dashboard */}
-        <View style={styles.statsSection}>
-          <View style={styles.statsSectionHeader}>
-            <Text style={styles.sectionTitle}>📊 Your Teaching Impact</Text>
-            <Text style={styles.sectionSubtitle}>See how you're making a difference! 🌟</Text>
-            <View style={styles.periodSelector}>
-              {['Week', 'Month', 'Semester'].map(period => (
+            <TouchableOpacity
+              style={styles.modernAICard}
+              onPress={() => {
+                setSelectedCourse(displayCourses[0] || { name: 'Computer Science', code: 'CSM101' });
+                setShowPerformancePrediction(true);
+              }}
+            >
+              <LinearGradient
+                colors={['#84CC16', '#65A30D']}
+                style={styles.modernAIGradient}
+              >
+                <Ionicons name="bulb" size={28} color="#FFFFFF" />
+                <Text style={styles.modernAITitle}>Performance AI</Text>
+                <Text style={styles.modernAIDescription}>Student insights</Text>
+        </LinearGradient>
+            </TouchableOpacity>
+
                 <TouchableOpacity
-                  key={period}
-                  style={[
-                    styles.periodBtn,
-                    selectedPeriod === period.toLowerCase() && styles.periodBtnActive
-                  ]}
-                  onPress={() => setSelectedPeriod(period.toLowerCase())}
-                >
-                  <Text style={[
-                    styles.periodText,
-                    selectedPeriod === period.toLowerCase() && styles.periodTextActive
-                  ]}>
-                    {period}
-                  </Text>
+              style={styles.modernAICard}
+              onPress={() => setShowAILessonPlanner(true)}
+            >
+              <LinearGradient
+                colors={['#8B5CF6', '#7C3AED']}
+                style={styles.modernAIGradient}
+              >
+                <Ionicons name="library" size={28} color="#FFFFFF" />
+                <Text style={styles.modernAITitle}>AI Lesson Planner</Text>
+                <Text style={styles.modernAIDescription}>Smart curriculum</Text>
+              </LinearGradient>
                 </TouchableOpacity>
-              ))}
             </View>
           </View>
           
-          <View style={styles.statsGrid}>
-            {renderStatCard(
-              'library', 
-              courseDetails.length, 
-              'Courses', 
-              5, 
-              '#4F46E5', 
-              ['#4F46E5', '#6366F1']
-            )}
-            {renderStatCard(
-              'people', 
-              totalStudents, 
-              'Students', 
-              12, 
-              '#059669', 
-              ['#059669', '#10B981']
-            )}
-            {renderStatCard(
-              'folder', 
-              totalMaterials, 
-              'Materials', 
-              8, 
-              '#D97706', 
-              ['#D97706', '#F59E0B']
-            )}
-            {renderStatCard(
-              'clipboard', 
-              pendingAssignments, 
-              'Pending', 
-              -3, 
-              '#DC2626', 
-              ['#DC2626', '#EF4444']
-            )}
-          </View>
+        {/* Courses Overview Section */}
+        <View style={[styles.section, isDark && styles.darkSection]}>
+          <View style={styles.sectionHeader}>
+          <Text style={[styles.sectionTitle, isDark && styles.darkSectionTitle]}>📚 Your Teaching Courses</Text>
+            <TouchableOpacity
+              style={styles.viewAllButton}
+              onPress={() => navigation.navigate('CourseRegistration')}
+            >
+              <Text style={styles.viewAllButtonText}>View All</Text>
+              <Ionicons name="arrow-forward" size={16} color="#4F46E5" />
+            </TouchableOpacity>
         </View>
 
-        {/* AI-Powered Lecturer Features Grid */}
-        <View style={styles.actionsSection}>
-          <Text style={styles.sectionTitle}>🚀 AI-Powered Teaching Tools</Text>
-          <Text style={styles.sectionSubtitle}>Revolutionary features that will transform your teaching!</Text>
-          <View style={styles.actionsGrid}>
-            {aiLecturerFeatures.map((action, index) => (
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.coursesScroll}>
+            {Object.entries(coursesByLevel).map(([level, courses]) => (
+              <View key={level} style={styles.levelContainer}>
+                <Text style={styles.levelTitle}>Level {level}</Text>
+                {courses.map((course, index) => (
               <TouchableOpacity
-                key={action.id}
-                style={[styles.actionCard, { animationDelay: index * 100 }]}
-                onPress={() => handleQuickAction(action)}
-                activeOpacity={0.8}
+                    key={course.id || index}
+                    style={styles.courseCard}
+                    onPress={() => setSelectedCourse(course)}
               >
                 <LinearGradient
-                  colors={action.gradient ? [`${action.gradient[0]}20`, `${action.gradient[1]}10`] : [action.color + '15', action.color + '05']}
-                  style={styles.actionCardGradient}
-                >
-                  {action.badge && (
-                    <View style={[styles.actionBadge, { backgroundColor: action.color }]}>
-                      <Text style={styles.actionBadgeText}>{action.badge}</Text>
+                      colors={['#F8FAFC', '#E2E8F0']}
+                      style={styles.courseCardContent}
+                    >
+                      <Text style={styles.courseCode}>{course.code}</Text>
+                      <Text style={styles.courseName}>{course.name}</Text>
+                      <Text style={styles.courseCredits}>{course.credits || 3} Credits</Text>
+                      <View style={styles.courseStats}>
+                        <Text style={styles.courseStat}>35 Students</Text>
+                        <Text style={styles.courseStat}>8 Materials</Text>
                     </View>
-                  )}
-                  <View style={[styles.actionIcon, { backgroundColor: action.color }]}>
-                    <Ionicons name={action.icon} size={22} color="#FFFFFF" />
-                  </View>
-                  <Text style={styles.actionTitle}>{action.title}</Text>
-                  <Text style={styles.actionDesc} numberOfLines={2}>
-                    {action.desc}
-                  </Text>
                 </LinearGradient>
               </TouchableOpacity>
             ))}
           </View>
-        </View>
-
-        {/* Course Management by Level */}
-        <View style={styles.coursesSection}>
-          <Text style={styles.sectionTitle}>📚 Your Amazing Courses</Text>
-          <Text style={styles.sectionSubtitle}>Inspiring minds across all levels! 🎓</Text>
-        </View>
-        
-        {Object.keys(coursesByLevel).sort().map(level => (
-          <View key={level} style={styles.levelSection}>
-            <View style={styles.levelHeader}>
-              <View style={styles.levelTitleContainer}>
-                <View style={[styles.levelIcon, { backgroundColor: getLevelColor(level) }]}>
-                  <Text style={styles.levelIconText}>{level}</Text>
-                </View>
-                <View>
-                  <Text style={styles.levelTitle}>Level {level} Courses</Text>
-                  <Text style={styles.levelSubtitle}>
-                    {coursesByLevel[level].length} course{coursesByLevel[level].length !== 1 ? 's' : ''} • 
-                    {coursesByLevel[level].length * 35} students
-                  </Text>
-                </View>
-              </View>
-              <TouchableOpacity style={styles.expandBtn}>
-                <Ionicons name="chevron-down" size={20} color="#64748B" />
-              </TouchableOpacity>
-            </View>
-            
-            <View style={styles.coursesContainer}>
-              {coursesByLevel[level].map(course => renderCourseCard(course, level))}
-            </View>
-          </View>
         ))}
-
-        {/* Recent Activity Feed */}
-        <View style={styles.activitySection}>
-          <Text style={styles.sectionTitle}>Recent Activity</Text>
-          <View style={styles.activityContainer}>
-            {recentActivities.map((activity, index) => (
-              <TouchableOpacity key={index} style={styles.activityItem} activeOpacity={0.8}>
-                <View style={[styles.activityIcon, { backgroundColor: activity.color + '15' }]}>
-                  <Ionicons name={activity.icon} size={18} color={activity.color} />
-                </View>
-                <View style={styles.activityContent}>
-                  <Text style={styles.activityTitle}>{activity.title}</Text>
-                  <Text style={styles.activityCourse}>{activity.course}</Text>
-                  <View style={styles.activityFooter}>
-                    <Text style={styles.activityTime}>{activity.time}</Text>
-                    <View style={styles.engagementBadge}>
-                      <Text style={styles.engagementText}>{activity.engagement}</Text>
-                    </View>
-                  </View>
-                </View>
-                <Ionicons name="chevron-forward" size={16} color="#94A3B8" />
-              </TouchableOpacity>
-            ))}
-          </View>
+          </ScrollView>
         </View>
 
-        {/* Performance Insights Preview */}
-        <View style={styles.insightsSection}>
-          <LinearGradient colors={['#F8FAFC', '#FFFFFF']} style={styles.insightsContainer}>
-            <View style={styles.insightsHeader}>
-              <View>
-                <Text style={styles.insightsTitle}>Performance Insights</Text>
-                <Text style={styles.insightsSubtitle}>Student engagement metrics</Text>
-              </View>
-              <TouchableOpacity style={styles.viewAllBtn}>
-                <Text style={styles.viewAllText}>View All</Text>
-                <Ionicons name="arrow-forward" size={14} color="#4F46E5" />
-              </TouchableOpacity>
+        {/* Recent Activity Section */}
+        <View style={[styles.section, isDark && styles.darkSection]}>
+          <Text style={[styles.sectionTitle, isDark && styles.darkSectionTitle]}>📊 Recent Activity</Text>
+          <View style={styles.activityCards}>
+            <View style={styles.activityCard}>
+              <Ionicons name="document-text" size={24} color="#10B981" />
+                <View style={styles.activityContent}>
+                <Text style={styles.activityTitle}>New Assignment Posted</Text>
+                <Text style={styles.activitySubtitle}>CSM251 - Data Structures</Text>
+                <Text style={styles.activityTime}>2 hours ago</Text>
+        </View>
             </View>
             
-            <View style={styles.insightsMetrics}>
-              <View style={styles.insightMetric}>
-                <Text style={styles.metricValue}>85%</Text>
-                <Text style={styles.metricLabel}>Avg Attendance</Text>
-                <View style={styles.metricTrend}>
-                  <Ionicons name="trending-up" size={12} color="#10B981" />
-                  <Text style={styles.metricTrendText}>+5%</Text>
-                </View>
-              </View>
-              <View style={styles.insightMetric}>
-                <Text style={styles.metricValue}>92%</Text>
-                <Text style={styles.metricLabel}>Assignment Completion</Text>
-                <View style={styles.metricTrend}>
-                  <Ionicons name="trending-up" size={12} color="#10B981" />
-                  <Text style={styles.metricTrendText}>+8%</Text>
-                </View>
-              </View>
-              <View style={styles.insightMetric}>
-                <Text style={styles.metricValue}>4.6</Text>
-                <Text style={styles.metricLabel}>Avg Rating</Text>
-                <View style={styles.metricTrend}>
-                  <Ionicons name="star" size={12} color="#F59E0B" />
-                  <Text style={styles.metricTrendText}>Excellent</Text>
-                </View>
-              </View>
+            <View style={styles.activityCard}>
+              <Ionicons name="people" size={24} color="#F59E0B" />
+              <View style={styles.activityContent}>
+                <Text style={styles.activityTitle}>Student Consultation</Text>
+                <Text style={styles.activitySubtitle}>Alice Johnson - CSM251</Text>
+                <Text style={styles.activityTime}>1 day ago</Text>
             </View>
-          </LinearGradient>
-        </View>
-      </ScrollView>
-
-      {/* Quick Action Modal */}
-      <Modal
-        animationType="slide"
-        transparent={true}
-        visible={quickActionModal}
-        onRequestClose={() => setQuickActionModal(false)}
-      >
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalContent}>
-            {selectedAction && (
-              <>
-                <View style={styles.modalHeader}>
-                  <View style={styles.modalTitleContainer}>
-                    <View style={[styles.modalActionIcon, { backgroundColor: selectedAction.color }]}>
-                      <Ionicons name={selectedAction.icon} size={24} color="#FFFFFF" />
-                    </View>
-                    <View>
-                      <Text style={styles.modalTitle}>{selectedAction.title}</Text>
-                      <Text style={styles.modalSubtitle}>{selectedAction.desc}</Text>
+          </View>
+            
+            <View style={styles.activityCard}>
+              <Ionicons name="videocam" size={24} color="#8B5CF6" />
+                <View style={styles.activityContent}>
+                <Text style={styles.activityTitle}>Lecture Recorded</Text>
+                <Text style={styles.activitySubtitle}>CSM351 - Algorithms</Text>
+                <Text style={styles.activityTime}>2 days ago</Text>
                     </View>
                   </View>
-                  <TouchableOpacity 
-                    style={styles.closeButton} 
-                    onPress={() => setQuickActionModal(false)}
-                  >
-                    <Ionicons name="close" size={24} color="#64748B" />
-                  </TouchableOpacity>
-                </View>
-                
-                <View style={styles.modalBody}>
-                  <Text style={styles.modalText}>
-                    This action will take you to the {selectedAction.title.toLowerCase()} section.
-                    Continue?
-                  </Text>
-                </View>
-
-                <View style={styles.modalFooter}>
-                  <TouchableOpacity 
-                    style={styles.cancelBtn} 
-                    onPress={() => setQuickActionModal(false)}
-                  >
-                    <Text style={styles.cancelText}>Cancel</Text>
-                  </TouchableOpacity>
-                  <TouchableOpacity 
-                    style={[styles.confirmBtn, { backgroundColor: selectedAction.color }]} 
-                    onPress={executeQuickAction}
-                  >
-                    <Ionicons name={selectedAction.icon} size={16} color="#FFFFFF" />
-                    <Text style={styles.confirmText}>Continue</Text>
-                  </TouchableOpacity>
-                </View>
-              </>
-            )}
           </View>
         </View>
-      </Modal>
+
+        {/* Quick Actions Section */}
+        <View style={[styles.section, isDark && styles.darkSection]}>
+          <Text style={[styles.sectionTitle, isDark && styles.darkSectionTitle]}>⚡ Quick Actions</Text>
+          <View style={styles.quickActionButtons}>
+            <TouchableOpacity
+              style={[styles.quickActionButton, isDark && styles.darkQuickActionButton]}
+              onPress={() => navigation.navigate('Materials')}
+            >
+              <Ionicons name="cloud-upload" size={24} color="#4F46E5" />
+              <Text style={[styles.quickActionButtonText, isDark && styles.darkQuickActionButtonText]}>Course Materials</Text>
+              </TouchableOpacity>
+            
+                  <TouchableOpacity 
+              style={[styles.quickActionButton, isDark && styles.darkQuickActionButton]}
+              onPress={() => navigation.navigate('Chat')}
+                  >
+              <Ionicons name="chatbubbles" size={24} color="#10B981" />
+              <Text style={[styles.quickActionButtonText, isDark && styles.darkQuickActionButtonText]}>Course Chats</Text>
+                  </TouchableOpacity>
+            
+                  <TouchableOpacity 
+              style={[styles.quickActionButton, isDark && styles.darkQuickActionButton]}
+              onPress={() => navigation.navigate('Students')}
+                  >
+              <Ionicons name="people" size={24} color="#F59E0B" />
+              <Text style={[styles.quickActionButtonText, isDark && styles.darkQuickActionButtonText]}>Manage Students</Text>
+                  </TouchableOpacity>
+            
+                  <TouchableOpacity 
+              style={[styles.quickActionButton, isDark && styles.darkQuickActionButton]}
+              onPress={() => navigation.navigate('Analytics')}
+                  >
+              <Ionicons name="analytics" size={24} color="#8B5CF6" />
+              <Text style={[styles.quickActionButtonText, isDark && styles.darkQuickActionButtonText]}>View Analytics</Text>
+                  </TouchableOpacity>
+            
+                  <TouchableOpacity 
+              style={[styles.quickActionButton, isDark && styles.darkQuickActionButton]}
+              onPress={() => setShowWelcomeGuide(true)}
+                  >
+              <Ionicons name="help-circle" size={24} color="#8B5CF6" />
+              <Text style={[styles.quickActionButtonText, isDark && styles.darkQuickActionButtonText]}>Feature Guide</Text>
+                  </TouchableOpacity>
+                </View>
+              </View>
+
+                    {/* Additional Lecturer Features */}
+          <View style={[styles.section, isDark && styles.darkSection]}>
+            <Text style={[styles.sectionTitle, isDark && styles.darkSectionTitle]}>📚 Teaching Tools</Text>
+            <View style={styles.additionalFeaturesGrid}>
+              <TouchableOpacity 
+                style={styles.additionalFeatureCard}
+                onPress={() => navigation.navigate('Materials')}
+              >
+                <LinearGradient
+                  colors={['#EC4899', '#BE185D']}
+                  style={styles.additionalFeatureGradient}
+                >
+                  <Ionicons name="create" size={24} color="#FFFFFF" />
+                  <Text style={styles.additionalFeatureText}>Course Materials</Text>
+          </LinearGradient>
+              </TouchableOpacity>
+
+              <TouchableOpacity 
+                style={styles.additionalFeatureCard}
+                onPress={() => navigation.navigate('Gradebook')}
+              >
+                <LinearGradient
+                  colors={['#10B981', '#059669']}
+                  style={styles.additionalFeatureGradient}
+                >
+                  <Ionicons name="book" size={24} color="#FFFFFF" />
+                  <Text style={styles.additionalFeatureText}>Gradebook</Text>
+                </LinearGradient>
+              </TouchableOpacity>
+
+              <TouchableOpacity 
+                style={styles.additionalFeatureCard}
+                onPress={() => navigation.navigate('Analytics')}
+              >
+                <LinearGradient
+                  colors={['#F59E0B', '#D97706']}
+                  style={styles.additionalFeatureGradient}
+                >
+                  <Ionicons name="analytics" size={24} color="#FFFFFF" />
+                  <Text style={styles.additionalFeatureText}>View Analytics</Text>
+                </LinearGradient>
+              </TouchableOpacity>
+
+              <TouchableOpacity 
+                style={styles.additionalFeatureCard}
+                onPress={() => navigation.navigate('Students')}
+              >
+                <LinearGradient
+                  colors={['#8B5CF6', '#7C3AED']}
+                  style={styles.additionalFeatureGradient}
+                >
+                  <Ionicons name="people" size={24} color="#FFFFFF" />
+                  <Text style={styles.additionalFeatureText}>Students</Text>
+                </LinearGradient>
+              </TouchableOpacity>
+                    </View>
+                    </View>
+
+          {/* Teaching Impact Section - 2x2 Layout */}
+          <View style={[styles.section, isDark && styles.darkSection]}>
+            <Text style={[styles.sectionTitle, isDark && styles.darkSectionTitle]}>🎯 Teaching Impact</Text>
+            <Text style={[styles.sectionSubtitle, isDark && styles.darkSectionSubtitle]}>Track your influence on student learning</Text>
+            <View style={styles.teachingImpactGrid}>
+                  <TouchableOpacity 
+                style={styles.teachingImpactCard}
+                onPress={() => navigation.navigate('Analytics')}
+              >
+                <LinearGradient
+                  colors={['#10B981', '#059669']}
+                  style={styles.teachingImpactGradient}
+                >
+                  <Ionicons name="trending-up" size={32} color="#FFFFFF" />
+                  <Text style={styles.teachingImpactTitle}>Student Progress</Text>
+                  <Text style={styles.teachingImpactSubtitle}>Track learning outcomes</Text>
+                </LinearGradient>
+                  </TouchableOpacity>
+
+              <TouchableOpacity 
+                style={styles.teachingImpactCard}
+                onPress={() => navigation.navigate('Analytics')}
+              >
+                <LinearGradient
+                  colors={['#F59E0B', '#D97706']}
+                  style={styles.teachingImpactGradient}
+                >
+                  <Ionicons name="people" size={32} color="#FFFFFF" />
+                  <Text style={styles.teachingImpactTitle}>Engagement</Text>
+                  <Text style={styles.teachingImpactSubtitle}>Monitor participation</Text>
+                </LinearGradient>
+              </TouchableOpacity>
+
+                  <TouchableOpacity 
+                style={styles.teachingImpactCard}
+                onPress={() => navigation.navigate('Gradebook')}
+              >
+                <LinearGradient
+                  colors={['#8B5CF6', '#7C3AED']}
+                  style={styles.teachingImpactGradient}
+                >
+                  <Ionicons name="chatbubble-ellipses" size={32} color="#FFFFFF" />
+                  <Text style={styles.teachingImpactTitle}>Feedback</Text>
+                  <Text style={styles.teachingImpactSubtitle}>Student insights</Text>
+                </LinearGradient>
+                  </TouchableOpacity>
+
+                  <TouchableOpacity 
+                style={styles.teachingImpactCard}
+                onPress={() => navigation.navigate('Analytics')}
+              >
+                <LinearGradient
+                  colors={['#EC4899', '#BE185D']}
+                  style={styles.teachingImpactGradient}
+                >
+                  <Ionicons name="trophy" size={32} color="#FFFFFF" />
+                  <Text style={styles.teachingImpactTitle}>Success Rate</Text>
+                  <Text style={styles.teachingImpactSubtitle}>Achievement tracking</Text>
+                </LinearGradient>
+                  </TouchableOpacity>
+                </View>
+          </View>
+        </ScrollView>
 
       {/* 🚀 AMAZING AI-POWERED LECTURER FEATURES MODALS */}
+      {showAILectureAssistant && (
       <AILectureAssistant
         visible={showAILectureAssistant}
         onClose={() => setShowAILectureAssistant(false)}
         course={selectedCourse}
         user={user}
       />
+      )}
 
+      {showSmartGrading && (
       <SmartGradingSystem
         visible={showSmartGrading}
         onClose={() => setShowSmartGrading(false)}
         course={selectedCourse}
         user={user}
       />
+      )}
 
+      {showLectureAnalytics && (
       <LectureAnalyticsDashboard
         visible={showLectureAnalytics}
         onClose={() => setShowLectureAnalytics(false)}
         course={selectedCourse}
         user={user}
       />
+      )}
 
+      {showVirtualClassroom && (
       <VirtualClassroom
         visible={showVirtualClassroom}
         onClose={() => setShowVirtualClassroom(false)}
         course={selectedCourse}
         user={user}
       />
+      )}
 
+      {showContentGenerator && (
       <AIContentGenerator
         visible={showContentGenerator}
         onClose={() => setShowContentGenerator(false)}
         course={selectedCourse}
         user={user}
       />
+      )}
 
+      {showLectureRecorder && (
       <SmartLectureRecorder
         visible={showLectureRecorder}
         onClose={() => setShowLectureRecorder(false)}
         course={selectedCourse}
         user={user}
       />
+      )}
 
+      {showPlagiarismDetector && (
       <AIPlagiarismDetector
         visible={showPlagiarismDetector}
         onClose={() => setShowPlagiarismDetector(false)}
         course={selectedCourse}
         user={user}
       />
+      )}
 
+      {showPerformancePrediction && (
       <AIPerformancePrediction
         visible={showPerformancePrediction}
         onClose={() => setShowPerformancePrediction(false)}
         course={selectedCourse}
         user={user}
       />
+      )}
 
       {/* 🌟 Welcome Guide for Discovering Amazing Lecturer Features */}
+      {showWelcomeGuide && (
       <FeatureWelcomeGuide
         visible={showWelcomeGuide}
         onClose={() => setShowWelcomeGuide(false)}
-        userType="lecturer"
+          features={[
+            {
+              title: 'AI Lecture Assistant',
+              description: 'Get AI-powered help with lesson planning and content creation',
+              icon: '🤖',
+              color: '#6366F1'
+            },
+            {
+              title: 'Smart Grading System',
+              description: 'Automated grading with AI-powered insights and feedback',
+              icon: '📊',
+              color: '#10B981'
+            },
+            {
+              title: 'Lecture Analytics',
+              description: 'Comprehensive analytics to track student engagement and performance',
+              icon: '📈',
+              color: '#F59E0B'
+            },
+            {
+              title: 'Virtual Classroom',
+              description: 'Create immersive online learning experiences',
+              icon: '🏫',
+              color: '#8B5CF6'
+            },
+            {
+              title: 'AI Content Generator',
+              description: 'Generate course materials, assignments, and presentations',
+              icon: '✨',
+              color: '#EC4899'
+            },
+            {
+              title: 'Smart Lecture Recorder',
+              description: 'Enhanced recording with AI-powered transcription and analysis',
+              icon: '🎥',
+              color: '#06B6D4'
+            },
+            {
+              title: 'Plagiarism Detector',
+              description: 'AI-powered tools to maintain academic integrity',
+              icon: '🔍',
+              color: '#EF4444'
+            },
+            {
+              title: 'Performance Prediction',
+              description: 'Predict student performance and provide early interventions',
+              icon: '🎯',
+              color: '#84CC16'
+            }
+          ]}
+        />
+      )}
+
+      {/* 🎤 Voice Recorder Modal */}
+      <VoiceRecorder
+        visible={showVoiceRecorder}
+        onClose={() => setShowVoiceRecorder(false)}
+        onSend={(voiceData) => {
+          console.log('Voice message sent:', voiceData);
+          Alert.alert('Success!', 'Voice message recorded and sent successfully!');
+        }}
+        courseCode={selectedCourse?.code}
+      />
+
+      {/* ✏️ Smart Text Editor Modal */}
+      <TextEditor
+        visible={showTextEditor}
+        onClose={() => setShowTextEditor(false)}
+        onSave={(textData) => {
+          console.log('Text saved:', textData);
+          Alert.alert('Success!', 'Text saved and sent successfully!');
+        }}
+        courseCode={selectedCourse?.code}
       />
     </SafeAreaView>
   );
@@ -792,728 +896,446 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#F8FAFC',
   },
-  scrollContent: {
-    paddingBottom: 30,
+  darkContainer: {
+    backgroundColor: '#0F172A',
   },
-  headerGradient: {
-    borderBottomLeftRadius: 32,
-    borderBottomRightRadius: 32,
+  darkContent: {
+    backgroundColor: '#0F172A',
+  },
+  darkSection: {},
+  darkSectionTitle: {
+    color: '#F8FAFC',
+  },
+  darkSectionSubtitle: {
+    color: '#94A3B8',
+  },
+  quickAccessRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'space-between',
+    gap: 10,
+    marginTop: 12,
+  },
+  quickAccessCard: {
+    width: (width - 20 * 2 - 10) / 2 - 5,
+    borderRadius: 14,
+    overflow: 'hidden',
+  },
+  darkQuickAccessCard: {
+    opacity: 0.95,
+  },
+  quickAccessGradient: {
+    paddingVertical: 16,
+    paddingHorizontal: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+    minHeight: 72,
+  },
+  quickAccessLabel: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: '#FFFFFF',
+    marginTop: 6,
+    textAlign: 'center',
+  },
+  teachingImpactCardOuter: {
+    width: (width - 20 * 2 - 12) / 2,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 12,
+    overflow: 'hidden',
+    marginBottom: 12,
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+  },
+  darkTeachingImpactCardOuter: {
+    backgroundColor: '#1E293B',
+    borderColor: '#334155',
+  },
+  teachingImpactCardTitle: {
+    fontWeight: '700',
+    color: '#111827',
+    marginTop: 8,
+  },
+  teachingImpactCardSub: {
+    color: '#6B7280',
+    fontSize: 12,
+  },
+  darkQuickActionButton: {
+    backgroundColor: '#1E293B',
+    borderColor: '#334155',
+  },
+  darkQuickActionButtonText: {
+    color: '#F8FAFC',
   },
   header: {
+    paddingTop: 20,
+    paddingBottom: 30,
+    paddingHorizontal: 20,
+  },
+  headerContent: {
+    flex: 1,
+  },
+  headerTop: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingHorizontal: 20,
-    paddingVertical: 20,
-    paddingTop: 10,
+    alignItems: 'flex-start',
+    marginBottom: 25,
   },
-  userSection: {
-    flexDirection: 'row',
-    alignItems: 'center',
+  lecturerInfo: {
     flex: 1,
+    marginRight: 20,
   },
-  avatarContainer: {
-    width: 60,
-    height: 60,
-    borderRadius: 30,
-    backgroundColor: 'rgba(255,255,255,0.2)',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginRight: 16,
-    position: 'relative',
-  },
-  avatarText: {
-    color: '#FFFFFF',
-    fontSize: 20,
-    fontWeight: 'bold',
-  },
-  lecturerIndicator: {
-    position: 'absolute',
-    bottom: -2,
-    right: -2,
-    backgroundColor: '#F59E0B',
-    borderRadius: 10,
-    width: 20,
-    height: 20,
-    justifyContent: 'center',
-    alignItems: 'center',
-    borderWidth: 2,
-    borderColor: '#FFFFFF',
-  },
-  userInfo: {
-    flex: 1,
+  greetingSection: {
+    marginBottom: 12,
   },
   greeting: {
-    fontSize: 20,
+    fontSize: 28,
     fontWeight: 'bold',
-    color: '#FFFFFF',
-    marginBottom: 4,
+    color: 'white',
+    marginBottom: 5,
   },
+
+
   subtitle: {
-    fontSize: 14,
-    color: '#C7D2FE',
-    marginBottom: 6,
+    fontSize: 16,
+    color: 'rgba(255, 255, 255, 0.9)',
+    marginBottom: 12,
   },
-  teachingBadge: {
+  onlineStatus: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 4,
+    marginTop: 8,
   },
-  teachingText: {
+  onlineIndicator: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: '#10B981',
+    marginRight: 6,
+  },
+  onlineText: {
     fontSize: 12,
-    color: '#C7D2FE',
+    color: 'rgba(255, 255, 255, 0.8)',
     fontWeight: '500',
-  },
-  headerActions: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-  },
-  discoverButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: 'rgba(255, 255, 255, 0.2)',
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    borderRadius: 20,
-  },
-  discoverButtonText: {
-    fontSize: 12,
-    color: '#FFFFFF',
-    fontWeight: '600',
-    marginLeft: 4,
   },
   notificationButton: {
     position: 'relative',
     padding: 8,
-    backgroundColor: 'rgba(255,255,255,0.2)',
-    borderRadius: 12,
   },
   notificationBadge: {
     position: 'absolute',
-    top: 2,
-    right: 2,
+    top: 5,
+    right: 5,
     backgroundColor: '#EF4444',
-    borderRadius: 8,
-    minWidth: 16,
-    height: 16,
+    borderRadius: 10,
+    minWidth: 20,
+    height: 20,
     justifyContent: 'center',
     alignItems: 'center',
   },
-  notificationCount: {
-    color: '#FFFFFF',
-    fontSize: 10,
+  notificationBadgeText: {
+    color: 'white',
+    fontSize: 12,
     fontWeight: 'bold',
   },
-  statsSection: {
-    paddingHorizontal: 20,
-    marginTop: 24,
+  statsContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
   },
-  statsSectionHeader: {
+  statCard: {
+    backgroundColor: 'rgba(255, 255, 255, 0.15)',
+    borderRadius: 12,
+    padding: 15,
+    alignItems: 'center',
+    flex: 1,
+    marginHorizontal: 5,
+  },
+  statNumber: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: 'white',
+    marginTop: 8,
+  },
+  statLabel: {
+    fontSize: 12,
+    color: 'rgba(255, 255, 255, 0.9)',
+    marginTop: 4,
+  },
+  content: {
+    flex: 1,
+    paddingHorizontal: 20,
+  },
+  section: {
+    marginTop: 30,
+  },
+  sectionHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 16,
+    marginBottom: 20,
   },
   sectionTitle: {
-    fontSize: 20,
+    fontSize: 24,
     fontWeight: 'bold',
     color: '#1E293B',
-  },
-  periodSelector: {
-    flexDirection: 'row',
-    backgroundColor: '#FFFFFF',
-    borderRadius: 12,
-    padding: 4,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 3,
-  },
-  periodBtn: {
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 8,
-  },
-  periodBtnActive: {
-    backgroundColor: '#4F46E5',
-  },
-  periodText: {
-    fontSize: 12,
-    fontWeight: '600',
-    color: '#64748B',
-  },
-  periodTextActive: {
-    color: '#FFFFFF',
-  },
-  statsGrid: {
-    flexDirection: 'row',
-    gap: 12,
-  },
-  statCard: {
-    flex: 1,
-    borderRadius: 16,
-    overflow: 'hidden',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.1,
-    shadowRadius: 12,
-    elevation: 5,
-  },
-  statGradient: {
-    padding: 16,
-    alignItems: 'center',
-  },
-  statIconContainer: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: 'rgba(255,255,255,0.2)',
-    justifyContent: 'center',
-    alignItems: 'center',
     marginBottom: 8,
   },
-  statContent: {
-    alignItems: 'center',
+  sectionSubtitle: {
+    fontSize: 16,
+    color: '#64748B',
+    marginBottom: 20,
   },
-  statNumber: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#FFFFFF',
-    marginBottom: 2,
-  },
-  statLabel: {
-    fontSize: 11,
-    color: 'rgba(255,255,255,0.8)',
-    textAlign: 'center',
-  },
-  trendContainer: {
+  viewAllButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginTop: 4,
-    gap: 2,
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    backgroundColor: '#F1F5F9',
+    borderRadius: 20,
   },
-  trendText: {
-    fontSize: 10,
+  viewAllButtonText: {
+    color: '#4F46E5',
+    fontSize: 14,
     fontWeight: '600',
+    marginRight: 4,
   },
-  actionsSection: {
+  quickActionsGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'space-between',
+  },
+  actionCard: {
+    width: (width - 60) / 2,
+    padding: 20,
+    borderRadius: 16,
+    marginBottom: 15,
+    alignItems: 'center',
+  },
+  actionIcon: {
+    fontSize: 32,
+    marginBottom: 12,
+  },
+  actionTitle: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: 'white',
+    marginBottom: 8,
+    textAlign: 'center',
+  },
+  actionDescription: {
+    fontSize: 12,
+    color: 'rgba(255, 255, 255, 0.9)',
+    textAlign: 'center',
+    lineHeight: 16,
+  },
+  coursesScroll: {
+    marginHorizontal: -20,
     paddingHorizontal: 20,
-    marginTop: 32,
   },
-  actionsGrid: {
+  levelContainer: {
+    marginRight: 25,
+  },
+  levelTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#475569',
+    marginBottom: 15,
+    textAlign: 'center',
+  },
+  courseCard: {
+    width: 200,
+    marginBottom: 15,
+  },
+  courseCardContent: {
+    padding: 20,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+  },
+
+  courseCode: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#4F46E5',
+    marginBottom: 8,
+  },
+  courseName: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#1E293B',
+    marginBottom: 8,
+    lineHeight: 22,
+  },
+  courseCredits: {
+    fontSize: 14,
+    color: '#64748B',
+    marginBottom: 12,
+  },
+  courseStats: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+  },
+  courseStat: {
+    fontSize: 12,
+    color: '#64748B',
+  },
+  activityCards: {
+    gap: 15,
+  },
+  activityCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'white',
+    padding: 20,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+  },
+  activityContent: {
+    marginLeft: 15,
+    flex: 1,
+  },
+  activityTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#1E293B',
+    marginBottom: 4,
+  },
+  activitySubtitle: {
+    fontSize: 14,
+    color: '#64748B',
+    marginBottom: 4,
+  },
+  activityTime: {
+    fontSize: 12,
+    color: '#94A3B8',
+  },
+  quickActionButtons: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'space-between',
+  },
+  quickActionButton: {
+    width: (width - 60) / 2,
+    backgroundColor: 'white',
+    padding: 20,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+    alignItems: 'center',
+    marginBottom: 15,
+  },
+  quickActionButtonText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#1E293B',
+    marginTop: 8,
+    textAlign: 'center',
+  },
+
+
+
+  // Profile Section Styles
+
+
+
+  // Additional Features Styles
+  additionalFeaturesGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     gap: 12,
     marginTop: 16,
   },
-  actionCard: {
+  additionalFeatureCard: {
     width: (width - 64) / 2,
     borderRadius: 16,
     overflow: 'hidden',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 8,
-    elevation: 3,
-  },
-  actionCardGradient: {
-    padding: 16,
-    alignItems: 'center',
-    backgroundColor: '#FFFFFF',
-    position: 'relative',
-  },
-  actionBadge: {
-    position: 'absolute',
-    top: 8,
-    right: 8,
-    paddingHorizontal: 6,
-    paddingVertical: 2,
-    borderRadius: 8,
-    zIndex: 1,
-  },
-  actionBadgeText: {
-    fontSize: 8,
-    color: '#FFFFFF',
-    fontWeight: 'bold',
-    textAlign: 'center',
-  },
-  actionIcon: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    justifyContent: 'center',
-    alignItems: 'center',
     marginBottom: 12,
   },
-  actionTitle: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#1E293B',
-    textAlign: 'center',
-    marginBottom: 4,
+  additionalFeatureGradient: {
+    padding: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
+    minHeight: 70,
   },
-  actionDesc: {
-    fontSize: 11,
-    color: '#64748B',
+  additionalFeatureText: {
+    color: '#FFFFFF',
+    fontSize: 13,
+    fontWeight: '600',
+    marginTop: 6,
+    textAlign: 'center',
+  },
+
+  // Modern AI Tools Styles
+  modernAIGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 16,
+    justifyContent: 'space-between',
+  },
+  modernAICard: {
+    width: (width - 64) / 2,
+    borderRadius: 20,
+    overflow: 'hidden',
+    marginBottom: 16,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.15,
+    shadowRadius: 15,
+    elevation: 8,
+  },
+  modernAIGradient: {
+    padding: 24,
+    alignItems: 'center',
+    justifyContent: 'center',
+    minHeight: 120,
+  },
+  modernAITitle: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: '700',
+    marginTop: 12,
+    marginBottom: 6,
+    textAlign: 'center',
+  },
+  modernAIDescription: {
+    color: 'rgba(255, 255, 255, 0.9)',
+    fontSize: 12,
+    fontWeight: '500',
     textAlign: 'center',
     lineHeight: 16,
   },
-  levelSection: {
-    paddingHorizontal: 20,
-    marginTop: 32,
-  },
-  levelHeader: {
+
+  // Teaching Impact Styles
+  teachingImpactGrid: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 16,
-  },
-  levelTitleContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexWrap: 'wrap',
     gap: 12,
+    marginTop: 16,
   },
-  levelIcon: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  levelIconText: {
-    color: '#FFFFFF',
-    fontSize: 14,
-    fontWeight: 'bold',
-  },
-  levelTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#1E293B',
-  },
-  levelSubtitle: {
-    fontSize: 13,
-    color: '#64748B',
-    marginTop: 2,
-  },
-  expandBtn: {
-    padding: 8,
-    borderRadius: 8,
-    backgroundColor: '#F8FAFC',
-  },
-  coursesContainer: {
-    gap: 12,
-  },
-  courseCard: {
+  teachingImpactCard: {
+    width: (width - 64) / 2,
     borderRadius: 16,
     overflow: 'hidden',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.08,
-    shadowRadius: 12,
-    elevation: 4,
-  },
-  courseCardGradient: {
-    padding: 16,
-  },
-  courseHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'flex-start',
-  },
-  courseMainInfo: {
-    flex: 1,
-  },
-  courseTitleRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 6,
-    gap: 8,
-  },
-  courseCode: {
-    fontSize: 14,
-    fontWeight: 'bold',
-    color: '#4F46E5',
-  },
-  levelBadge: {
-    paddingHorizontal: 6,
-    paddingVertical: 2,
-    borderRadius: 8,
-  },
-  levelBadgeText: {
-    fontSize: 10,
-    color: '#FFFFFF',
-    fontWeight: 'bold',
-  },
-  courseName: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#1E293B',
-    marginBottom: 8,
-    lineHeight: 20,
-  },
-  courseMetrics: {
-    flexDirection: 'row',
-    gap: 16,
-  },
-  metricItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-  },
-  metricText: {
-    fontSize: 12,
-    fontWeight: '500',
-  },
-  courseActions: {
-    flexDirection: 'row',
-    gap: 8,
-  },
-  courseActionBtn: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    backgroundColor: '#F8FAFC',
-    justifyContent: 'center',
-    alignItems: 'center',
-    borderWidth: 1,
-    borderColor: '#E2E8F0',
-  },
-  courseDivider: {
-    height: 1,
-    backgroundColor: '#F1F5F9',
-    marginVertical: 12,
-  },
-  courseFooter: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  activityIndicator: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-  },
-  activityDot: {
-    width: 6,
-    height: 6,
-    borderRadius: 3,
-    backgroundColor: '#10B981',
-  },
-  activityText: {
-    fontSize: 11,
-    color: '#64748B',
-  },
-  viewDetailsBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-  },
-  viewDetailsText: {
-    fontSize: 12,
-    color: '#4F46E5',
-    fontWeight: '500',
-  },
-  activitySection: {
-    paddingHorizontal: 20,
-    marginTop: 32,
-  },
-  activityContainer: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 16,
-    marginTop: 16,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 8,
-    elevation: 3,
-  },
-  activityItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    padding: 16,
-    borderBottomWidth: 1,
-    borderBottomColor: '#F8FAFC',
-  },
-  activityIcon: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginRight: 12,
-  },
-  activityContent: {
-    flex: 1,
-  },
-  activityTitle: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#1E293B',
-    marginBottom: 2,
-  },
-  activityCourse: {
-    fontSize: 12,
-    color: '#64748B',
-    marginBottom: 4,
-  },
-  activityFooter: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  activityTime: {
-    fontSize: 11,
-    color: '#94A3B8',
-  },
-  engagementBadge: {
-    backgroundColor: '#EEF2FF',
-    paddingHorizontal: 6,
-    paddingVertical: 2,
-    borderRadius: 8,
-  },
-  engagementText: {
-    fontSize: 10,
-    color: '#4F46E5',
-    fontWeight: '500',
-  },
-  insightsSection: {
-    paddingHorizontal: 20,
-    marginTop: 32,
-  },
-  insightsContainer: {
-    borderRadius: 16,
-    padding: 20,
-    marginTop: 16,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 8,
-    elevation: 3,
-  },
-  insightsHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 16,
-  },
-  insightsTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#1E293B',
-  },
-  insightsSubtitle: {
-    fontSize: 13,
-    color: '#64748B',
-    marginTop: 2,
-  },
-  viewAllBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-  },
-  viewAllText: {
-    fontSize: 12,
-    color: '#4F46E5',
-    fontWeight: '500',
-  },
-  insightsMetrics: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-  },
-  insightMetric: {
-    flex: 1,
-    alignItems: 'center',
-  },
-  metricValue: {
-    fontSize: 22,
-    fontWeight: 'bold',
-    color: '#1E293B',
-    marginBottom: 4,
-  },
-  metricLabel: {
-    fontSize: 11,
-    color: '#64748B',
-    textAlign: 'center',
-    marginBottom: 4,
-  },
-  metricTrend: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 2,
-  },
-  metricTrendText: {
-    fontSize: 10,
-    fontWeight: '600',
-    color: '#10B981',
-  },
-  modalOverlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
-    justifyContent: 'center',
-    alignItems: 'center',
-    paddingHorizontal: 20,
-  },
-  modalContent: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 20,
-    width: '100%',
-    maxWidth: 400,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 10 },
-    shadowOpacity: 0.3,
-    shadowRadius: 20,
-    elevation: 10,
-  },
-  modalHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    padding: 20,
-    borderBottomWidth: 1,
-    borderBottomColor: '#F1F5F9',
-  },
-  modalTitleContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-    flex: 1,
-  },
-  modalActionIcon: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  modalTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#1E293B',
-  },
-  modalSubtitle: {
-    fontSize: 13,
-    color: '#64748B',
-    marginTop: 2,
-  },
-  closeButton: {
-    padding: 4,
-  },
-  modalBody: {
-    padding: 20,
-  },
-  modalText: {
-    fontSize: 15,
-    color: '#64748B',
-    lineHeight: 22,
-    textAlign: 'center',
-  },
-  modalFooter: {
-    flexDirection: 'row',
-    padding: 20,
-    paddingTop: 0,
-    gap: 12,
-  },
-  cancelBtn: {
-    flex: 1,
-    backgroundColor: '#F8FAFC',
-    borderRadius: 12,
-    paddingVertical: 14,
-    alignItems: 'center',
-    borderWidth: 1,
-    borderColor: '#E2E8F0',
-  },
-  cancelText: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#64748B',
-  },
-  confirmBtn: {
-    flex: 1,
-    borderRadius: 12,
-    paddingVertical: 14,
-    alignItems: 'center',
-    flexDirection: 'row',
-    justifyContent: 'center',
-    gap: 6,
-  },
-  confirmText: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#FFFFFF',
-  },
-  
-  // Welcome Card Styles
-  welcomeCard: {
-    margin: 20,
-    borderRadius: 16,
-    overflow: 'hidden',
-  },
-  welcomeGradient: {
-    padding: 24,
-    position: 'relative',
-  },
-  dismissButton: {
-    position: 'absolute',
-    top: 16,
-    right: 16,
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    backgroundColor: 'rgba(255, 255, 255, 0.2)',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  welcomeEmoji: {
-    fontSize: 32,
-    textAlign: 'center',
     marginBottom: 12,
   },
-  welcomeTitle: {
-    fontSize: 22,
-    fontWeight: '700',
-    color: '#FFFFFF',
-    textAlign: 'center',
-    marginBottom: 8,
-  },
-  welcomeSubtitle: {
-    fontSize: 16,
-    color: '#E2E8F0',
-    textAlign: 'center',
-    lineHeight: 24,
-    marginBottom: 24,
-  },
-  welcomeActions: {
+  teachingImpactGradient: {
+    padding: 20,
     alignItems: 'center',
+    justifyContent: 'center',
+    minHeight: 120,
   },
-  welcomeActionButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: 'rgba(255, 255, 255, 0.2)',
-    paddingHorizontal: 20,
-    paddingVertical: 12,
-    borderRadius: 25,
-    gap: 8,
-  },
-  welcomeActionText: {
+  teachingImpactTitle: {
     color: '#FFFFFF',
     fontSize: 16,
-    fontWeight: '600',
-  },
-  
-  // Section subtitle style
-  sectionSubtitle: {
-    fontSize: 14,
-    color: '#64748B',
-    marginBottom: 16,
-    fontStyle: 'italic',
+    fontWeight: 'bold',
+    marginTop: 12,
+    marginBottom: 4,
     textAlign: 'center',
   },
-  
-  // Courses section
-  coursesSection: {
-    paddingHorizontal: 20,
-    paddingTop: 20,
+  teachingImpactSubtitle: {
+    color: 'rgba(255, 255, 255, 0.9)',
+    fontSize: 12,
+    textAlign: 'center',
   },
 });

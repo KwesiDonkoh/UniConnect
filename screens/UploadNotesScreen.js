@@ -20,6 +20,7 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useApp } from '../context/AppContext';
+import { useTheme } from '../components/ThemeProvider';
 import fileUploadService from '../services/fileUploadService';
 import { DocumentUploadModal } from '../components/DocumentUploadModal';
 
@@ -27,9 +28,11 @@ const { width, height } = Dimensions.get('window');
 
 export default function UploadNotesScreen({ navigation }) {
   const { user, csModules } = useApp();
+  const { isDark } = useTheme();
   
   // State management
-  const [selectedTab, setSelectedTab] = useState('upload');
+  // Students see shared materials first; lecturers see upload first
+  const [selectedTab, setSelectedTab] = useState(user?.userType === 'lecturer' ? 'upload' : 'shared');
   const [selectedCourse, setSelectedCourse] = useState(null);
   const [selectedFiles, setSelectedFiles] = useState([]);
   const [isUploading, setIsUploading] = useState(false);
@@ -628,8 +631,8 @@ export default function UploadNotesScreen({ navigation }) {
 
   if (!user) {
     return (
-      <SafeAreaView style={styles.container}>
-        <View style={styles.loadingContainer}>
+      <SafeAreaView style={[styles.container, isDark && styles.darkContainer]}>
+        <View style={[styles.loadingContainer, isDark && styles.darkLoadingContainer]}>
           <ActivityIndicator size="large" color="#4F46E5" />
           <Text style={styles.loadingText}>Loading...</Text>
         </View>
@@ -638,21 +641,27 @@ export default function UploadNotesScreen({ navigation }) {
   }
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={[styles.container, isDark && styles.darkContainer]}>
       {/* Header */}
-      <View style={styles.header}>
-        <TouchableOpacity onPress={() => navigation.goBack()}>
-          <Ionicons name="arrow-back" size={24} color="#1E293B" />
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>Study Materials</Text>
-        <TouchableOpacity onPress={() => Alert.alert('Help', 'Share notes, PDFs, images and other study materials with your coursemates!')}>
-          <Ionicons name="help-circle-outline" size={24} color="#4F46E5" />
+      <View style={[styles.header, isDark && styles.darkHeader]}>
+        {navigation.canGoBack() ? (
+          <TouchableOpacity onPress={() => navigation.goBack()}>
+            <Ionicons name="arrow-back" size={24} color={isDark ? '#F8FAFC' : '#1E293B'} />
+          </TouchableOpacity>
+        ) : (
+          <View style={{ width: 24 }} />
+        )}
+        <Text style={[styles.headerTitle, isDark && styles.darkHeaderTitle]}>
+          {user?.userType === 'lecturer' ? 'Course Materials' : 'Study Materials'}
+        </Text>
+        <TouchableOpacity onPress={() => Alert.alert('Help', user?.userType === 'lecturer' ? 'Upload and manage course materials. Students can view and download shared files.' : 'Share notes, PDFs, images and other study materials with your coursemates!')}>
+          <Ionicons name="help-circle-outline" size={24} color={isDark ? '#A5B4FC' : '#4F46E5'} />
         </TouchableOpacity>
       </View>
 
       <Animated.View style={{ flex: 1, opacity: fadeAnim, transform: [{ translateY: slideAnim }] }}>
-        {/* Tab Navigation */}
-        <View style={styles.tabContainer}>
+              {/* Tab Navigation */}
+      <View style={[styles.tabContainer, isDark && styles.darkTabContainer]}>
           {tabItems.map((tab) => (
             <TouchableOpacity
               key={tab.id}
@@ -849,10 +858,17 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#F8FAFC',
   },
+  darkContainer: {
+    flex: 1,
+    backgroundColor: '#0F172A',
+  },
   loadingContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
+  },
+  darkLoadingContainer: {
+    backgroundColor: '#0F172A',
   },
   loadingText: {
     marginTop: 16,
@@ -869,16 +885,27 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: '#E2E8F0',
   },
+  darkHeader: {
+    backgroundColor: '#1E293B',
+    borderBottomColor: '#334155',
+  },
   headerTitle: {
     fontSize: 20,
     fontWeight: '700',
     color: '#1E293B',
+  },
+  darkHeaderTitle: {
+    color: '#FFFFFF',
   },
   tabContainer: {
     flexDirection: 'row',
     backgroundColor: '#FFFFFF',
     borderBottomWidth: 1,
     borderBottomColor: '#E2E8F0',
+  },
+  darkTabContainer: {
+    backgroundColor: '#1E293B',
+    borderBottomColor: '#334155',
   },
   tabItem: {
     flex: 1,
@@ -913,11 +940,19 @@ const styles = StyleSheet.create({
     shadowRadius: 8,
     elevation: 3,
   },
+  darkSectionCard: {
+    backgroundColor: '#1E293B',
+    shadowColor: '#000',
+    shadowOpacity: 0.3,
+  },
   sectionTitle: {
     fontSize: 18,
     fontWeight: '700',
     color: '#1E293B',
     marginBottom: 16,
+  },
+  darkSectionTitle: {
+    color: '#FFFFFF',
   },
   courseSelector: {
     borderWidth: 1,

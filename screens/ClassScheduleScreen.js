@@ -16,11 +16,13 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useApp } from '../context/AppContext';
+import { useTheme } from '../components/ThemeProvider';
 
 const { width, height } = Dimensions.get('window');
 
 export default function ClassScheduleScreen({ navigation }) {
   const { user, csModules } = useApp();
+  const { isDark } = useTheme();
   const [selectedWeek, setSelectedWeek] = useState(0); // 0 = current week
   const [selectedDay, setSelectedDay] = useState(new Date().getDay());
   const [viewMode, setViewMode] = useState('weekly'); // 'weekly' or 'daily'
@@ -468,8 +470,8 @@ export default function ClassScheduleScreen({ navigation }) {
 
   if (!user) {
     return (
-      <SafeAreaView style={styles.container}>
-        <View style={styles.loadingContainer}>
+      <SafeAreaView style={[styles.container, isDark && styles.darkContainer]}>
+        <View style={[styles.loadingContainer, isDark && styles.darkLoadingContainer]}>
           <ActivityIndicator size="large" color="#4F46E5" />
           <Text style={styles.loadingText}>Loading schedule...</Text>
         </View>
@@ -478,13 +480,13 @@ export default function ClassScheduleScreen({ navigation }) {
   }
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={[styles.container, isDark && styles.darkContainer]}>
       {/* Header */}
-      <View style={styles.header}>
+      <View style={[styles.header, isDark && styles.darkHeader]}>
         <TouchableOpacity onPress={() => navigation.goBack()}>
           <Ionicons name="arrow-back" size={24} color="#1E293B" />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Class Schedule</Text>
+        <Text style={[styles.headerTitle, isDark && styles.darkHeaderTitle]}>Class Schedule</Text>
         <TouchableOpacity onPress={() => Alert.alert('Settings', 'Schedule settings coming soon!')}>
           <Ionicons name="settings" size={24} color="#4F46E5" />
         </TouchableOpacity>
@@ -710,10 +712,17 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#F8FAFC',
   },
+  darkContainer: {
+    flex: 1,
+    backgroundColor: '#0F172A',
+  },
   loadingContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
+  },
+  darkLoadingContainer: {
+    backgroundColor: '#0F172A',
   },
   loadingText: {
     marginTop: 16,
@@ -730,10 +739,17 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: '#E2E8F0',
   },
+  darkHeader: {
+    backgroundColor: '#1E293B',
+    borderBottomColor: '#334155',
+  },
   headerTitle: {
     fontSize: 20,
     fontWeight: '700',
     color: '#1E293B',
+  },
+  darkHeaderTitle: {
+    color: '#FFFFFF',
   },
   weekNavigation: {
     flexDirection: 'row',

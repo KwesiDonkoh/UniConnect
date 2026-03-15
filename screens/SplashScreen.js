@@ -77,10 +77,11 @@ export default function SplashScreen() {
 
   return (
     <LinearGradient
-      colors={['#667eea', '#764ba2']}
+      colors={['#4338ca', '#6366F1', '#8B5CF6', '#7C3AED']}
       style={styles.container}
       start={{ x: 0, y: 0 }}
       end={{ x: 1, y: 1 }}
+      locations={[0, 0.35, 0.7, 1]}
     >
       {/* Background Pattern */}
       <View style={styles.backgroundPattern}>
@@ -110,9 +111,9 @@ export default function SplashScreen() {
             },
           ]}
         >
-          <Ionicons name="school" size={70} color="#FFFFFF" />
+          <Ionicons name="school" size={72} color="#FFFFFF" />
           <View style={styles.iconOverlay}>
-            <Ionicons name="code-slash" size={24} color="#667eea" />
+            <Ionicons name="code-slash" size={26} color="#6366F1" />
           </View>
         </Animated.View>
         
@@ -178,44 +179,46 @@ const styles = StyleSheet.create({
   },
   iconContainer: {
     position: 'relative',
-    width: 120,
-    height: 120,
-    borderRadius: 60,
-    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    width: 128,
+    height: 128,
+    borderRadius: 64,
+    backgroundColor: 'rgba(255, 255, 255, 0.25)',
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: 30,
+    marginBottom: 28,
+    borderWidth: 3,
+    borderColor: 'rgba(255, 255, 255, 0.4)',
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 10 },
-    shadowOpacity: 0.3,
-    shadowRadius: 20,
-    elevation: 10,
+    shadowOffset: { width: 0, height: 12 },
+    shadowOpacity: 0.35,
+    shadowRadius: 24,
+    elevation: 12,
   },
   iconOverlay: {
     position: 'absolute',
-    bottom: -5,
-    right: -5,
-    width: 40,
-    height: 40,
-    borderRadius: 20,
+    bottom: -6,
+    right: -6,
+    width: 44,
+    height: 44,
+    borderRadius: 22,
     backgroundColor: '#FFFFFF',
     justifyContent: 'center',
     alignItems: 'center',
-    shadowColor: '#000',
+    shadowColor: '#4338ca',
     shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
+    shadowOpacity: 0.4,
+    shadowRadius: 10,
     elevation: 8,
   },
   appName: {
-    fontSize: 42,
-    fontWeight: 'bold',
+    fontSize: 44,
+    fontWeight: '800',
     color: '#FFFFFF',
     marginBottom: 8,
-    letterSpacing: 2,
-    textShadowColor: 'rgba(0, 0, 0, 0.3)',
+    letterSpacing: 2.5,
+    textShadowColor: 'rgba(0, 0, 0, 0.25)',
     textShadowOffset: { width: 0, height: 2 },
-    textShadowRadius: 4,
+    textShadowRadius: 8,
   },
   tagline: {
     fontSize: 18,

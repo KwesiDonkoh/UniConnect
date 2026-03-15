@@ -15,9 +15,12 @@ import {
   Vibration,
   Image,
   ActivityIndicator,
+  Modal,
+  Pressable,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
+import { useTheme } from '../components/ThemeProvider';
 import { useApp } from '../context/AppContext';
 import achievementsService from '../services/achievementsService';
 import AIStudyAssistant from '../components/AIStudyAssistant';
@@ -28,11 +31,19 @@ import EnhancedVoiceCall from '../components/EnhancedVoiceCall';
 import AIQuizGenerator from '../components/AIQuizGenerator';
 import SmartScheduleOptimizer from '../components/SmartScheduleOptimizer';
 import FeatureWelcomeGuide from '../components/FeatureWelcomeGuide';
+import VoiceRecorder from '../components/VoiceRecorder';
+import TextEditor from '../components/TextEditor';
+import ProgressTracker from '../components/ProgressTracker';
+import SemesterModules from '../components/SemesterModules';
+import GameCenter from '../components/GameCenter';
+import FocusMode from '../components/FocusMode';
+import WeekendActivities from '../components/WeekendActivities';
 
 const { width, height } = Dimensions.get('window');
 
 export default function ModernHomeDashboard({ navigation }) {
   const { csModules, notifications, user } = useApp();
+  const { isDark: themeIsDark, toggleTheme: toggleGlobalTheme } = useTheme();
   
   // Debug logging
   console.log('ModernHomeDashboard - User:', user?.uid, user?.userType);
@@ -54,10 +65,13 @@ export default function ModernHomeDashboard({ navigation }) {
   const [studyStreak, setStudyStreak] = useState(7);
   const [dailyGoal, setDailyGoal] = useState(0.75);
   const [weeklyProgress, setWeeklyProgress] = useState(0.6);
-  const [isDark, setIsDark] = useState(false);
+  const [isDark, setIsDark] = useState(themeIsDark);
   const [achievements, setAchievements] = useState([]);
   
   // New feature modals
+  const [showVoiceRecorder, setShowVoiceRecorder] = useState(false);
+  const [showTextEditor, setShowTextEditor] = useState(false);
+  const [showMindMap, setShowMindMap] = useState(false);
   const [showAIAssistant, setShowAIAssistant] = useState(false);
   const [showSmartNotes, setShowSmartNotes] = useState(false);
   const [showProgress, setShowProgress] = useState(false);
@@ -67,7 +81,19 @@ export default function ModernHomeDashboard({ navigation }) {
   const [callParticipant, setCallParticipant] = useState(null);
   const [showQuizGenerator, setShowQuizGenerator] = useState(false);
   const [showScheduleOptimizer, setShowScheduleOptimizer] = useState(false);
+  const [showGameCenter, setShowGameCenter] = useState(false);
+  const [showFocusMode, setShowFocusMode] = useState(false);
+  const [showKnowledgeTree, setShowKnowledgeTree] = useState(false);
+  const [showTimeTravel, setShowTimeTravel] = useState(false);
+  const [showDreamJournal, setShowDreamJournal] = useState(false);
+  const [showSmartVoiceNotes, setShowSmartVoiceNotes] = useState(false);
   const [showWelcomeGuide, setShowWelcomeGuide] = useState(false);
+  const [showWeekendActivities, setShowWeekendActivities] = useState(false);
+  const [showProgressTracker, setShowProgressTracker] = useState(false);
+  const [showSemesterModules, setShowSemesterModules] = useState(false);
+  const [showQuickActionsModal, setShowQuickActionsModal] = useState(false);
+  const [showStudyGroupPicker, setShowStudyGroupPicker] = useState(false);
+  const [showReminderPicker, setShowReminderPicker] = useState(false);
   const [achievementProgress, setAchievementProgress] = useState({
     total: 0,
     earned: 0,
@@ -176,109 +202,54 @@ export default function ModernHomeDashboard({ navigation }) {
     }
   };
 
-  // Quick Action Functions
+  // Courses list for study group etc. (array - from level or flat)
+  const coursesList = Array.isArray(csModules) ? csModules : (currentLevelModules || []);
+
+  // Quick Action: Create Study Group — pick course then confirm
   const createStudyGroup = () => {
+    setShowQuickActionsModal(false);
+    if (!coursesList.length) {
+      Alert.alert('No Courses', 'You have no courses yet. Enroll in courses to create study groups.');
+      return;
+    }
+    setShowStudyGroupPicker(true);
+  };
+
+  const confirmStudyGroup = (course) => {
+    setShowStudyGroupPicker(false);
+    Vibration.vibrate(50);
     Alert.alert(
-      'Create Study Group 👥',
-      'Choose a course to create a study group for:',
+      'Study Group Created! 🎉',
+      `Study group for ${course.name} has been created. Other students will be notified to join.`,
       [
-        ...csModules.slice(0, 3).map(course => ({
-          text: course.code,
-          onPress: () => {
-            Alert.alert(
-              'Study Group Created! 🎉',
-              `Study group for ${course.name} has been created. Other students will be notified to join.`,
-              [{ text: 'Great!', onPress: () => navigation.navigate('Chat') }]
-            );
-          }
-        })),
-        { text: 'Cancel', style: 'cancel' }
+        { text: 'Go to Chat', onPress: () => navigation.navigate('Chat') },
+        { text: 'OK' }
       ]
     );
   };
 
   const setReminder = () => {
-    Alert.alert(
-      'Set Study Reminder ⏰',
-      'What would you like to be reminded about?',
-      [
-        { 
-          text: 'Assignment Due', 
-          onPress: () => {
-            Alert.alert(
-              'Reminder Set! ✅',
-              'You\'ll be reminded about upcoming assignment deadlines.',
-              [{ text: 'OK' }]
-            );
-          }
-        },
-        { 
-          text: 'Study Session', 
-          onPress: () => {
-            Alert.alert(
-              'Study Reminder Set! 📚',
-              'Daily study reminder has been enabled. You\'ll get notifications to maintain your study streak.',
-              [{ text: 'Perfect!' }]
-            );
-          }
-        },
-        { 
-          text: 'Class Schedule', 
-          onPress: () => {
-            Alert.alert(
-              'Class Reminder Set! 🎓',
-              'You\'ll be reminded 15 minutes before each class starts.',
-              [{ text: 'Thanks!' }]
-            );
-          }
-        },
-        { text: 'Cancel', style: 'cancel' }
-      ]
-    );
+    setShowQuickActionsModal(false);
+    setShowReminderPicker(true);
+  };
+
+  const confirmReminder = (type, title, message) => {
+    setShowReminderPicker(false);
+    Vibration.vibrate(50);
+    Alert.alert(title, message, [{ text: 'OK' }]);
   };
 
   const startPomodoroTimer = () => {
-    Alert.alert(
-      'Start Pomodoro Timer 🍅',
-      'Choose your focus session duration:',
-      [
-        { 
-          text: '25 minutes', 
-          onPress: () => {
-            Alert.alert(
-              'Pomodoro Started! 🚀',
-              'Focus timer set for 25 minutes. Stay focused and avoid distractions!',
-              [
-                { text: 'Start Studying', onPress: () => navigation.navigate('StudyScreen') },
-                { text: 'OK' }
-              ]
-            );
-          }
-        },
-        { 
-          text: '50 minutes', 
-          onPress: () => {
-            Alert.alert(
-              'Long Study Session! 📖',
-              'Extended focus timer set for 50 minutes. You\'ve got this!',
-              [
-                { text: 'Start Studying', onPress: () => navigation.navigate('StudyScreen') },
-                { text: 'OK' }
-              ]
-            );
-          }
-        },
-        { text: 'Cancel', style: 'cancel' }
-      ]
-    );
+    setShowQuickActionsModal(false);
+    setShowFocusMode(true);
   };
   
   if (!user) {
     return (
-      <View style={styles.loadingContainer}>
+      <View style={[styles.loadingContainer, isDark && styles.darkContainer]}>
         <Animated.View style={{ transform: [{ scale: scaleAnim }] }}>
           <LinearGradient
-            colors={['#6366F1', '#8B5CF6']}
+            colors={isDark ? ['#1A1A2E', '#16213E'] : ['#6366F1', '#8B5CF6']}
             style={styles.loadingCard}
           >
             <Ionicons name="school" size={48} color="#FFFFFF" />
@@ -297,9 +268,11 @@ export default function ModernHomeDashboard({ navigation }) {
   };
 
   const toggleTheme = () => {
-    setIsDark(!isDark);
+    toggleGlobalTheme();
     Vibration.vibrate(50);
   };
+
+
 
   const renderModernCourseCard = ({ item, index }) => {
     const unreadCount = notifications.filter(
@@ -329,7 +302,7 @@ export default function ModernHomeDashboard({ navigation }) {
         }]
       }}>
         <TouchableOpacity
-          style={styles.modernCourseCard}
+          style={[styles.modernCourseCard, isDark && styles.darkCard]}
           onPress={() => navigation.navigate('Chat', { selectedCourse: item })}
           activeOpacity={0.8}
         >
@@ -341,7 +314,7 @@ export default function ModernHomeDashboard({ navigation }) {
             style={styles.courseGradient}
           >
             <View style={styles.courseHeader}>
-              <Text style={styles.courseCode}>{item.code}</Text>
+              <Text style={[styles.courseCode, isDark && styles.darkText]}>{item.code}</Text>
               {unreadCount > 0 && (
                 <View style={styles.courseBadge}>
                   <Text style={styles.courseBadgeText}>
@@ -351,7 +324,7 @@ export default function ModernHomeDashboard({ navigation }) {
               )}
             </View>
             
-            <Text style={styles.courseName} numberOfLines={2}>
+            <Text style={[styles.courseName, isDark && styles.darkText]} numberOfLines={2}>
               {item.name}
             </Text>
             
@@ -360,7 +333,7 @@ export default function ModernHomeDashboard({ navigation }) {
                 <View style={[styles.progressBar, { width: '100%' }]}>
                   <View style={[styles.progressFill, { width: `${Math.random() * 100}%` }]} />
                 </View>
-                <Text style={styles.progressText}>
+                <Text style={[styles.progressText, isDark && styles.darkText]}>
                   {Math.floor(Math.random() * 100)}% Complete
                 </Text>
               </View>
@@ -427,12 +400,45 @@ export default function ModernHomeDashboard({ navigation }) {
                 </TouchableOpacity>
                 
                 <View style={styles.userDetails}>
-                  <Text style={styles.welcomeText}>Welcome back,</Text>
-                  <Text style={styles.userName}>{user.name}</Text>
-                  <Text style={styles.userLevel}>
-                    {user.userType === 'lecturer' ? 'Lecturer' : 
-                     `Level ${user.academicLevel} • ${user.levelDescription}`}
-                  </Text>
+                  <View style={styles.greetingSection}>
+                    <Text style={styles.welcomeText} numberOfLines={1}>
+                      Welcome back, <Text style={styles.userName}>{user.name}</Text>
+                    </Text>
+                    <View style={styles.credentialsSection}>
+                      <View style={styles.credentialGrid}>
+                        <View style={styles.credentialRow}> 
+                          <View style={styles.credentialItem}>
+                            <Ionicons name="person" size={14} color="rgba(255, 255, 255, 0.7)" />
+                            <Text style={styles.credentialText} numberOfLines={1}>{user.name}</Text>
+                          </View>
+                        </View>
+                        <View style={styles.credentialRow}>
+                          <View style={styles.credentialItem}>
+                            <Ionicons name="school" size={14} color="rgba(255, 255, 255, 0.7)" />
+                            <Text style={styles.credentialText}>Level {user.academicLevel}</Text>
+                          </View>
+                          <Text style={styles.credentialSeparator}>•</Text>
+                          <View style={styles.credentialItem}>
+                            <Ionicons name="id-card" size={14} color="rgba(255, 255, 255, 0.7)" />
+                            <Text style={styles.credentialText}>ID: {user.studentId || 'CST2024001'}</Text>
+                          </View>
+                        </View>
+                        <View style={styles.credentialRow}>
+                          <View style={styles.credentialItem}>
+                            <Ionicons name="mail" size={14} color="rgba(255, 255, 255, 0.7)" />
+                            <Text style={styles.credentialText} numberOfLines={1}>{user.email || 'student@university.edu'}</Text>
+                          </View>
+                        </View>
+                      </View>
+                    </View>
+                  </View>
+                  
+                  <View style={styles.onlineStatus}>
+                    <View style={styles.onlineIndicator} />
+                    <Text style={styles.onlineText} numberOfLines={1}>
+                      {Math.floor(Math.random() * 50) + 20} people online
+                    </Text>
+                  </View>
                 </View>
               </View>
               
@@ -473,36 +479,41 @@ export default function ModernHomeDashboard({ navigation }) {
             </View>
 
             {/* Study Streak and Progress */}
+            <View style={[styles.statsSection, isDark && styles.darkSection]}>
+              <Text style={[styles.statsSectionTitle, isDark && styles.darkText]}>Your Progress</Text>
             <View style={styles.statsContainer}>
-              <View style={styles.statCard}>
+                <View style={[styles.statCard, isDark && styles.darkCard]}>
                 <Animated.View style={{ transform: [{ scale: bounceScale }] }}>
-                  <Ionicons name="flame" size={28} color="#F59E0B" />
+                    <Ionicons name="flame" size={24} color="#F59E0B" />
                 </Animated.View>
-                <Text style={styles.statNumber}>{studyStreak}</Text>
-                <Text style={styles.statLabel}>Day Streak</Text>
+                  <Text style={[styles.statNumber, isDark && styles.darkText]}>{studyStreak}</Text>
+                  <Text style={[styles.statLabel, isDark && styles.darkText]}>Day Streak</Text>
               </View>
 
-              <View style={styles.statCard}>
+                <View style={[styles.statCard, isDark && styles.darkCard]}>
                 <View style={styles.progressContainer}>
-                  <Text style={styles.progressLabel}>Daily Goal</Text>
+                    <Text style={[styles.progressLabel, isDark && styles.darkText]}>Daily Goal</Text>
                   <View style={styles.circularProgress}>
-                    <Text style={styles.progressPercentage}>
+                      <Text style={[styles.progressPercentage, isDark && styles.darkText]}>
                       {Math.round(dailyGoal * 100)}%
                     </Text>
                   </View>
                 </View>
               </View>
 
-              <View style={styles.statCard}>
-                <Ionicons name="trophy" size={28} color="#F59E0B" />
-                <Text style={styles.statNumber}>{achievementProgress.earned}</Text>
-                <Text style={styles.statLabel}>Achievements</Text>
+                <View style={[styles.statCard, isDark && styles.darkCard]}>
+                  <Ionicons name="trophy" size={24} color="#F59E0B" />
+                  <Text style={[styles.statNumber, isDark && styles.darkText]}>{achievementProgress.earned}</Text>
+                  <Text style={[styles.statLabel, isDark && styles.darkText]}>Achievements</Text>
+                </View>
               </View>
             </View>
           </LinearGradient>
 
+
+
           {/* Quick Actions with Modern Cards */}
-          <View style={styles.section}>
+          <View style={[styles.section, isDark && styles.darkSection]}>
             <View style={styles.sectionHeader}>
               <Text style={[styles.sectionTitle, isDark && styles.darkText]}>Quick Actions</Text>
               <TouchableOpacity>
@@ -511,9 +522,10 @@ export default function ModernHomeDashboard({ navigation }) {
             </View>
             
             <View style={styles.quickActionsGrid}>
-              {/* AI Study Assistant - The WOW Factor! */}
+              {/* Row 1: Core Study Tools */}
+              <View style={styles.quickActionRow}>
               <TouchableOpacity 
-                style={styles.quickActionCard}
+                  style={[styles.quickActionCard, isDark && styles.darkCard]}
                 onPress={() => setShowAIAssistant(true)}
                 activeOpacity={0.8}
               >
@@ -521,15 +533,14 @@ export default function ModernHomeDashboard({ navigation }) {
                   colors={['#667eea', '#764ba2']}
                   style={styles.quickActionGradient}
                 >
-                  <Ionicons name="sparkles" size={32} color="#FFFFFF" />
+                    <Ionicons name="sparkles" size={22} color="#FFFFFF" />
                 </LinearGradient>
                 <Text style={[styles.quickActionText, isDark && styles.darkText]}>AI Tutor</Text>
                 <Text style={styles.quickActionSubtext}>Smart study buddy</Text>
               </TouchableOpacity>
 
-              {/* Smart Note Taking */}
               <TouchableOpacity 
-                style={styles.quickActionCard}
+                  style={[styles.quickActionCard, isDark && styles.darkCard]}
                 onPress={() => setShowSmartNotes(true)}
                 activeOpacity={0.8}
               >
@@ -537,15 +548,32 @@ export default function ModernHomeDashboard({ navigation }) {
                   colors={['#4facfe', '#00f2fe']}
                   style={styles.quickActionGradient}
                 >
-                  <Ionicons name="document-text" size={32} color="#FFFFFF" />
+                    <Ionicons name="document-text" size={22} color="#FFFFFF" />
                 </LinearGradient>
                 <Text style={[styles.quickActionText, isDark && styles.darkText]}>Smart Notes</Text>
-                <Text style={styles.quickActionSubtext}>AI auto-summary</Text>
+                  <Text style={styles.quickActionSubtext}>AI-powered notes</Text>
               </TouchableOpacity>
 
-              {/* AR Study Mode */}
               <TouchableOpacity 
-                style={styles.quickActionCard}
+                  style={[styles.quickActionCard, isDark && styles.darkCard]}
+                  onPress={() => setShowMindMap(true)}
+                  activeOpacity={0.8}
+                >
+                  <LinearGradient
+                    colors={['#10B981', '#059669']}
+                    style={styles.quickActionGradient}
+                  >
+                    <Ionicons name="git-network" size={22} color="#FFFFFF" />
+                  </LinearGradient>
+                  <Text style={[styles.quickActionText, isDark && styles.darkText]}>Mind Maps</Text>
+                  <Text style={styles.quickActionSubtext}>Visual learning</Text>
+                </TouchableOpacity>
+              </View>
+
+              {/* Row 2: Interactive Learning */}
+              <View style={styles.quickActionRow}>
+                <TouchableOpacity 
+                  style={[styles.quickActionCard, isDark && styles.darkCard]}
                 onPress={() => setShowARMode(true)}
                 activeOpacity={0.8}
               >
@@ -553,31 +581,95 @@ export default function ModernHomeDashboard({ navigation }) {
                   colors={['#fa709a', '#fee140']}
                   style={styles.quickActionGradient}
                 >
-                  <Ionicons name="cube" size={32} color="#FFFFFF" />
+                    <Ionicons name="cube" size={22} color="#FFFFFF" />
                 </LinearGradient>
                 <Text style={[styles.quickActionText, isDark && styles.darkText]}>AR Learning</Text>
-                <Text style={styles.quickActionSubtext}>3D interactive</Text>
+                  <Text style={styles.quickActionSubtext}>3D visualization</Text>
               </TouchableOpacity>
 
-              {/* Progress Tracker */}
               <TouchableOpacity 
-                style={styles.quickActionCard}
-                onPress={() => setShowProgress(true)}
+                  style={[styles.quickActionCard, isDark && styles.darkCard]}
+                  onPress={() => setShowGameCenter(true)}
                 activeOpacity={0.8}
               >
                 <LinearGradient
-                  colors={['#a8edea', '#fed6e3']}
+                    colors={['#FF6B6B', '#4ECDC4']}
                   style={styles.quickActionGradient}
                 >
-                  <Ionicons name="trophy" size={32} color="#FFFFFF" />
+                    <Ionicons name="game-controller" size={22} color="#FFFFFF" />
                 </LinearGradient>
-                <Text style={[styles.quickActionText, isDark && styles.darkText]}>Progress</Text>
-                <Text style={styles.quickActionSubtext}>XP & achievements</Text>
+                  <Text style={[styles.quickActionText, isDark && styles.darkText]}>Game Center</Text>
+                  <Text style={styles.quickActionSubtext}>Learn & play</Text>
               </TouchableOpacity>
 
-              {/* Enhanced Voice Call */}
               <TouchableOpacity 
-                style={styles.quickActionCard}
+                  style={[styles.quickActionCard, isDark && styles.darkCard]}
+                  onPress={() => setShowFocusMode(true)}
+                  activeOpacity={0.8}
+                >
+                  <LinearGradient
+                    colors={['#8B5CF6', '#7C3AED']}
+                    style={styles.quickActionGradient}
+                  >
+                    <Ionicons name="eye" size={22} color="#FFFFFF" />
+                  </LinearGradient>
+                  <Text style={[styles.quickActionText, isDark && styles.darkText]}>Focus Mode</Text>
+                  <Text style={styles.quickActionSubtext}>Stay focused</Text>
+                </TouchableOpacity>
+              </View>
+
+              {/* Row 3: Knowledge & Progress */}
+              <View style={styles.quickActionRow}>
+                <TouchableOpacity 
+                  style={[styles.quickActionCard, isDark && styles.darkCard]}
+                  onPress={() => setShowKnowledgeTree(true)}
+                  activeOpacity={0.8}
+                >
+                  <LinearGradient
+                    colors={['#10B981', '#059669']}
+                    style={styles.quickActionGradient}
+                  >
+                    <Ionicons name="leaf" size={22} color="#FFFFFF" />
+                  </LinearGradient>
+                  <Text style={[styles.quickActionText, isDark && styles.darkText]}>Knowledge Tree</Text>
+                  <Text style={styles.quickActionSubtext}>Learning path</Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity 
+                  style={[styles.quickActionCard, isDark && styles.darkCard]}
+                  onPress={() => setShowTimeTravel(true)}
+                  activeOpacity={0.8}
+                >
+                  <LinearGradient
+                    colors={['#F59E0B', '#D97706']}
+                    style={styles.quickActionGradient}
+                  >
+                    <Ionicons name="time" size={22} color="#FFFFFF" />
+                  </LinearGradient>
+                  <Text style={[styles.quickActionText, isDark && styles.darkText]}>Time Travel</Text>
+                  <Text style={styles.quickActionSubtext}>Study history</Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity 
+                  style={[styles.quickActionCard, isDark && styles.darkCard]}
+                  onPress={() => setShowTimeTravel(true)}
+                  activeOpacity={0.8}
+                >
+                  <LinearGradient
+                    colors={['#EC4899', '#BE185D']}
+                    style={styles.quickActionGradient}
+                  >
+                    <Ionicons name="moon" size={22} color="#FFFFFF" />
+                  </LinearGradient>
+                  <Text style={[styles.quickActionText, isDark && styles.darkText]}>Dream Journal</Text>
+                  <Text style={styles.quickActionSubtext}>AI insights</Text>
+                </TouchableOpacity>
+              </View>
+
+              {/* Row 4: Communication & AI */}
+              <View style={styles.quickActionRow}>
+                <TouchableOpacity 
+                  style={[styles.quickActionCard, isDark && styles.darkCard]}
                 onPress={() => {
                   setCallParticipant({ name: 'Study Partner', userType: 'Student' });
                   setShowVoiceCall(true);
@@ -588,15 +680,14 @@ export default function ModernHomeDashboard({ navigation }) {
                   colors={['#ffecd2', '#fcb69f']}
                   style={styles.quickActionGradient}
                 >
-                  <Ionicons name="call" size={32} color="#FFFFFF" />
+                    <Ionicons name="call" size={22} color="#FFFFFF" />
                 </LinearGradient>
                 <Text style={[styles.quickActionText, isDark && styles.darkText]}>HD Calls</Text>
                 <Text style={styles.quickActionSubtext}>AI noise reduction</Text>
               </TouchableOpacity>
 
-              {/* AI Quiz Generator */}
               <TouchableOpacity 
-                style={styles.quickActionCard}
+                  style={[styles.quickActionCard, isDark && styles.darkCard]}
                 onPress={() => setShowQuizGenerator(true)}
                 activeOpacity={0.8}
               >
@@ -604,15 +695,14 @@ export default function ModernHomeDashboard({ navigation }) {
                   colors={['#ff6b6b', '#ee5a52']}
                   style={styles.quickActionGradient}
                 >
-                  <Ionicons name="help-circle" size={32} color="#FFFFFF" />
+                    <Ionicons name="help-circle" size={22} color="#FFFFFF" />
                 </LinearGradient>
                 <Text style={[styles.quickActionText, isDark && styles.darkText]}>AI Quiz</Text>
                 <Text style={styles.quickActionSubtext}>Smart testing</Text>
               </TouchableOpacity>
 
-              {/* Smart Schedule */}
               <TouchableOpacity 
-                style={styles.quickActionCard}
+                  style={[styles.quickActionCard, isDark && styles.darkCard]}
                 onPress={() => setShowScheduleOptimizer(true)}
                 activeOpacity={0.8}
               >
@@ -620,30 +710,17 @@ export default function ModernHomeDashboard({ navigation }) {
                   colors={['#74b9ff', '#0984e3']}
                   style={styles.quickActionGradient}
                 >
-                  <Ionicons name="calendar" size={32} color="#FFFFFF" />
+                    <Ionicons name="calendar" size={22} color="#FFFFFF" />
                 </LinearGradient>
-                <Text style={[styles.quickActionText, isDark && styles.darkText]}>Schedule</Text>
+                  <Text style={[styles.quickActionText, isDark && styles.darkText]}>Schedule AI</Text>
                 <Text style={styles.quickActionSubtext}>AI optimized</Text>
               </TouchableOpacity>
+              </View>
 
-              {/* Group Chat */}
+              {/* Row 5: Academic Tools */}
+              <View style={styles.quickActionRow}>
               <TouchableOpacity 
-                style={styles.quickActionCard}
-                onPress={() => navigation.navigate('Chat')}
-                activeOpacity={0.8}
-              >
-                <LinearGradient
-                  colors={['#6366F1', '#8B5CF6']}
-                  style={styles.quickActionGradient}
-                >
-                  <Ionicons name="chatbubbles" size={32} color="#FFFFFF" />
-                </LinearGradient>
-                <Text style={[styles.quickActionText, isDark && styles.darkText]}>Chat</Text>
-                <Text style={styles.quickActionSubtext}>Group discussions</Text>
-              </TouchableOpacity>
-
-                            <TouchableOpacity
-                style={styles.quickActionCard}
+                  style={[styles.quickActionCard, isDark && styles.darkCard]}
                 onPress={() => navigation.navigate('AcademicCalendar')}
                 activeOpacity={0.8}
               >
@@ -651,14 +728,14 @@ export default function ModernHomeDashboard({ navigation }) {
                   colors={['#EC4899', '#8B5CF6']}
                   style={styles.quickActionGradient}
                 >
-                  <Ionicons name="calendar" size={32} color="#FFFFFF" />
+                    <Ionicons name="calendar" size={22} color="#FFFFFF" />
                 </LinearGradient>
                 <Text style={[styles.quickActionText, isDark && styles.darkText]}>Calendar</Text>
                 <Text style={styles.quickActionSubtext}>Academic events</Text>
               </TouchableOpacity>
 
               <TouchableOpacity
-                style={styles.quickActionCard}
+                  style={[styles.quickActionCard, isDark && styles.darkCard]}
                 onPress={() => navigation.navigate('CourseRegistration')}
                 activeOpacity={0.8}
               >
@@ -666,14 +743,14 @@ export default function ModernHomeDashboard({ navigation }) {
                   colors={['#8B5CF6', '#7C3AED']}
                   style={styles.quickActionGradient}
                 >
-                  <Ionicons name="school" size={32} color="#FFFFFF" />
+                    <Ionicons name="school" size={22} color="#FFFFFF" />
                 </LinearGradient>
                 <Text style={[styles.quickActionText, isDark && styles.darkText]}>Register</Text>
                 <Text style={styles.quickActionSubtext}>Course Registration</Text>
               </TouchableOpacity>
 
               <TouchableOpacity
-                style={styles.quickActionCard}
+                  style={[styles.quickActionCard, isDark && styles.darkCard]}
                 onPress={() => navigation.navigate('AcademicResults')}
                 activeOpacity={0.8}
               >
@@ -681,62 +758,124 @@ export default function ModernHomeDashboard({ navigation }) {
                   colors={['#10B981', '#059669']}
                   style={styles.quickActionGradient}
                 >
-                  <Ionicons name="trophy" size={32} color="#FFFFFF" />
+                    <Ionicons name="trophy" size={22} color="#FFFFFF" />
                 </LinearGradient>
                 <Text style={[styles.quickActionText, isDark && styles.darkText]}>Results</Text>
-                <Text style={styles.quickActionSubtext}>Academic Results</Text>
+                  <Text style={styles.quickActionSubtext}>Academic performance</Text>
               </TouchableOpacity>
+              </View>
 
+              {/* Row 6: Progress & Modules */}
+              <View style={styles.quickActionRow}>
               <TouchableOpacity
-                style={styles.quickActionCard}
-                onPress={() => navigation.navigate('WeekendStudy')}
+                  style={[styles.quickActionCard, isDark && styles.darkCard]}
+                  onPress={() => setShowProgressTracker(true)}
                 activeOpacity={0.8}
               >
                 <LinearGradient
-                  colors={['#EF4444', '#DC2626']}
+                    colors={['#F59E0B', '#D97706']}
                   style={styles.quickActionGradient}
                 >
-                  <Ionicons name="people" size={32} color="#FFFFFF" />
+                    <Ionicons name="trending-up" size={22} color="#FFFFFF" />
                 </LinearGradient>
-                <Text style={[styles.quickActionText, isDark && styles.darkText]}>Weekend</Text>
-                <Text style={styles.quickActionSubtext}>Study Groups</Text>
+                  <Text style={[styles.quickActionText, isDark && styles.darkText]}>Progress</Text>
+                  <Text style={styles.quickActionSubtext}>Track learning</Text>
               </TouchableOpacity>
 
               <TouchableOpacity
-                style={styles.quickActionCard}
-                onPress={() => navigation.navigate('SemesterModules')}
+                  style={[styles.quickActionCard, isDark && styles.darkCard]}
+                  onPress={() => setShowSemesterModules(true)}
                 activeOpacity={0.8}
               >
                 <LinearGradient
-                  colors={['#6366F1', '#8B5CF6']}
+                    colors={['#06B6D4', '#0891B2']}
                   style={styles.quickActionGradient}
                 >
-                  <Ionicons name="library" size={32} color="#FFFFFF" />
+                    <Ionicons name="library" size={22} color="#FFFFFF" />
                 </LinearGradient>
                 <Text style={[styles.quickActionText, isDark && styles.darkText]}>Modules</Text>
-                <Text style={styles.quickActionSubtext}>Semester Modules</Text>
+                  <Text style={styles.quickActionSubtext}>Semester courses</Text>
               </TouchableOpacity>
 
               <TouchableOpacity
-                style={styles.quickActionCard}
-                onPress={() => navigation.navigate('ClassSchedule')}
+                  style={[styles.quickActionCard, isDark && styles.darkCard]}
+                  onPress={() => setShowWeekendActivities(true)}
                 activeOpacity={0.8}
+              >
+                <LinearGradient
+                    colors={['#EC4899', '#BE185D']}
+                  style={styles.quickActionGradient}
+                >
+                    <Ionicons name="sunny" size={22} color="#FFFFFF" />
+                </LinearGradient>
+                  <Text style={[styles.quickActionText, isDark && styles.darkText]}>Weekend</Text>
+                  <Text style={styles.quickActionSubtext}>Study activities</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+          </View>
+
+          {/* Additional Student Features */}
+          <View style={[styles.section, isDark && styles.darkSection]}>
+            <Text style={[styles.sectionTitle, isDark && styles.darkText]}>📚 Academic Tools</Text>
+            <View style={styles.additionalFeaturesGrid}>
+              <TouchableOpacity 
+                style={[styles.additionalFeatureCard, isDark && styles.darkCard]}
+                onPress={() => navigation.navigate('GroupDiscussion')}
+              >
+                <LinearGradient
+                  colors={['#EC4899', '#BE185D']}
+                  style={styles.additionalFeatureGradient}
+                >
+                  <Ionicons name="people-circle" size={24} color="#FFFFFF" />
+                  <Text style={styles.additionalFeatureText}>Group Discussion</Text>
+                </LinearGradient>
+              </TouchableOpacity>
+
+              <TouchableOpacity 
+                style={[styles.additionalFeatureCard, isDark && styles.darkCard]}
+                onPress={() => navigation.navigate('StayUpdated')}
+              >
+                <LinearGradient
+                  colors={['#10B981', '#059669']}
+                  style={styles.additionalFeatureGradient}
+                >
+                  <Ionicons name="notifications-circle" size={24} color="#FFFFFF" />
+                  <Text style={styles.additionalFeatureText}>Stay Updated</Text>
+                </LinearGradient>
+              </TouchableOpacity>
+
+              <TouchableOpacity 
+                style={[styles.additionalFeatureCard, isDark && styles.darkCard]}
+                onPress={() => navigation.navigate('MaterialsAndTime')}
               >
                 <LinearGradient
                   colors={['#F59E0B', '#D97706']}
-                  style={styles.quickActionGradient}
+                  style={styles.additionalFeatureGradient}
                 >
-                  <Ionicons name="time" size={32} color="#FFFFFF" />
+                  <Ionicons name="time" size={24} color="#FFFFFF" />
+                  <Text style={styles.additionalFeatureText}>Materials & Time</Text>
                 </LinearGradient>
-                <Text style={[styles.quickActionText, isDark && styles.darkText]}>Schedule</Text>
-                <Text style={styles.quickActionSubtext}>Class Timetable</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity 
+                style={[styles.additionalFeatureCard, isDark && styles.darkCard]}
+                onPress={() => navigation.navigate('GradeBook')}
+              >
+                <LinearGradient
+                  colors={['#8B5CF6', '#7C3AED']}
+                  style={styles.additionalFeatureGradient}
+                >
+                  <Ionicons name="book" size={24} color="#FFFFFF" />
+                  <Text style={styles.additionalFeatureText}>Grade Book</Text>
+                </LinearGradient>
               </TouchableOpacity>
             </View>
           </View>
 
           {/* My Courses */}
           {user.userType === 'student' && (
-            <View style={styles.section}>
+            <View style={[styles.section, isDark && styles.darkSection]}>
               <View style={styles.sectionHeader}>
                 <Text style={[styles.sectionTitle, isDark && styles.darkText]}>My Courses</Text>
                 <TouchableOpacity>
@@ -756,7 +895,7 @@ export default function ModernHomeDashboard({ navigation }) {
           )}
 
           {/* Achievements & Progress */}
-          <View style={styles.section}>
+          <View style={[styles.section, isDark && styles.darkSection]}>
             <View style={styles.sectionHeader}>
               <Text style={[styles.sectionTitle, isDark && styles.darkText]}>🏆 Achievements & Progress</Text>
               <TouchableOpacity onPress={() => Alert.alert('🎖️ Achievement Center', 'Track your academic progress and unlock rewards!\n\n📊 Progress Overview:\n• Chat Activity: Master Communicator\n• Study Sessions: Focus Champion\n• Course Performance: Academic Star\n• Community: Team Player\n\n🎯 Keep engaging to unlock more achievements!')}>
@@ -765,36 +904,36 @@ export default function ModernHomeDashboard({ navigation }) {
             </View>
 
             {/* Achievement Progress Summary */}
-            <View style={styles.achievementSummary}>
+            <View style={[styles.achievementSummary, isDark && styles.darkCard]}>
               <LinearGradient
-                colors={['#4F46E5', '#7C3AED']}
+                colors={isDark ? ['#1E293B', '#334155'] : ['#4F46E5', '#7C3AED']}
                 style={styles.achievementSummaryGradient}
                 start={{ x: 0, y: 0 }}
                 end={{ x: 1, y: 0 }}
               >
                 <View style={styles.achievementStats}>
                   <View style={styles.achievementStat}>
-                    <Text style={styles.achievementStatNumber}>
+                    <Text style={[styles.achievementStatNumber, isDark && styles.darkText]}>
                       {achievementProgress?.earned || (achievements.length > 0 ? achievements.length : 4)}
                     </Text>
-                    <Text style={styles.achievementStatLabel}>Earned</Text>
+                    <Text style={[styles.achievementStatLabel, isDark && styles.darkText]}>Earned</Text>
                   </View>
                   <View style={styles.achievementStat}>
-                    <Text style={styles.achievementStatNumber}>
+                    <Text style={[styles.achievementStatNumber, isDark && styles.darkText]}>
                       {userStats?.totalPoints || (achievements.length > 0 ? achievements.reduce((sum, a) => sum + (a.points || 50), 0) : 185)}
                     </Text>
-                    <Text style={styles.achievementStatLabel}>Points</Text>
+                    <Text style={[styles.achievementStatLabel, isDark && styles.darkText]}>Points</Text>
                   </View>
                   <View style={styles.achievementStat}>
-                    <Text style={styles.achievementStatNumber}>
+                    <Text style={[styles.achievementStatNumber, isDark && styles.darkText]}>
                       {achievementProgress?.percentage || 65}%
                     </Text>
-                    <Text style={styles.achievementStatLabel}>Progress</Text>
+                    <Text style={[styles.achievementStatLabel, isDark && styles.darkText]}>Progress</Text>
                   </View>
                 </View>
                 
                 <View style={styles.levelProgress}>
-                  <Text style={styles.levelText}>
+                  <Text style={[styles.levelText, isDark && styles.darkText]}>
                     Level {Math.floor((userStats?.totalPoints || 185) / 100) + 1} • {((userStats?.totalPoints || 185) % 100)} XP to next level
                   </Text>
                   <View style={styles.levelProgressBar}>
@@ -903,7 +1042,7 @@ export default function ModernHomeDashboard({ navigation }) {
 
           {/* Academic Progress & Credits */}
           {user.userType === 'student' && (
-            <View style={styles.section}>
+            <View style={[styles.section, isDark && styles.darkSection]}>
               <View style={styles.sectionHeader}>
                 <Text style={[styles.sectionTitle, isDark && styles.darkText]}>📚 Academic Progress</Text>
                 <TouchableOpacity onPress={() => navigation.navigate('AcademicOverview')}>
@@ -912,7 +1051,7 @@ export default function ModernHomeDashboard({ navigation }) {
               </View>
 
               <View style={styles.academicStatsContainer}>
-                <View style={styles.academicStatCard}>
+                <View style={[styles.academicStatCard, isDark && styles.darkCard]}>
                   <LinearGradient colors={['#10B981', '#059669']} style={styles.academicStatGradient}>
                     <Ionicons name="book-outline" size={24} color="#FFFFFF" />
                     <Text style={styles.academicStatNumber}>{csModules?.length || 0}</Text>
@@ -920,7 +1059,7 @@ export default function ModernHomeDashboard({ navigation }) {
                   </LinearGradient>
                 </View>
 
-                <View style={styles.academicStatCard}>
+                <View style={[styles.academicStatCard, isDark && styles.darkCard]}>
                   <LinearGradient colors={['#8B5CF6', '#7C3AED']} style={styles.academicStatGradient}>
                     <Ionicons name="school-outline" size={24} color="#FFFFFF" />
                     <Text style={styles.academicStatNumber}>
@@ -930,15 +1069,15 @@ export default function ModernHomeDashboard({ navigation }) {
                   </LinearGradient>
                 </View>
 
-                <View style={styles.academicStatCard}>
+                <View style={[styles.academicStatCard, isDark && styles.darkCard]}>
                   <LinearGradient colors={['#F59E0B', '#D97706']} style={styles.academicStatGradient}>
-                    <Ionicons name="trending-up-outline" size={24} color="#FFFFFF" />
+                    <Ionicons name="trending-outline" size={24} color="#FFFFFF" />
                     <Text style={styles.academicStatNumber}>3.45</Text>
                     <Text style={styles.academicStatLabel}>CGPA</Text>
                   </LinearGradient>
                 </View>
 
-                <View style={styles.academicStatCard}>
+                <View style={[styles.academicStatCard, isDark && styles.darkCard]}>
                   <LinearGradient colors={['#EF4444', '#DC2626']} style={styles.academicStatGradient}>
                     <Ionicons name="calendar-outline" size={24} color="#FFFFFF" />
                     <Text style={styles.academicStatNumber}>{user?.academicLevel || '300'}</Text>
@@ -948,27 +1087,27 @@ export default function ModernHomeDashboard({ navigation }) {
               </View>
 
               {/* Semester Credit Breakdown */}
-              <View style={styles.semesterBreakdown}>
-                <Text style={styles.semesterTitle}>Credit Hours Breakdown</Text>
+              <View style={[styles.semesterBreakdown, isDark && styles.darkCard]}>
+                <Text style={[styles.semesterTitle, isDark && styles.darkText]}>Credit Hours Breakdown</Text>
                 <View style={styles.semesterRow}>
                   <View style={styles.semesterColumn}>
-                    <Text style={styles.semesterLabel}>Semester 1</Text>
-                    <Text style={styles.semesterCredits}>
+                    <Text style={[styles.semesterLabel, isDark && styles.darkText]}>Semester 1</Text>
+                    <Text style={[styles.semesterCredits, isDark && styles.darkText]}>
                       {csModules?.filter(module => module.semester === 1)
                         .reduce((total, course) => total + (course.credits || 3), 0) || 0} Credits
                     </Text>
-                    <Text style={styles.semesterCourses}>
+                    <Text style={[styles.semesterCourses, isDark && styles.darkText]}>
                       {csModules?.filter(module => module.semester === 1).length || 0} Courses
                     </Text>
                   </View>
                   <View style={styles.semesterDivider} />
                   <View style={styles.semesterColumn}>
-                    <Text style={styles.semesterLabel}>Semester 2</Text>
-                    <Text style={styles.semesterCredits}>
+                    <Text style={[styles.semesterLabel, isDark && styles.darkText]}>Semester 2</Text>
+                    <Text style={[styles.semesterCredits, isDark && styles.darkText]}>
                       {csModules?.filter(module => module.semester === 2)
                         .reduce((total, course) => total + (course.credits || 3), 0) || 0} Credits
                     </Text>
-                    <Text style={styles.semesterCourses}>
+                    <Text style={[styles.semesterCourses, isDark && styles.darkText]}>
                       {csModules?.filter(module => module.semester === 2).length || 0} Courses
                     </Text>
                   </View>
@@ -978,7 +1117,7 @@ export default function ModernHomeDashboard({ navigation }) {
           )}
 
           {/* Recent Activity */}
-          <View style={styles.section}>
+                      <View style={[styles.section, isDark && styles.darkSection]}>
             <View style={styles.sectionHeader}>
               <Text style={[styles.sectionTitle, isDark && styles.darkText]}>📋 Recent Activity</Text>
               <TouchableOpacity onPress={() => navigation.navigate('Notifications')}>
@@ -1011,10 +1150,10 @@ export default function ModernHomeDashboard({ navigation }) {
                     <Text style={[styles.activityTitle, isDark && styles.darkText]} numberOfLines={1}>
                       {notification.title}
                     </Text>
-                    <Text style={styles.activityMessage} numberOfLines={2}>
+                    <Text style={[styles.activityMessage, isDark && styles.darkText]} numberOfLines={2}>
                       {notification.message}
                     </Text>
-                    <Text style={styles.activityTime}>
+                    <Text style={[styles.activityTime, isDark && styles.darkText]}>
                       {new Date(notification.timestamp).toLocaleDateString()}
                     </Text>
                   </View>
@@ -1030,30 +1169,129 @@ export default function ModernHomeDashboard({ navigation }) {
         </ScrollView>
       </Animated.View>
 
-      {/* Modern Floating Action Button */}
+      {/* Modern Floating Action Button — opens Quick Actions modal */}
       <TouchableOpacity 
         style={styles.fab}
-        onPress={() => Alert.alert('Quick Actions', 'Choose an action:', [
-          { text: 'Create Study Group', onPress: () => createStudyGroup() },
-          { text: 'Set Reminder', onPress: () => setReminder() },
-          { text: 'Start Pomodoro', onPress: () => startPomodoroTimer() },
-          { text: 'Private Message 🔒', onPress: () => navigation.navigate('PrivateMessaging') },
-          { text: 'Course Rep 👑', onPress: () => navigation.navigate('CourseRepresentative') },
-                  { text: 'Academic Overview', onPress: () => navigation.navigate('AcademicOverview') },
-        { text: 'Academic Calendar', onPress: () => navigation.navigate('AcademicCalendar') },
-        { text: 'View Profile', onPress: () => navigation.navigate('AcademicOverview', { initialTab: 'personal' }) },
-        { text: 'View Modules', onPress: () => navigation.navigate('SemesterModules') },
-          { text: 'Cancel', style: 'cancel' }
-        ])}
+        onPress={() => { Vibration.vibrate(50); setShowQuickActionsModal(true); }}
         activeOpacity={0.8}
       >
         <LinearGradient
-          colors={['#6366F1', '#8B5CF6']}
+          colors={isDark ? ['#1E293B', '#334155'] : ['#6366F1', '#8B5CF6']}
           style={styles.fabGradient}
         >
           <Ionicons name="add" size={28} color="#FFFFFF" />
         </LinearGradient>
       </TouchableOpacity>
+
+      {/* Quick Actions Modal — all actions with icons */}
+      <Modal
+        visible={showQuickActionsModal}
+        transparent
+        animationType="slide"
+        onRequestClose={() => setShowQuickActionsModal(false)}
+      >
+        <Pressable style={styles.quickActionsOverlay} onPress={() => setShowQuickActionsModal(false)}>
+          <View style={[styles.quickActionsSheet, isDark && styles.quickActionsSheetDark]} onStartShouldSetResponder={() => true}>
+            <View style={styles.quickActionsHandle} />
+            <Text style={[styles.quickActionsTitle, isDark && styles.darkText]}>Quick Actions</Text>
+            <ScrollView showsVerticalScrollIndicator={false} style={styles.quickActionsScroll}>
+              {[
+                { id: 'studyGroup', icon: 'people', label: 'Create Study Group', sub: 'Invite coursemates', onPress: createStudyGroup, colors: ['#6366F1', '#8B5CF6'] },
+                { id: 'reminder', icon: 'alarm', label: 'Set Reminder', sub: 'Assignments & classes', onPress: setReminder, colors: ['#F59E0B', '#D97706'] },
+                { id: 'pomodoro', icon: 'timer', label: 'Start Pomodoro', sub: 'Focus timer', onPress: startPomodoroTimer, colors: ['#10B981', '#059669'] },
+                { id: 'privateMsg', icon: 'chatbubble-ellipses', label: 'Private Message', sub: 'Direct chat', onPress: () => { setShowQuickActionsModal(false); navigation.navigate('PrivateMessaging'); }, colors: ['#EC4899', '#BE185D'] },
+                { id: 'courseRep', icon: 'ribbon', label: 'Course Rep', sub: 'Representatives', onPress: () => { setShowQuickActionsModal(false); navigation.navigate('CourseRepresentative'); }, colors: ['#8B5CF6', '#7C3AED'] },
+                { id: 'acadOverview', icon: 'school', label: 'Academic Overview', sub: 'Grades & progress', onPress: () => { setShowQuickActionsModal(false); navigation.navigate('AcademicOverview'); }, colors: ['#3B82F6', '#2563EB'] },
+                { id: 'acadCalendar', icon: 'calendar', label: 'Academic Calendar', sub: 'Events & deadlines', onPress: () => { setShowQuickActionsModal(false); navigation.navigate('AcademicCalendar'); }, colors: ['#EC4899', '#8B5CF6'] },
+                { id: 'profile', icon: 'person', label: 'View Profile', sub: 'Your account', onPress: () => { setShowQuickActionsModal(false); navigation.navigate('Profile'); }, colors: ['#64748B', '#475569'] },
+                { id: 'modules', icon: 'library', label: 'View Modules', sub: 'Semester courses', onPress: () => { setShowQuickActionsModal(false); setShowSemesterModules(true); }, colors: ['#059669', '#047857'] },
+              ].map((action) => (
+                <TouchableOpacity
+                  key={action.id}
+                  style={[styles.quickActionRow, isDark && styles.quickActionRowDark]}
+                  onPress={action.onPress}
+                  activeOpacity={0.7}
+                >
+                  <LinearGradient colors={action.colors} style={styles.quickActionRowIcon}>
+                    <Ionicons name={action.icon} size={22} color="#FFFFFF" />
+                  </LinearGradient>
+                  <View style={styles.quickActionRowText}>
+                    <Text style={[styles.quickActionRowLabel, isDark && styles.darkText]}>{action.label}</Text>
+                    <Text style={[styles.quickActionRowSub, isDark && styles.quickActionRowSubDark]}>{action.sub}</Text>
+                  </View>
+                  <Ionicons name="chevron-forward" size={20} color={isDark ? '#94A3B8' : '#64748B'} />
+                </TouchableOpacity>
+              ))}
+            </ScrollView>
+            <TouchableOpacity style={[styles.quickActionsCancel, isDark && styles.quickActionsCancelDark]} onPress={() => setShowQuickActionsModal(false)}>
+              <Text style={[styles.quickActionsCancelText, isDark && styles.darkText]}>Cancel</Text>
+            </TouchableOpacity>
+          </View>
+        </Pressable>
+      </Modal>
+
+      {/* Study Group Picker Modal — choose course to create group */}
+      <Modal visible={showStudyGroupPicker} transparent animationType="fade">
+        <Pressable style={styles.quickActionsOverlay} onPress={() => setShowStudyGroupPicker(false)}>
+          <View style={[styles.studyGroupPickerCard, isDark && styles.quickActionsSheetDark]} onStartShouldSetResponder={() => true}>
+            <Text style={[styles.studyGroupPickerTitle, isDark && styles.darkText]}>Create Study Group 👥</Text>
+            <Text style={[styles.studyGroupPickerSub, isDark && styles.quickActionRowSubDark]}>Choose a course</Text>
+            <ScrollView style={styles.studyGroupPickerList} showsVerticalScrollIndicator={false}>
+              {coursesList.map((course) => (
+                <TouchableOpacity
+                  key={course.code}
+                  style={[styles.studyGroupPickerItem, isDark && styles.quickActionRowDark]}
+                  onPress={() => confirmStudyGroup(course)}
+                  activeOpacity={0.7}
+                >
+                  <View style={[styles.studyGroupPickerItemDot, { backgroundColor: course.color || '#6366F1' }]} />
+                  <Text style={[styles.studyGroupPickerItemCode, isDark && styles.darkText]}>{course.code}</Text>
+                  <Text style={[styles.studyGroupPickerItemName, isDark && styles.quickActionRowSubDark]} numberOfLines={1}>{course.name}</Text>
+                  <Ionicons name="chevron-forward" size={18} color={isDark ? '#94A3B8' : '#64748B'} />
+                </TouchableOpacity>
+              ))}
+            </ScrollView>
+            <TouchableOpacity style={[styles.quickActionsCancel, isDark && styles.quickActionsCancelDark]} onPress={() => setShowStudyGroupPicker(false)}>
+              <Text style={[styles.quickActionsCancelText, isDark && styles.darkText]}>Cancel</Text>
+            </TouchableOpacity>
+          </View>
+        </Pressable>
+      </Modal>
+
+      {/* Set Reminder Picker Modal */}
+      <Modal visible={showReminderPicker} transparent animationType="fade">
+        <Pressable style={styles.quickActionsOverlay} onPress={() => setShowReminderPicker(false)}>
+          <View style={[styles.studyGroupPickerCard, isDark && styles.quickActionsSheetDark]} onStartShouldSetResponder={() => true}>
+            <Text style={[styles.studyGroupPickerTitle, isDark && styles.darkText]}>Set Reminder ⏰</Text>
+            <Text style={[styles.studyGroupPickerSub, isDark && styles.quickActionRowSubDark]}>What would you like to be reminded about?</Text>
+            {[
+              { type: 'assignment', title: 'Reminder Set! ✅', message: "You'll be reminded about upcoming assignment deadlines.", icon: 'document-text', colors: ['#3B82F6', '#2563EB'] },
+              { type: 'study', title: 'Study Reminder Set! 📚', message: "Daily study reminder enabled. You'll get notifications to maintain your streak.", icon: 'book', colors: ['#10B981', '#059669'] },
+              { type: 'class', title: 'Class Reminder Set! 🎓', message: "You'll be reminded 15 minutes before each class starts.", icon: 'calendar', colors: ['#8B5CF6', '#7C3AED'] },
+            ].map((r) => (
+              <TouchableOpacity
+                key={r.type}
+                style={[styles.quickActionRow, isDark && styles.quickActionRowDark]}
+                onPress={() => confirmReminder(r.type, r.title, r.message)}
+                activeOpacity={0.7}
+              >
+                <LinearGradient colors={r.colors} style={styles.quickActionRowIcon}>
+                  <Ionicons name={r.icon} size={22} color="#FFFFFF" />
+                </LinearGradient>
+                <View style={styles.quickActionRowText}>
+                  <Text style={[styles.quickActionRowLabel, isDark && styles.darkText]}>
+                    {r.type === 'assignment' ? 'Assignment Due' : r.type === 'study' ? 'Study Session' : 'Class Schedule'}
+                  </Text>
+                </View>
+                <Ionicons name="chevron-forward" size={20} color={isDark ? '#94A3B8' : '#64748B'} />
+              </TouchableOpacity>
+            ))}
+            <TouchableOpacity style={[styles.quickActionsCancel, isDark && styles.quickActionsCancelDark]} onPress={() => setShowReminderPicker(false)}>
+              <Text style={[styles.quickActionsCancelText, isDark && styles.darkText]}>Cancel</Text>
+            </TouchableOpacity>
+          </View>
+        </Pressable>
+      </Modal>
 
       {/* Amazing New Features Modals */}
       <AIStudyAssistant 
@@ -1109,6 +1347,65 @@ export default function ModernHomeDashboard({ navigation }) {
         onClose={() => setShowWelcomeGuide(false)}
         userType="student"
       />
+
+      {/* 🎤 Voice Recorder Modal */}
+      <VoiceRecorder
+        visible={showVoiceRecorder}
+        onClose={() => setShowVoiceRecorder(false)}
+        onSend={(voiceData) => {
+          console.log('Voice message sent:', voiceData);
+          Alert.alert('Success!', 'Voice message recorded and sent successfully!');
+        }}
+        courseCode={selectedCourse?.code}
+      />
+
+      {/* ✏️ Smart Text Editor Modal */}
+      <TextEditor
+        visible={showTextEditor}
+        onClose={() => setShowTextEditor(false)}
+        onSave={(textData) => {
+          console.log('Text saved:', textData);
+          Alert.alert('Success!', 'Text saved and sent successfully!');
+        }}
+        courseCode={selectedCourse?.code}
+      />
+
+      {/* 🎯 Progress Tracker Modal */}
+      <ProgressTracker
+        visible={showProgressTracker}
+        onClose={() => setShowProgressTracker(false)}
+        user={user}
+        courses={csModules}
+      />
+
+      {/* 📚 Semester Modules Modal */}
+      <SemesterModules
+        visible={showSemesterModules}
+        onClose={() => setShowSemesterModules(false)}
+        user={user}
+        courses={csModules}
+      />
+
+      {/* 🎮 Game Center Modal */}
+      <GameCenter
+        visible={showGameCenter}
+        onClose={() => setShowGameCenter(false)}
+        user={user}
+      />
+
+      {/* 🎯 Focus Mode Modal */}
+      <FocusMode
+        visible={showFocusMode}
+        onClose={() => setShowFocusMode(false)}
+        user={user}
+      />
+
+      {/* 🌅 Weekend Activities Modal */}
+      <WeekendActivities
+        visible={showWeekendActivities}
+        onClose={() => setShowWeekendActivities(false)}
+        user={user}
+      />
     </SafeAreaView>
   );
 }
@@ -1120,6 +1417,25 @@ const styles = StyleSheet.create({
   },
   darkContainer: {
     backgroundColor: '#0F0F23',
+  },
+  darkText: {
+    color: '#FFFFFF',
+  },
+  darkCard: {
+    backgroundColor: '#1E293B',
+    borderColor: '#334155',
+  },
+  darkSection: {
+    backgroundColor: '#1E293B',
+  },
+  darkGradient: {
+    backgroundColor: '#1E293B',
+  },
+  darkBorder: {
+    borderColor: '#334155',
+  },
+  darkBackground: {
+    backgroundColor: '#0F172A',
   },
   content: {
     flex: 1,
@@ -1199,19 +1515,72 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   welcomeText: {
-    fontSize: 14,
-    color: 'rgba(255, 255, 255, 0.8)',
-    marginBottom: 4,
+    fontSize: 18,
+    color: '#FFFFFF',
+    fontWeight: '600',
+    marginBottom: 6,
+    textShadowColor: 'rgba(0, 0, 0, 0.2)',
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 2,
   },
   userName: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#FFFFFF',
-    marginBottom: 4,
+    fontSize: 20,
+    fontWeight: '700',
+    color: '#FCD34D',
+    textShadowColor: 'rgba(0, 0, 0, 0.3)',
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 2,
   },
-  userLevel: {
+
+  greetingSection: {
+    marginBottom: 12,
+  },
+  credentialsSection: {
+    marginTop: 8,
+  },
+  credentialRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    flexWrap: 'wrap',
+    paddingHorizontal: 0,
+  },
+  credentialItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    flexShrink: 1,
+  },
+  credentialText: {
+    fontSize: 13,
+    color: 'rgba(255, 255, 255, 0.9)',
+    fontWeight: '600',
+    lineHeight: 18,
+  },
+  credentialSeparator: {
     fontSize: 14,
+    color: 'rgba(255, 255, 255, 0.35)',
+    marginHorizontal: 8,
+    fontWeight: '400',
+    marginTop: 1,
+  },
+
+  onlineStatus: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 8,
+  },
+  onlineIndicator: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: '#10B981',
+    marginRight: 6,
+  },
+  onlineText: {
+    fontSize: 12,
     color: 'rgba(255, 255, 255, 0.8)',
+    fontWeight: '500',
   },
   headerActions: {
     flexDirection: 'row',
@@ -1221,16 +1590,21 @@ const styles = StyleSheet.create({
   discoverButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: 'rgba(255, 255, 255, 0.2)',
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    borderRadius: 20,
+    backgroundColor: 'rgba(255, 255, 255, 0.25)',
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    borderRadius: 24,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.3)',
   },
   discoverButtonText: {
-    fontSize: 12,
+    fontSize: 14,
     color: '#FFFFFF',
-    fontWeight: '600',
-    marginLeft: 4,
+    fontWeight: '700',
+    marginLeft: 6,
+    textShadowColor: 'rgba(0, 0, 0, 0.3)',
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 2,
   },
   themeToggle: {
     width: 44,
@@ -1268,52 +1642,68 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
   },
 
+  // Stats Section
+  statsSection: {
+    marginTop: 16,
+  },
+  statsSectionTitle: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: '#FFFFFF',
+    marginBottom: 12,
+    textAlign: 'center',
+    textShadowColor: 'rgba(0, 0, 0, 0.3)',
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 2,
+  },
   // Stats Container
   statsContainer: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    gap: 12,
+    gap: 10,
   },
   statCard: {
     flex: 1,
     backgroundColor: 'rgba(255, 255, 255, 0.2)',
-    borderRadius: 16,
-    padding: 16,
+    borderRadius: 12,
+    padding: 12,
     alignItems: 'center',
     justifyContent: 'center',
   },
   statNumber: {
-    fontSize: 24,
+    fontSize: 20,
     fontWeight: 'bold',
     color: '#FFFFFF',
-    marginTop: 8,
+    marginTop: 6,
   },
   statLabel: {
-    fontSize: 12,
+    fontSize: 11,
     color: 'rgba(255, 255, 255, 0.8)',
-    marginTop: 4,
+    marginTop: 3,
   },
   progressContainer: {
     alignItems: 'center',
   },
   progressLabel: {
-    fontSize: 12,
+    fontSize: 11,
     color: 'rgba(255, 255, 255, 0.8)',
-    marginBottom: 8,
+    marginBottom: 6,
   },
   circularProgress: {
-    width: 50,
-    height: 50,
-    borderRadius: 25,
+    width: 40,
+    height: 40,
+    borderRadius: 20,
     backgroundColor: 'rgba(255, 255, 255, 0.2)',
     justifyContent: 'center',
     alignItems: 'center',
   },
   progressPercentage: {
-    fontSize: 14,
+    fontSize: 12,
     fontWeight: 'bold',
     color: '#FFFFFF',
   },
+
+
 
   // Sections
   section: {
@@ -1342,43 +1732,49 @@ const styles = StyleSheet.create({
 
   // Quick Actions
   quickActionsGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
+    flexDirection: 'column',
     gap: 16,
   },
+  quickActionRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    gap: 12,
+  },
   quickActionCard: {
-    width: (width - 60) / 2,
+    flex: 1,
     backgroundColor: '#FFFFFF',
-    borderRadius: 20,
-    padding: 20,
+    borderRadius: 16,
+    padding: 16,
     alignItems: 'center',
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 4,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 4,
+    elevation: 2,
   },
   darkCard: {
     backgroundColor: '#1A1A2E',
   },
   quickActionGradient: {
-    width: 60,
-    height: 60,
-    borderRadius: 30,
+    width: 44,
+    height: 44,
+    borderRadius: 22,
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: 12,
+    marginBottom: 8,
   },
   quickActionText: {
-    fontSize: 16,
+    fontSize: 12,
     fontWeight: '600',
     color: '#1E293B',
-    marginBottom: 4,
+    textAlign: 'center',
+    marginBottom: 2,
   },
   quickActionSubtext: {
-    fontSize: 12,
+    fontSize: 10,
     color: '#64748B',
     textAlign: 'center',
+    fontWeight: '400',
   },
 
   // Courses
@@ -1406,6 +1802,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'flex-start',
   },
+
   courseCode: {
     fontSize: 14,
     fontWeight: '600',
@@ -1707,5 +2104,217 @@ const styles = StyleSheet.create({
     borderRadius: 32,
     justifyContent: 'center',
     alignItems: 'center',
+  },
+
+  // Quick Actions Modal
+  quickActionsOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    justifyContent: 'flex-end',
+  },
+  quickActionsSheet: {
+    backgroundColor: '#FFFFFF',
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    paddingHorizontal: 20,
+    paddingBottom: 34,
+    maxHeight: height * 0.75,
+  },
+  quickActionsSheetDark: {
+    backgroundColor: '#1E293B',
+  },
+  quickActionsHandle: {
+    width: 40,
+    height: 4,
+    borderRadius: 2,
+    backgroundColor: '#CBD5E1',
+    alignSelf: 'center',
+    marginTop: 12,
+    marginBottom: 8,
+  },
+  quickActionsTitle: {
+    fontSize: 22,
+    fontWeight: '700',
+    color: '#1E293B',
+    marginBottom: 16,
+    textAlign: 'center',
+  },
+  quickActionsScroll: {
+    maxHeight: height * 0.5,
+  },
+  quickActionRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#F8FAFC',
+    paddingVertical: 14,
+    paddingHorizontal: 16,
+    borderRadius: 14,
+    marginBottom: 10,
+  },
+  quickActionRowDark: {
+    backgroundColor: '#334155',
+  },
+  quickActionRowIcon: {
+    width: 44,
+    height: 44,
+    borderRadius: 12,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 14,
+  },
+  quickActionRowText: { flex: 1 },
+  quickActionRowLabel: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#1E293B',
+  },
+  quickActionRowSub: {
+    fontSize: 12,
+    color: '#64748B',
+    marginTop: 2,
+  },
+  quickActionRowSubDark: {
+    color: '#94A3B8',
+  },
+  quickActionsCancel: {
+    marginTop: 12,
+    paddingVertical: 14,
+    borderRadius: 14,
+    backgroundColor: '#F1F5F9',
+    alignItems: 'center',
+  },
+  quickActionsCancelDark: {
+    backgroundColor: '#334155',
+  },
+  quickActionsCancelText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#64748B',
+  },
+  studyGroupPickerCard: {
+    backgroundColor: '#FFFFFF',
+    marginHorizontal: 20,
+    marginBottom: 80,
+    borderRadius: 20,
+    padding: 20,
+    maxHeight: height * 0.6,
+  },
+  studyGroupPickerTitle: {
+    fontSize: 20,
+    fontWeight: '700',
+    color: '#1E293B',
+    marginBottom: 4,
+  },
+  studyGroupPickerSub: {
+    fontSize: 14,
+    color: '#64748B',
+    marginBottom: 16,
+  },
+  studyGroupPickerList: {
+    maxHeight: height * 0.35,
+  },
+  studyGroupPickerItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#F8FAFC',
+    paddingVertical: 12,
+    paddingHorizontal: 14,
+    borderRadius: 12,
+    marginBottom: 8,
+  },
+  studyGroupPickerItemDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    marginRight: 12,
+  },
+  studyGroupPickerItemCode: {
+    fontSize: 15,
+    fontWeight: '600',
+    color: '#1E293B',
+    marginRight: 8,
+  },
+  studyGroupPickerItemName: {
+    flex: 1,
+    fontSize: 13,
+    color: '#64748B',
+  },
+
+  // Profile Section Styles
+  profileSection: {
+    marginBottom: 24,
+    paddingHorizontal: 20,
+  },
+  profileCard: {
+    borderRadius: 20,
+    overflow: 'hidden',
+  },
+  profileGradient: {
+    padding: 20,
+  },
+  profileContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  profileAvatar: {
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 16,
+  },
+  profileAvatarText: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: '#FFFFFF',
+  },
+  profileInfo: {
+    flex: 1,
+  },
+  profileName: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#FFFFFF',
+    marginBottom: 4,
+  },
+  profileRole: {
+    fontSize: 14,
+    color: 'rgba(255, 255, 255, 0.9)',
+    marginBottom: 2,
+  },
+  profileDetails: {
+    fontSize: 12,
+    color: 'rgba(255, 255, 255, 0.8)',
+  },
+
+
+
+  // Additional Features Styles
+  additionalFeaturesGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 12,
+    marginTop: 16,
+  },
+  additionalFeatureCard: {
+    width: (width - 64) / 2,
+    borderRadius: 16,
+    overflow: 'hidden',
+    marginBottom: 12,
+  },
+  additionalFeatureGradient: {
+    padding: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
+    minHeight: 70,
+  },
+  additionalFeatureText: {
+    color: '#FFFFFF',
+    fontSize: 13,
+    fontWeight: '600',
+    marginTop: 6,
+    textAlign: 'center',
   },
 });

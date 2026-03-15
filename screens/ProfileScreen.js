@@ -19,11 +19,13 @@ import { LinearGradient } from 'expo-linear-gradient';
 import * as ImagePicker from 'expo-image-picker';
 import * as ImageManipulator from 'expo-image-manipulator';
 import { useApp } from '../context/AppContext';
+import { useTheme } from '../components/ThemeProvider';
 
 const { width } = Dimensions.get('window');
 
 export default function ProfileScreen({ navigation }) {
   const { user, csModules, signOut, updateUserData } = useApp();
+  const { isDark } = useTheme();
   const [editModalVisible, setEditModalVisible] = useState(false);
   const [profileImage, setProfileImage] = useState(user?.avatar || null);
   const [isUpdating, setIsUpdating] = useState(false);
@@ -497,7 +499,7 @@ export default function ProfileScreen({ navigation }) {
   };
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={[styles.container, isDark && styles.darkContainer]}>
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
         {/* Enhanced Header with Profile Picture */}
         <LinearGradient
@@ -505,7 +507,7 @@ export default function ProfileScreen({ navigation }) {
           style={styles.headerGradient}
         >
         <View style={styles.header}>
-          <View style={styles.profileCard}>
+                      <View style={[styles.profileCard, isDark && styles.darkProfileCard]}>
               <View style={styles.avatarSection}>
                 <TouchableOpacity 
                   style={styles.avatarContainer}
@@ -546,7 +548,7 @@ export default function ProfileScreen({ navigation }) {
                 </TouchableOpacity>
 
             <View style={styles.userInfo}>
-                  <Text style={styles.userName}>
+                  <Text style={[styles.userName, isDark && styles.darkUserName]}>
                     {user?.userType === 'lecturer' ? `${user?.title || 'Dr.'} ` : ''}{user?.name || 'User Name'}
                   </Text>
                   <Text style={styles.userEmail}>{user?.email || 'email@university.edu'}</Text>
@@ -921,12 +923,19 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#F8FAFC',
   },
+  darkContainer: {
+    flex: 1,
+    backgroundColor: '#0F172A',
+  },
   loadingContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
     backgroundColor: '#F8FAFC',
     gap: 16,
+  },
+  darkLoadingContainer: {
+    backgroundColor: '#0F172A',
   },
   loadingText: {
     fontSize: 16,
@@ -954,6 +963,9 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.15,
     shadowRadius: 20,
     elevation: 10,
+  },
+  darkProfileCard: {
+    backgroundColor: 'rgba(30, 41, 59, 0.95)',
   },
   avatarSection: {
     flexDirection: 'row',
@@ -1016,7 +1028,9 @@ const styles = StyleSheet.create({
     fontSize: 24,
     fontWeight: 'bold',
     color: '#1E293B',
-    marginBottom: 6,
+  },
+  darkUserName: {
+    color: '#FFFFFF',
   },
   userEmail: {
     fontSize: 16,

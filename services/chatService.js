@@ -251,13 +251,13 @@ class ChatService {
         return { success: false, error: 'You can only edit your own messages' };
       }
 
-      // Check if message is not too old (48 hours limit like WhatsApp)
+      // Check if message is not too old (7 days limit - more generous than WhatsApp)
       const messageTime = messageData.timestamp?.toDate?.() || new Date(0);
       const now = new Date();
       const hoursDiff = (now - messageTime) / (1000 * 60 * 60);
       
-      if (hoursDiff > 48) {
-        return { success: false, error: 'Message is too old to edit (48 hour limit)' };
+      if (hoursDiff > 168) { // 7 days = 168 hours
+        return { success: false, error: 'Message is too old to edit (7 day limit)' };
       }
 
       // Check if message was already deleted
@@ -300,13 +300,13 @@ class ChatService {
       }
 
       if (deleteForEveryone) {
-        // Delete for everyone (7 minutes limit like WhatsApp)
+        // Delete for everyone (30 minutes limit - more generous than WhatsApp)
         const messageTime = messageData.timestamp?.toDate?.() || new Date(0);
         const now = new Date();
         const minutesDiff = (now - messageTime) / (1000 * 60);
         
-        if (minutesDiff > 7) {
-          return { success: false, error: 'Cannot delete for everyone after 7 minutes' };
+        if (minutesDiff > 30) {
+          return { success: false, error: 'Cannot delete for everyone after 30 minutes' };
         }
 
         await updateDoc(messageRef, {

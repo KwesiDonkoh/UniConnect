@@ -1,225 +1,318 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState } from 'react';
 import {
   View,
   Text,
   TextInput,
   TouchableOpacity,
   StyleSheet,
-  SafeAreaView,
-  Alert,
-  ActivityIndicator,
-  Dimensions,
-  Animated,
   KeyboardAvoidingView,
   Platform,
+  Alert,
+  ScrollView,
+  SafeAreaView,
+  StatusBar,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
-import { StatusBar } from 'expo-status-bar';
 import { useApp } from '../context/AppContext';
-import { Colors } from '../themes/modernTheme';
-
-const { width, height } = Dimensions.get('window');
 
 export default function SimpleLoginScreen({ navigation }) {
-  const { signIn } = useApp();
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLogin, setIsLogin] = useState(true);
+  const [formData, setFormData] = useState({
+    fullName: '',
+    email: '',
+    password: '',
+    confirmPassword: '',
+    userType: 'student',
+    academicLevel: '100',
+  });
   const [showPassword, setShowPassword] = useState(false);
-  const [isSignUp, setIsSignUp] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  
+  const { signIn, signUp } = useApp();
 
-  const fadeAnim = useRef(new Animated.Value(0)).current;
-  const slideAnim = useRef(new Animated.Value(30)).current;
+  const userTypes = [
+    { id: 'student', title: 'Student', icon: 'school' },
+    { id: 'lecturer', title: 'Lecturer', icon: 'library' },
+  ];
 
-  useEffect(() => {
-    Animated.parallel([
-      Animated.timing(fadeAnim, {
-        toValue: 1,
-        duration: 1000,
-        useNativeDriver: true,
-      }),
-      Animated.timing(slideAnim, {
-        toValue: 0,
-        duration: 1000,
-        useNativeDriver: true,
-      }),
-    ]).start();
-  }, []);
+  const academicLevels = [
+    { id: '100', level: '100 Level' },
+    { id: '200', level: '200 Level' },
+    { id: '300', level: '300 Level' },
+    { id: '400', level: '400 Level' },
+  ];
 
-  const handleLogin = async () => {
-    if (!email || !password) {
-      Alert.alert('Error', 'Please fill in all fields');
-      return;
-    }
-
-    setIsLoading(true);
-    try {
-      const result = await signIn(email, password);
-      if (result.success) {
-        // Navigation will be handled by App.js based on auth state
-      } else {
-        Alert.alert('Login Failed', result.error || 'Please check your credentials');
+  const handleSubmit = async () => {
+    if (isLogin) {
+      // Handle Login
+      if (!formData.email.trim() || !formData.password.trim()) {
+        Alert.alert('Error', 'Please fill in all fields');
+        return;
       }
-    } catch (error) {
-      Alert.alert('Error', 'An unexpected error occurred');
-    } finally {
-      setIsLoading(false);
+
+      setIsLoading(true);
+      try {
+        const result = await signIn(formData.email.trim(), formData.password);
+        if (!result.success) {
+          Alert.alert('Login Failed', result.error);
+        }
+      } catch (error) {
+        Alert.alert('Error', 'An unexpected error occurred');
+      } finally {
+        setIsLoading(false);
+      }
+    } else {
+      // Handle Sign Up
+      if (!formData.fullName.trim() || !formData.email.trim() || !formData.password.trim()) {
+        Alert.alert('Error', 'Please fill in all required fields');
+        return;
+      }
+
+      if (formData.password !== formData.confirmPassword) {
+        Alert.alert('Error', 'Passwords do not match');
+        return;
+      }
+
+      if (formData.password.length < 6) {
+        Alert.alert('Error', 'Password must be at least 6 characters');
+        return;
+      }
+
+      setIsLoading(true);
+      try {
+        const signUpData = {
+          fullName: formData.fullName.trim(),
+          email: formData.email.trim(),
+          password: formData.password,
+          userType: formData.userType,
+          ...(formData.userType === 'student' && { academicLevel: formData.academicLevel }),
+        };
+
+        const result = await signUp(signUpData);
+        if (!result.success) {
+          Alert.alert('Sign Up Failed', result.error);
+        } else {
+          Alert.alert('Success', 'Account created successfully! Please log in.');
+          setIsLogin(true);
+          setFormData({ ...formData, password: '', confirmPassword: '' });
+        }
+      } catch (error) {
+        Alert.alert('Error', 'An unexpected error occurred');
+      } finally {
+        setIsLoading(false);
+      }
     }
   };
 
-  const handleSignUp = () => {
-    navigation.navigate('SignUp');
-  };
-
-  const handleForgotPassword = () => {
-    navigation.navigate('ForgotPassword');
+  const toggleMode = () => {
+    setIsLogin(!isLogin);
+    setFormData({
+      fullName: '',
+      email: '',
+      password: '',
+      confirmPassword: '',
+      userType: 'student',
+      academicLevel: '100',
+    });
   };
 
   return (
     <SafeAreaView style={styles.container}>
-      <StatusBar style="light" />
+      <StatusBar barStyle="light-content" backgroundColor="#4338ca" />
       
-      {/* Background Gradient */}
       <LinearGradient
-        colors={[Colors.primary[600], Colors.primary[500], Colors.primary[400]]}
-        style={styles.backgroundGradient}
+        colors={['#4338ca', '#6366F1', '#8B5CF6']}
+        style={styles.header}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }}
       >
-        <KeyboardAvoidingView
-          style={styles.keyboardAvoid}
-          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        >
-          <Animated.View
-            style={[
-              styles.content,
-              {
-                opacity: fadeAnim,
-                transform: [{ translateY: slideAnim }],
-              },
-            ]}
-          >
-            {/* Header */}
-            <View style={styles.header}>
-              <View style={styles.logoContainer}>
-                <LinearGradient
-                  colors={['rgba(255,255,255,0.2)', 'rgba(255,255,255,0.1)']}
-                  style={styles.logoGradient}
-                >
-                  <Ionicons name="school" size={40} color="white" />
-                </LinearGradient>
-              </View>
-              <Text style={styles.title}>UniConnect</Text>
-              <Text style={styles.subtitle}>Simple & Secure Access</Text>
-            </View>
-
-            {/* Login Form */}
-            <View style={styles.formContainer}>
-              <View style={styles.inputContainer}>
-                <View style={styles.inputWrapper}>
-                  <Ionicons name="mail-outline" size={20} color={Colors.neutral[400]} />
-                  <TextInput
-                    style={styles.input}
-                    placeholder="Email address"
-                    placeholderTextColor={Colors.neutral[400]}
-                    value={email}
-                    onChangeText={setEmail}
-                    keyboardType="email-address"
-                    autoCapitalize="none"
-                    autoCorrect={false}
-                  />
-                </View>
-              </View>
-
-              <View style={styles.inputContainer}>
-                <View style={styles.inputWrapper}>
-                  <Ionicons name="lock-closed-outline" size={20} color={Colors.neutral[400]} />
-                  <TextInput
-                    style={styles.input}
-                    placeholder="Password"
-                    placeholderTextColor={Colors.neutral[400]}
-                    value={password}
-                    onChangeText={setPassword}
-                    secureTextEntry={!showPassword}
-                    autoCapitalize="none"
-                    autoCorrect={false}
-                  />
-                  <TouchableOpacity
-                    style={styles.eyeButton}
-                    onPress={() => setShowPassword(!showPassword)}
-                  >
-                    <Ionicons
-                      name={showPassword ? 'eye-outline' : 'eye-off-outline'}
-                      size={20}
-                      color={Colors.neutral[400]}
-                    />
-                  </TouchableOpacity>
-                </View>
-              </View>
-
-              <TouchableOpacity
-                style={styles.forgotPassword}
-                onPress={handleForgotPassword}
-              >
-                <Text style={styles.forgotPasswordText}>Forgot Password?</Text>
-              </TouchableOpacity>
-
-              {/* Login Button */}
-              <TouchableOpacity
-                style={styles.loginButton}
-                onPress={handleLogin}
-                disabled={isLoading}
-                activeOpacity={0.8}
-              >
-                <LinearGradient
-                  colors={['rgba(255,255,255,0.9)', 'rgba(255,255,255,0.8)']}
-                  style={styles.loginGradient}
-                >
-                  {isLoading ? (
-                    <ActivityIndicator size="small" color={Colors.primary[600]} />
-                  ) : (
-                    <>
-                      <Text style={styles.loginButtonText}>Sign In</Text>
-                      <Ionicons name="arrow-forward" size={20} color={Colors.primary[600]} />
-                    </>
-                  )}
-                </LinearGradient>
-              </TouchableOpacity>
-
-              {/* Divider */}
-              <View style={styles.divider}>
-                <View style={styles.dividerLine} />
-                <Text style={styles.dividerText}>or</Text>
-                <View style={styles.dividerLine} />
-              </View>
-
-              {/* Quick Demo Login */}
-              <TouchableOpacity
-                style={styles.demoButton}
-                onPress={() => {
-                  setEmail('student@university.edu');
-                  setPassword('password123');
-                }}
-              >
-                <LinearGradient
-                  colors={['rgba(255,255,255,0.1)', 'rgba(255,255,255,0.05)']}
-                  style={styles.demoGradient}
-                >
-                  <Ionicons name="flash-outline" size={20} color="white" />
-                  <Text style={styles.demoButtonText}>Quick Demo Login</Text>
-                </LinearGradient>
-              </TouchableOpacity>
-            </View>
-
-            {/* Footer */}
-            <View style={styles.footer}>
-              <Text style={styles.footerText}>Don't have an account?</Text>
-              <TouchableOpacity onPress={handleSignUp}>
-                <Text style={styles.signUpText}>Sign Up</Text>
-              </TouchableOpacity>
-            </View>
-          </Animated.View>
-        </KeyboardAvoidingView>
+        <View style={styles.logoContainer}>
+          <Ionicons name="school" size={62} color="#FFFFFF" />
+          <Text style={styles.appName}>UniConnect</Text>
+          <Text style={styles.tagline}>Connect, Learn, Excel</Text>
+        </View>
       </LinearGradient>
+
+      <KeyboardAvoidingView
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        style={styles.formContainer}
+      >
+        <ScrollView showsVerticalScrollIndicator={false}>
+          <View style={styles.form}>
+            <Text style={styles.title}>
+              {isLogin ? 'Welcome Back!' : 'Create Account'}
+            </Text>
+            <Text style={styles.subtitle}>
+              {isLogin ? 'Sign in to continue your learning journey' : 'Join our educational community'}
+            </Text>
+
+            {!isLogin && (
+              <View style={styles.inputContainer}>
+                <Text style={styles.label}>Full Name</Text>
+                <TextInput
+                  style={styles.input}
+                  placeholder="Enter your full name"
+                  value={formData.fullName}
+                  onChangeText={(text) => setFormData({ ...formData, fullName: text })}
+                  autoCapitalize="words"
+                />
+              </View>
+            )}
+
+            <View style={styles.inputContainer}>
+              <Text style={styles.label}>Email</Text>
+              <TextInput
+                style={styles.input}
+                placeholder="Enter your email"
+                value={formData.email}
+                onChangeText={(text) => setFormData({ ...formData, email: text })}
+                keyboardType="email-address"
+                autoCapitalize="none"
+              />
+            </View>
+
+            <View style={styles.inputContainer}>
+              <Text style={styles.label}>Password</Text>
+              <View style={styles.passwordContainer}>
+                <TextInput
+                  style={[styles.input, styles.inputInsidePassword]}
+                  placeholder="Enter your password"
+                  value={formData.password}
+                  onChangeText={(text) => setFormData({ ...formData, password: text })}
+                  secureTextEntry={!showPassword}
+                />
+                <TouchableOpacity
+                  style={styles.eyeButton}
+                  onPress={() => setShowPassword(!showPassword)}
+                >
+                  <Ionicons
+                    name={showPassword ? 'eye-off' : 'eye'}
+                    size={20}
+                    color="#64748B"
+                  />
+                </TouchableOpacity>
+              </View>
+            </View>
+
+            {!isLogin && (
+              <>
+                <View style={styles.inputContainer}>
+                  <Text style={styles.label}>Confirm Password</Text>
+                  <View style={styles.passwordContainer}>
+                    <TextInput
+                      style={[styles.input, styles.inputInsidePassword]}
+                      placeholder="Confirm your password"
+                      value={formData.confirmPassword}
+                      onChangeText={(text) => setFormData({ ...formData, confirmPassword: text })}
+                      secureTextEntry={!showConfirmPassword}
+                    />
+                    <TouchableOpacity
+                      style={styles.eyeButton}
+                      onPress={() => setShowConfirmPassword(!showConfirmPassword)}
+                    >
+                      <Ionicons
+                        name={showConfirmPassword ? 'eye-off' : 'eye'}
+                        size={20}
+                        color="#64748B"
+                      />
+                    </TouchableOpacity>
+                  </View>
+                </View>
+
+                <View style={styles.inputContainer}>
+                  <Text style={styles.label}>I am a...</Text>
+                  <View style={styles.userTypeContainer}>
+                    {userTypes.map((type) => (
+                      <TouchableOpacity
+                        key={type.id}
+                        style={[
+                          styles.userTypeButton,
+                          formData.userType === type.id && styles.userTypeButtonActive
+                        ]}
+                        onPress={() => setFormData({ ...formData, userType: type.id })}
+                      >
+                        <Ionicons
+                          name={type.icon}
+                          size={20}
+                          color={formData.userType === type.id ? 'white' : '#64748B'}
+                        />
+                        <Text
+                          style={[
+                            styles.userTypeText,
+                            formData.userType === type.id && styles.userTypeTextActive
+                          ]}
+                        >
+                          {type.title}
+                        </Text>
+                      </TouchableOpacity>
+                    ))}
+                  </View>
+                </View>
+
+                {formData.userType === 'student' && (
+                  <View style={styles.inputContainer}>
+                    <Text style={styles.label}>Academic Level</Text>
+                    <View style={styles.levelContainer}>
+                      {academicLevels.map((level) => (
+                        <TouchableOpacity
+                          key={level.id}
+                          style={[
+                            styles.levelButton,
+                            formData.academicLevel === level.id && styles.levelButtonActive
+                          ]}
+                          onPress={() => setFormData({ ...formData, academicLevel: level.id })}
+                        >
+                          <Text
+                            style={[
+                              styles.levelText,
+                              formData.academicLevel === level.id && styles.levelTextActive
+                          ]}
+                          >
+                            {level.level}
+                          </Text>
+                        </TouchableOpacity>
+                      ))}
+                    </View>
+                  </View>
+                )}
+              </>
+            )}
+
+            <TouchableOpacity
+              style={[styles.submitButtonWrap, isLoading && styles.submitButtonDisabled]}
+              onPress={handleSubmit}
+              disabled={isLoading}
+              activeOpacity={0.85}
+            >
+              <LinearGradient
+                colors={isLoading ? ['#94A3B8', '#64748B'] : ['#6366F1', '#8B5CF6']}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 0 }}
+                style={styles.submitButton}
+              >
+                {isLoading ? (
+                  <Text style={styles.submitButtonText}>Please wait...</Text>
+                ) : (
+                  <Text style={styles.submitButtonText}>
+                    {isLogin ? 'Sign In' : 'Create Account'}
+                  </Text>
+                )}
+              </LinearGradient>
+            </TouchableOpacity>
+
+            <TouchableOpacity style={styles.toggleButton} onPress={toggleMode}>
+              <Text style={styles.toggleText}>
+                {isLogin ? "Don't have an account? " : 'Already have an account? '}
+                <Text style={styles.toggleTextBold}>
+                  {isLogin ? 'Sign Up' : 'Sign In'}
+                </Text>
+              </Text>
+            </TouchableOpacity>
+          </View>
+        </ScrollView>
+      </KeyboardAvoidingView>
     </SafeAreaView>
   );
 }
@@ -227,145 +320,177 @@ export default function SimpleLoginScreen({ navigation }) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-  },
-  backgroundGradient: {
-    flex: 1,
-  },
-  keyboardAvoid: {
-    flex: 1,
-  },
-  content: {
-    flex: 1,
-    justifyContent: 'center',
-    paddingHorizontal: 30,
+    backgroundColor: '#F8FAFC',
   },
   header: {
-    alignItems: 'center',
-    marginBottom: 50,
-  },
-  logoContainer: {
-    borderRadius: 40,
-    overflow: 'hidden',
-    marginBottom: 20,
-  },
-  logoGradient: {
-    width: 80,
-    height: 80,
+    height: 250,
     justifyContent: 'center',
     alignItems: 'center',
+    paddingHorizontal: 20,
+  },
+  logoContainer: {
+    alignItems: 'center',
+  },
+  appName: {
+    fontSize: 34,
+    fontWeight: '800',
+    color: '#FFFFFF',
+    marginTop: 14,
+    marginBottom: 6,
+    letterSpacing: 1,
+  },
+  tagline: {
+    fontSize: 16,
+    color: 'rgba(255, 255, 255, 0.95)',
+    fontWeight: '500',
+  },
+  formContainer: {
+    flex: 1,
+    backgroundColor: '#FFFFFF',
+    borderTopLeftRadius: 32,
+    borderTopRightRadius: 32,
+    marginTop: -32,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: -6 },
+    shadowOpacity: 0.08,
+    shadowRadius: 20,
+    elevation: 12,
+  },
+  form: {
+    padding: 28,
   },
   title: {
-    fontSize: 32,
-    fontWeight: 'bold',
-    color: 'white',
+    fontSize: 28,
+    fontWeight: '800',
+    color: '#1E293B',
+    textAlign: 'center',
     marginBottom: 8,
   },
   subtitle: {
     fontSize: 16,
-    color: 'rgba(255,255,255,0.8)',
-  },
-  formContainer: {
-    marginBottom: 40,
+    color: '#64748B',
+    textAlign: 'center',
+    marginBottom: 28,
   },
   inputContainer: {
     marginBottom: 20,
   },
-  inputWrapper: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: 'rgba(255,255,255,0.9)',
-    borderRadius: 15,
-    paddingHorizontal: 16,
-    paddingVertical: 4,
-  },
-  input: {
-    flex: 1,
-    fontSize: 16,
-    color: Colors.neutral[800],
-    paddingVertical: 16,
-    paddingHorizontal: 12,
-  },
-  eyeButton: {
-    padding: 8,
-  },
-  forgotPassword: {
-    alignSelf: 'flex-end',
-    marginBottom: 30,
-  },
-  forgotPasswordText: {
-    fontSize: 14,
-    color: 'rgba(255,255,255,0.8)',
-    fontWeight: '500',
-  },
-  loginButton: {
-    borderRadius: 15,
-    overflow: 'hidden',
-    marginBottom: 20,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.2,
-    shadowRadius: 8,
-    elevation: 4,
-  },
-  loginGradient: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 18,
-    gap: 8,
-  },
-  loginButtonText: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: Colors.primary[600],
-  },
-  divider: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginVertical: 20,
-  },
-  dividerLine: {
-    flex: 1,
-    height: 1,
-    backgroundColor: 'rgba(255,255,255,0.3)',
-  },
-  dividerText: {
-    marginHorizontal: 16,
-    fontSize: 14,
-    color: 'rgba(255,255,255,0.6)',
-  },
-  demoButton: {
-    borderRadius: 15,
-    overflow: 'hidden',
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.3)',
-  },
-  demoGradient: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 16,
-    gap: 8,
-  },
-  demoButtonText: {
+  label: {
     fontSize: 16,
     fontWeight: '600',
-    color: 'white',
+    color: '#374151',
+    marginBottom: 8,
   },
-  footer: {
+  input: {
+    borderWidth: 2,
+    borderColor: '#E2E8F0',
+    borderRadius: 14,
+    padding: 16,
+    fontSize: 16,
+    backgroundColor: '#F8FAFC',
+  },
+  passwordContainer: {
     flexDirection: 'row',
-    justifyContent: 'center',
     alignItems: 'center',
+    borderWidth: 2,
+    borderColor: '#E2E8F0',
+    borderRadius: 14,
+    backgroundColor: '#F8FAFC',
+  },
+  inputInsidePassword: {
+    borderWidth: 0,
+    flex: 1,
+  },
+  eyeButton: {
+    padding: 16,
+  },
+  userTypeContainer: {
+    flexDirection: 'row',
+    gap: 12,
+  },
+  userTypeButton: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 16,
+    borderWidth: 1,
+    borderColor: '#D1D5DB',
+    borderRadius: 12,
+    backgroundColor: '#F9FAFB',
     gap: 8,
   },
-  footerText: {
-    fontSize: 16,
-    color: 'rgba(255,255,255,0.8)',
+  userTypeButtonActive: {
+    backgroundColor: '#4F46E5',
+    borderColor: '#4F46E5',
   },
-  signUpText: {
+  userTypeText: {
     fontSize: 16,
-    fontWeight: 'bold',
+    color: '#64748B',
+    fontWeight: '500',
+  },
+  userTypeTextActive: {
     color: 'white',
-    textDecorationLine: 'underline',
+  },
+  levelContainer: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+  },
+  levelButton: {
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderWidth: 1,
+    borderColor: '#D1D5DB',
+    borderRadius: 8,
+    backgroundColor: '#F9FAFB',
+  },
+  levelButtonActive: {
+    backgroundColor: '#4F46E5',
+    borderColor: '#4F46E5',
+  },
+  levelText: {
+    fontSize: 16,
+    color: '#64748B',
+    fontWeight: '500',
+  },
+  levelTextActive: {
+    color: 'white',
+  },
+  submitButtonWrap: {
+    marginTop: 12,
+    marginBottom: 20,
+    borderRadius: 14,
+    overflow: 'hidden',
+    shadowColor: '#6366F1',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.35,
+    shadowRadius: 10,
+    elevation: 6,
+  },
+  submitButton: {
+    padding: 18,
+    borderRadius: 14,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  submitButtonDisabled: {
+    opacity: 0.8,
+  },
+  submitButtonText: {
+    color: '#FFFFFF',
+    fontSize: 18,
+    fontWeight: '700',
+  },
+  toggleButton: {
+    alignItems: 'center',
+  },
+  toggleText: {
+    fontSize: 16,
+    color: '#64748B',
+  },
+  toggleTextBold: {
+    color: '#4F46E5',
+    fontWeight: '600',
   },
 });

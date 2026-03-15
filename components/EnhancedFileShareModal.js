@@ -18,7 +18,7 @@ import { StatusBar } from 'expo-status-bar';
 import * as DocumentPicker from 'expo-document-picker';
 import * as ImagePicker from 'expo-image-picker';
 import { Colors } from '../themes/modernTheme';
-import enhancedFileUploadService from '../services/enhancedFileUploadService';
+import fileUploadService from '../services/fileUploadService';
 
 const { width, height } = Dimensions.get('window');
 
@@ -110,7 +110,7 @@ export default function EnhancedFileShareModal({
 
   async function pickDocument() {
     try {
-      const result = await enhancedFileUploadService.pickDocument();
+      const result = await fileUploadService.pickDocument();
       if (result.success && result.file) {
         addFileToSelection(result.file);
       } else if (result.error) {
@@ -123,7 +123,7 @@ export default function EnhancedFileShareModal({
 
   async function pickImage(fromCamera = false) {
     try {
-      const result = await enhancedFileUploadService.pickImage(fromCamera);
+      const result = await fileUploadService.pickImage(fromCamera);
       if (result.success && result.file) {
         addFileToSelection(result.file);
       } else if (result.error) {
@@ -172,7 +172,7 @@ export default function EnhancedFileShareModal({
       for (const file of selectedFiles) {
         setUploadProgress(prev => ({ ...prev, [file.id]: 0 }));
 
-        const result = await enhancedFileUploadService.uploadFile(
+        const result = await fileUploadService.uploadFile(
           file,
           userInfo,
           courseCode,

@@ -16,10 +16,12 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useApp } from '../context/AppContext';
+import { useTheme } from '../components/ThemeProvider';
 import notificationService from '../services/notificationService';
 
 export default function NotificationsScreen({ navigation }) {
   const { user } = useApp();
+  const { isDark } = useTheme();
   const [notifications, setNotifications] = useState([]);
   const [filter, setFilter] = useState('all');
   const [isLoading, setIsLoading] = useState(true);
@@ -416,36 +418,62 @@ export default function NotificationsScreen({ navigation }) {
   const unreadCount = notifications.filter(n => !n.read).length;
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={[styles.container, isDark && styles.darkContainer]}>
       {/* Enhanced Header */}
-      <View style={styles.header}>
+      <View style={[styles.header, isDark && styles.darkHeader]}>
         <View style={styles.headerLeft}>
-          <Text style={styles.headerTitle}>Notifications</Text>
+          <Text style={[styles.headerTitle, isDark && styles.darkHeaderTitle]}>Notifications</Text>
           {unreadCount > 0 && (
-            <Text style={styles.subtitle}>{unreadCount} unread</Text>
+            <Text style={[styles.subtitle, isDark && styles.darkSubtitle]}>{unreadCount} unread</Text>
           )}
         </View>
         <View style={styles.headerActions}>
-        {unreadCount > 0 && (
-          <TouchableOpacity style={styles.markAllButton} onPress={markAllAsRead}>
+          {/* Left side - Mark all read */}
+          {unreadCount > 0 && (
+            <TouchableOpacity style={styles.markAllButton} onPress={markAllAsRead}>
               <Ionicons name="checkmark-done" size={20} color="#4F46E5" />
-            <Text style={styles.markAllText}>Mark all read</Text>
-          </TouchableOpacity>
-        )}
-          {user?.userType === 'lecturer' && (
-            <TouchableOpacity 
-              style={styles.createButton} 
-              onPress={() => setShowCreateModal(true)}
-            >
-              <Ionicons name="add" size={20} color="#FFFFFF" />
+              <Text style={styles.markAllText}>Mark all read</Text>
             </TouchableOpacity>
           )}
-          <TouchableOpacity 
-            style={styles.filterActionButton} 
-            onPress={() => setShowFilterModal(true)}
-          >
-            <Ionicons name="options" size={20} color="#4F46E5" />
-          </TouchableOpacity>
+          
+          {/* Center - Quick Action Buttons */}
+          <View style={styles.quickActionsCenter}>
+            <TouchableOpacity 
+              style={styles.quickActionButton}
+              onPress={() => navigation.navigate('Materials')}
+            >
+              <Ionicons name="book" size={18} color="#4F46E5" />
+              <Text style={styles.quickActionText}>Materials</Text>
+            </TouchableOpacity>
+            
+            <TouchableOpacity 
+              style={styles.quickActionButton}
+              onPress={() => navigation.navigate('Schedule')}
+            >
+              <Ionicons name="calendar" size={18} color="#4F46E5" />
+              <Text style={styles.quickActionText}>Schedule</Text>
+            </TouchableOpacity>
+          </View>
+          
+          {/* Right side - Create and Filter */}
+          <View style={styles.rightActions}>
+            {user?.userType === 'lecturer' && (
+              <TouchableOpacity 
+                style={styles.createButton} 
+                onPress={() => setShowCreateModal(true)}
+              >
+                <Ionicons name="add" size={20} color="#FFFFFF" />
+                <Text style={styles.createButtonText}>Create</Text>
+              </TouchableOpacity>
+            )}
+            
+            <TouchableOpacity 
+              style={styles.filterActionButton} 
+              onPress={() => setShowFilterModal(true)}
+            >
+              <Ionicons name="options" size={20} color="#4F46E5" />
+            </TouchableOpacity>
+          </View>
         </View>
       </View>
 
@@ -514,14 +542,12 @@ export default function NotificationsScreen({ navigation }) {
         />
       )}
 
-      {/* Create Notification Modal (for lecturers) */}
-      {user?.userType === 'lecturer' && (
-        <CreateNotificationModal
-          visible={showCreateModal}
-          onClose={() => setShowCreateModal(false)}
-          user={user}
-        />
-      )}
+      {/* Create Notification Modal (for both students and lecturers) */}
+      <CreateNotificationModal
+        visible={showCreateModal}
+        onClose={() => setShowCreateModal(false)}
+        user={user}
+      />
 
       {/* Filter Modal */}
       <FilterModal
@@ -773,6 +799,10 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#F8FAFC',
   },
+  darkContainer: {
+    flex: 1,
+    backgroundColor: '#0F172A',
+  },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -789,6 +819,11 @@ const styles = StyleSheet.create({
     shadowRadius: 8,
     elevation: 5,
   },
+  darkHeader: {
+    backgroundColor: '#1E293B',
+    shadowColor: '#000',
+    shadowOpacity: 0.3,
+  },
   headerLeft: {
     flex: 1,
   },
@@ -802,15 +837,24 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: '#1E293B',
   },
+  darkHeaderTitle: {
+    color: '#FFFFFF',
+  },
   title: {
     fontSize: 26,
     fontWeight: 'bold',
     color: '#1E293B',
   },
+  darkTitle: {
+    color: '#FFFFFF',
+  },
   subtitle: {
     fontSize: 14,
     color: '#64748B',
     marginTop: 4,
+  },
+  darkSubtitle: {
+    color: '#94A3B8',
   },
   markAllButton: {
     paddingHorizontal: 12,
@@ -861,6 +905,17 @@ const styles = StyleSheet.create({
   notificationsContent: {
     paddingHorizontal: 20,
     paddingBottom: 20,
+  },
+  notificationCard: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 16,
+    marginBottom: 16,
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+  },
+  darkNotificationCard: {
+    backgroundColor: '#1E293B',
+    borderColor: '#334155',
   },
   notificationCard: {
     backgroundColor: '#FFFFFF',
@@ -967,12 +1022,36 @@ const styles = StyleSheet.create({
   
   // New styles for enhanced functionality
   createButton: {
-    width: 40,
-    height: 40,
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 12,
+    paddingVertical: 8,
     borderRadius: 20,
     backgroundColor: '#4F46E5',
     justifyContent: 'center',
+    gap: 6,
+  },
+  createButtonText: {
+    color: '#FFFFFF',
+    fontSize: 12,
+    fontWeight: '600',
+  },
+  quickActionButton: {
+    flexDirection: 'row',
     alignItems: 'center',
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 16,
+    backgroundColor: '#F8FAFC',
+    justifyContent: 'center',
+    gap: 4,
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+  },
+  quickActionText: {
+    color: '#4F46E5',
+    fontSize: 11,
+    fontWeight: '500',
   },
   filterActionButton: {
     width: 40,
@@ -1030,10 +1109,16 @@ const styles = StyleSheet.create({
     borderLeftWidth: 4,
     borderLeftColor: '#DC2626',
   },
-  headerActions: {
+
+  quickActionsCenter: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 4,
+    gap: 8,
+  },
+  rightActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
   },
   actionButton: {
     padding: 4,
@@ -1216,18 +1301,6 @@ const styles = StyleSheet.create({
   },
   selectedTypeText: {
     color: '#FFFFFF',
-  },
-  createButton: {
-    backgroundColor: '#4F46E5',
-    padding: 16,
-    borderRadius: 12,
-    alignItems: 'center',
-    marginTop: 20,
-  },
-  createButtonText: {
-    color: '#FFFFFF',
-    fontSize: 16,
-    fontWeight: '600',
   },
   
   // Filter modal styles
