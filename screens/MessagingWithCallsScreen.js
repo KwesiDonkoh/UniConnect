@@ -22,9 +22,8 @@ import simpleCallingService from '../services/simpleCallingService';
 
 // Import safe components
 import EnhancedFileShareModal from '../components/EnhancedFileShareModal';
-import SimpleAudioRecorder from '../components/SimpleAudioRecorder';
-import SimpleVoiceCallModal from '../components/SimpleVoiceCallModal';
-import SimpleVideoCallModal from '../components/SimpleVideoCallModal';
+import VoiceCallComponent from '../components/VoiceCallComponent';
+import VideoCallComponent from '../components/VideoCallComponent';
 
 export default function MessagingWithCallsScreen({ navigation }) {
   const appContext = useApp();
@@ -67,6 +66,7 @@ export default function MessagingWithCallsScreen({ navigation }) {
       
       // Set up calling service callbacks
       simpleCallingService.setOnCallStatusChange(handleCallStatusChange);
+      simpleCallingService.setOnIncomingCall(handleIncomingCall);
       
       loadConversations();
       
@@ -81,6 +81,15 @@ export default function MessagingWithCallsScreen({ navigation }) {
       simpleCallingService.destroy();
     };
   }, [user]);
+
+  const handleIncomingCall = (callData) => {
+    setCurrentCall(callData);
+    if (callData.type === 'voice') {
+      setShowVoiceCall(true);
+    } else {
+      setShowVideoCall(true);
+    }
+  };
 
   const handleCallStatusChange = (callData) => {
     setCurrentCall(callData);
@@ -474,24 +483,33 @@ export default function MessagingWithCallsScreen({ navigation }) {
           courseCode={selectedConversation?.subject || 'private'}
         />
 
-        <SimpleAudioRecorder
-          visible={showAudioRecorder}
-          onClose={() => setShowAudioRecorder(false)}
-          onSendAudio={handleAudioSent}
-        />
-
-        <SimpleVoiceCallModal
+        
+        <VoiceCallComponent
           visible={showVoiceCall}
-          onClose={() => setShowVoiceCall(false)}
+          onClose={() => {
+            setShowVoiceCall(false);
+            setCurrentCall(null);
+          }}
           callData={currentCall}
-          isIncoming={false}
+          isIncoming={currentCall?.initiator !== user?.uid}
+          callerName={currentCall?.receiverName || currentCall?.callerName || 'Unknown'}
+          isActive={currentCall?.status === 'connected'}
+          onAccept={() => simpleCallingService.acceptCall(currentCall?.id)}
+          onReject={() => simpleCallingService.rejectCall(currentCall?.id)}
         />
 
-        <SimpleVideoCallModal
+        <VideoCallComponent
           visible={showVideoCall}
-          onClose={() => setShowVideoCall(false)}
+          onClose={() => {
+            setShowVideoCall(false);
+            setCurrentCall(null);
+          }}
           callData={currentCall}
-          isIncoming={false}
+          isIncoming={currentCall?.initiator !== user?.uid}
+          callerName={currentCall?.receiverName || currentCall?.callerName || 'Unknown'}
+          isActive={currentCall?.status === 'connected'}
+          onAccept={() => simpleCallingService.acceptCall(currentCall?.id)}
+          onReject={() => simpleCallingService.rejectCall(currentCall?.id)}
         />
       </SafeAreaView>
     );

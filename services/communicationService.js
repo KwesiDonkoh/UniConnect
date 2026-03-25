@@ -1,5 +1,5 @@
 import AudioCompat from '../utils/audioCompat';
-import * as FileSystem from 'expo-file-system';
+import * as FileSystem from 'expo-file-system/legacy';
 import { Platform, Alert, Linking } from 'react-native';
 import { 
   collection, 
@@ -31,6 +31,8 @@ class CommunicationService {
     
     // Audio playback
     this.currentPlayback = null;
+    this.currentSound = null; // Deprecated, but keep for now to avoid reference errors during transition
+
     
     // Listen to auth state
     auth.onAuthStateChanged((user) => {
@@ -148,112 +150,8 @@ class CommunicationService {
     }
   }
 
-  async playVoiceMessage(uri, onPlaybackUpdate) {
-    try {
-      // Stop any currently playing sound
-      if (this.currentSound) {
-        await this.currentSound.unloadAsync();
-        this.currentSound = null;
-      }
+  // Audio Playback methods are consolidated at the end of the file.
 
-      // Validate URI
-      if (!uri) {
-        throw new Error('Audio URI is required');
-      }
-
-      // Check if file exists
-      const fileInfo = await FileSystem.getInfoAsync(uri);
-      if (!fileInfo.exists) {
-        throw new Error('Audio file not found');
-      }
-
-      // Ensure URI is properly formatted
-      let audioUri = uri;
-      if (!uri.startsWith('file://') && !uri.startsWith('http')) {
-        audioUri = `file://${uri}`;
-      }
-      
-      console.log('Playing voice message:', audioUri);
-      
-      const { sound } = await AudioCompat.Sound.createAsync(
-        { uri: audioUri },
-        { 
-          shouldPlay: true,
-          isLooping: false,
-          volume: 1.0,
-        }
-      );
-      
-      this.currentSound = sound;
-      
-      // Set up playback status updates
-      sound.setOnPlaybackStatusUpdate((status) => {
-        if (onPlaybackUpdate) {
-          onPlaybackUpdate(status);
-        }
-        
-        if (status.didJustFinish) {
-          this.currentSound = null;
-          if (onPlaybackUpdate) {
-            onPlaybackUpdate({ ...status, isFinished: true });
-          }
-        }
-      });
-
-      // Get duration for UI
-      const status = await sound.getStatusAsync();
-      
-      return { 
-        success: true, 
-        sound,
-        duration: status.durationMillis || 0
-      };
-    } catch (error) {
-      console.error('Error playing voice message:', error);
-      return { success: false, error: error.message };
-    }
-  }
-
-  async pauseVoiceMessage() {
-    try {
-      if (this.currentSound) {
-        await this.currentSound.pauseAsync();
-        return { success: true };
-      }
-      return { success: false, error: 'No audio playing' };
-    } catch (error) {
-      console.error('Error pausing voice message:', error);
-      return { success: false, error: error.message };
-    }
-  }
-
-  async resumeVoiceMessage() {
-    try {
-      if (this.currentSound) {
-        await this.currentSound.playAsync();
-        return { success: true };
-      }
-      return { success: false, error: 'No audio to resume' };
-    } catch (error) {
-      console.error('Error resuming voice message:', error);
-      return { success: false, error: error.message };
-    }
-  }
-
-  async stopVoiceMessage() {
-    try {
-      if (this.currentSound) {
-        await this.currentSound.stopAsync();
-        await this.currentSound.unloadAsync();
-        this.currentSound = null;
-        return { success: true };
-      }
-      return { success: false, error: 'No audio playing' };
-    } catch (error) {
-      console.error('Error stopping voice message:', error);
-      return { success: false, error: error.message };
-    }
-  }
 
   // Voice Call Functions
   async initiateVoiceCall(courseCode, participants = []) {
@@ -783,9 +681,12 @@ class CommunicationService {
 
       console.log('Loading audio from URI:', uri);
       
-      // Validate URI
-      if (!uri || typeof uri !== 'string') {
-        throw new Error('Invalid audio URI provided');
+      // Check if file exists (if it's a local file)
+      if (uri.startsWith('file://') || !uri.startsWith('http')) {
+        const fileInfo = await FileSystem.getInfoAsync(uri);
+        if (!fileInfo.exists) {
+          throw new Error('Audio file not found');
+        }
       }
 
       // Set audio mode for playback

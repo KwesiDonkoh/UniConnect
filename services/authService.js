@@ -55,6 +55,7 @@ export class AuthService {
       if (userData.userType === 'student') {
         userDocData.academicLevel = userData.academicLevel;
         userDocData.levelDescription = this.getLevelDescription(userData.academicLevel);
+        userDocData.readingCourses = userData.readingCourses || [];
       } else if (userData.userType === 'lecturer') {
         userDocData.teachingCourses = userData.teachingCourses;
         userDocData.title = 'Lecturer'; // Default title

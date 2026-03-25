@@ -507,75 +507,87 @@ export default function ProfileScreen({ navigation }) {
           style={styles.headerGradient}
         >
         <View style={styles.header}>
-                      <View style={[styles.profileCard, isDark && styles.darkProfileCard]}>
-              <View style={styles.avatarSection}>
-                <TouchableOpacity 
-                  style={styles.avatarContainer}
-                  onPress={pickImage}
-                  activeOpacity={0.8}
-                >
-                  {isUpdating ? (
-                    <View style={styles.avatarLoading}>
-                      <ActivityIndicator size="large" color="#FFFFFF" />
-            </View>
-                  ) : profileImage ? (
-                    <Image 
-                      source={{ uri: profileImage }} 
-                      style={styles.avatarImage}
-                      resizeMode="cover"
-                    />
-                  ) : (
-                    <LinearGradient
-                      colors={['#4F46E5', '#6366F1']}
-                      style={styles.avatarGradient}
-                    >
-                      <Text style={styles.avatarText}>
-                        {user?.name?.split(' ').map(n => n[0]).join('').toUpperCase() || (user?.userType === 'lecturer' ? 'L' : 'ST')}
-                      </Text>
-                    </LinearGradient>
-                  )}
-                  
-                  {user?.userType === 'lecturer' && (
-                    <View style={styles.lecturerBadge}>
-                      <Ionicons name="school" size={12} color="#FFFFFF" />
-                    </View>
-                  )}
-                  
-                  {/* Camera overlay */}
-                  <View style={styles.cameraOverlay}>
-                    <Ionicons name="camera" size={16} color="#FFFFFF" />
+          <View style={[styles.profileCard, isDark && styles.darkProfileCard]}>
+            <View style={styles.avatarSection}>
+              <TouchableOpacity
+                style={styles.avatarContainer}
+                onPress={pickImage}
+                activeOpacity={0.8}
+              >
+                {isUpdating ? (
+                  <View style={styles.avatarLoading}>
+                    <ActivityIndicator size="large" color="#FFFFFF" />
                   </View>
-                </TouchableOpacity>
+                ) : profileImage ? (
+                  <Image
+                    source={{ uri: profileImage }}
+                    style={styles.avatarImage}
+                    resizeMode="cover"
+                  />
+                ) : (
+                  <LinearGradient
+                    colors={['#4F46E5', '#6366F1']}
+                    style={styles.avatarGradient}
+                  >
+                    <Text style={styles.avatarText}>
+                      {user?.name?.split(' ').map(n => n[0]).join('').toUpperCase() || (user?.userType === 'lecturer' ? 'L' : 'ST')}
+                    </Text>
+                  </LinearGradient>
+                )}
 
-            <View style={styles.userInfo}>
-                  <Text style={[styles.userName, isDark && styles.darkUserName]}>
-                    {user?.userType === 'lecturer' ? `${user?.title || 'Dr.'} ` : ''}{user?.name || 'User Name'}
-                  </Text>
-                  <Text style={styles.userEmail}>{user?.email || 'email@university.edu'}</Text>
-                  <Text style={styles.studentId}>ID: {user?.identifier || user?.studentId || (user?.userType === 'lecturer' ? 'STAFF000' : 'CST000000')}</Text>
-                  <View style={styles.levelBadgeContainer}>
-                    <View style={styles.levelBadge}>
-                      <Text style={styles.levelBadgeText}>
-                        {user?.userType === 'lecturer' 
-                          ? `${levelsCovered.length} Level${levelsCovered.length > 1 ? 's' : ''}`
-                          : `Level ${user?.academicLevel || '100'}`
-                        }
-                      </Text>
-            </View>
-                    <Text style={styles.department}>{user?.department || 'Computer Science'}</Text>
-          </View>
-                  
-                  {/* Real-time sync indicator */}
-                  {hasUnsavedChanges && (
-                    <View style={styles.syncIndicator}>
-                      <View style={styles.syncDot} />
-                      <Text style={styles.syncText}>Changes pending...</Text>
-        </View>
-                  )}
+                {user?.userType === 'lecturer' && (
+                  <View style={styles.lecturerBadge}>
+                    <Ionicons name="school" size={14} color="#FFFFFF" />
+                  </View>
+                )}
+
+                <View style={styles.cameraOverlay}>
+                  <Ionicons name="camera" size={16} color="#FFFFFF" />
                 </View>
+              </TouchableOpacity>
+
+              <View style={styles.userInfo}>
+                <Text style={[styles.userName, isDark && styles.darkUserName]}>
+                  {user?.userType === 'lecturer' ? `${user?.title || 'Dr.'} ` : ''}{user?.name || 'User Name'}
+                </Text>
+                <Text style={styles.userEmail}>{user?.email || 'email@university.edu'}</Text>
+                
+                <View style={styles.idBadgeRow}>
+                  <View style={[styles.idBadge, { backgroundColor: isDark ? 'rgba(99, 102, 241, 0.2)' : '#EEF2FF' }]}>
+                    <Ionicons name="card-outline" size={14} color="#4F46E5" />
+                    <Text style={[styles.idBadgeText, { color: '#4F46E5' }]}>
+                      {user?.identifier || user?.studentId || (user?.userType === 'lecturer' ? 'STAFF000' : 'CST000000')}
+                    </Text>
+                  </View>
+                </View>
+
+                <View style={styles.levelBadgeContainer}>
+                  <LinearGradient
+                    colors={['#4F46E5', '#6366F1']}
+                    start={{ x: 0, y: 0 }}
+                    end={{ x: 1, y: 0 }}
+                    style={styles.levelBadge}
+                  >
+                    <Text style={styles.levelBadgeText}>
+                      {user?.userType === 'lecturer'
+                        ? `${levelsCovered.length} Level${levelsCovered.length > 1 ? 's' : ''}`
+                        : `Level ${user?.academicLevel || '100'}`
+                      }
+                    </Text>
+                  </LinearGradient>
+                  <Text style={[styles.department, isDark && { color: '#94A3B8' }]}>{user?.department || 'Computer Science'}</Text>
+                </View>
+
+                {hasUnsavedChanges && (
+                  <View style={styles.syncIndicator}>
+                    <View style={styles.syncDot} />
+                    <Text style={styles.syncText}>Changes pending...</Text>
+                  </View>
+                )}
               </View>
             </View>
           </View>
+        </View>
         </LinearGradient>
 
         {/* Academic/Teaching Stats */}
@@ -1025,22 +1037,37 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   userName: {
-    fontSize: 24,
-    fontWeight: 'bold',
+    fontSize: 28,
+    fontWeight: '900',
     color: '#1E293B',
+    letterSpacing: -0.5,
   },
   darkUserName: {
-    color: '#FFFFFF',
+    color: '#F8FAFC',
   },
   userEmail: {
     fontSize: 16,
     color: '#64748B',
     marginBottom: 4,
   },
-  studentId: {
-    fontSize: 14,
-    color: '#94A3B8',
+  idBadgeRow: {
+    flexDirection: 'row',
     marginBottom: 12,
+  },
+  idBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 12,
+    gap: 6,
+  },
+  idBadgeText: {
+    fontSize: 13,
+    fontWeight: '700',
+  },
+  studentId: {
+    display: 'none',
   },
   levelBadgeContainer: {
     flexDirection: 'row',
@@ -1115,14 +1142,16 @@ const styles = StyleSheet.create({
   statCard: {
     flex: 1,
     backgroundColor: '#FFFFFF',
-    borderRadius: 20,
+    borderRadius: 24,
     padding: 20,
     alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
+    shadowColor: '#4F46E5',
+    shadowOffset: { width: 0, height: 10 },
     shadowOpacity: 0.1,
-    shadowRadius: 12,
-    elevation: 6,
+    shadowRadius: 20,
+    elevation: 8,
+    borderWidth: 1,
+    borderColor: 'rgba(79, 70, 229, 0.05)',
   },
   statIcon: {
     width: 44,
@@ -1203,13 +1232,15 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: '#FFFFFF',
-    borderRadius: 20,
-    padding: 20,
+    borderRadius: 24,
+    padding: 18,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.1,
-    shadowRadius: 12,
-    elevation: 6,
+    shadowOpacity: 0.05,
+    shadowRadius: 15,
+    elevation: 4,
+    borderWidth: 1,
+    borderColor: '#F1F5F9',
   },
   optionContent: {
     flexDirection: 'row',

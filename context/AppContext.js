@@ -68,6 +68,7 @@ export const AppProvider = ({ children }) => {
           ...(userData.userType === 'student' && {
             academicLevel: userData.academicLevel || '100',
             levelDescription: userData.levelDescription || 'First Year - Foundation',
+            readingCourses: userData.readingCourses || [],
           }),
           // Lecturer-specific fields
           ...(userData.userType === 'lecturer' && {

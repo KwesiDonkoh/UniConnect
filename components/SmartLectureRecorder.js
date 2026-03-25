@@ -12,6 +12,8 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
+import { CameraView, Camera } from 'expo-camera';
+import { Audio } from 'expo-av';
 
 const { width, height } = Dimensions.get('window');
 
@@ -27,6 +29,15 @@ export const SmartLectureRecorder = ({ visible, onClose, course, user }) => {
     engagementAnalysis: true,
     autoChapters: true,
   });
+  const [hasPermission, setHasPermission] = useState(null);
+
+  useEffect(() => {
+    (async () => {
+      const cameraStatus = await Camera.requestCameraPermissionsAsync();
+      const audioStatus = await Audio.requestPermissionsAsync();
+      setHasPermission(cameraStatus.status === 'granted' && audioStatus.status === 'granted');
+    })();
+  }, []);
 
   const slideAnim = useRef(new Animated.Value(height)).current;
   const pulseAnim = useRef(new Animated.Value(1)).current;
@@ -231,6 +242,16 @@ export const SmartLectureRecorder = ({ visible, onClose, course, user }) => {
 
         {/* Recording Status */}
         <View style={styles.recordingStatus}>
+          {hasPermission && (
+            <View style={styles.cameraPreviewContainer}>
+              <CameraView 
+                style={styles.cameraPreview} 
+                facing="front"
+                mute={true}
+              />
+            </View>
+          )}
+
           {isRecording ? (
             <View style={styles.activeRecording}>
               <Animated.View style={[styles.recordingIndicator, { transform: [{ scale: pulseAnim }] }]}>
@@ -568,6 +589,18 @@ const styles = StyleSheet.create({
     padding: 20,
     marginBottom: 20,
     alignItems: 'center',
+  },
+  cameraPreviewContainer: {
+    width: '100%',
+    height: 300,
+    borderRadius: 15,
+    overflow: 'hidden',
+    marginBottom: 15,
+    backgroundColor: '#000',
+  },
+  cameraPreview: {
+    flex: 1,
+    width: '100%',
   },
   activeRecording: {
     flexDirection: 'row',

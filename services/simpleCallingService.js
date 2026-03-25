@@ -27,6 +27,48 @@ class SimpleCallingService {
   async initialize(userId) {
     this.userId = userId;
     console.log('Simple calling service initialized for user:', userId);
+    this.listenForIncomingCalls();
+  }
+
+  // Listen for incoming calls
+  listenForIncomingCalls() {
+    if (this.incomingCallListener) this.incomingCallListener();
+
+    const q = query(
+      collection(db, 'calls'),
+      where('receiverId', '==', this.userId),
+      where('status', '==', 'ringing'),
+      orderBy('startedAt', 'desc')
+    );
+
+    this.incomingCallListener = onSnapshot(q, (snapshot) => {
+      snapshot.docChanges().forEach((change) => {
+        if (change.type === 'added') {
+          const callData = { id: change.doc.id, ...change.doc.data() };
+          console.log('Incoming call detected:', callData);
+          this.currentCall = callData;
+          if (this.onIncomingCall) {
+            this.onIncomingCall(callData);
+          }
+          
+          // Also listen for status changes of THIS specific call
+          this.listenToCallStatus(change.doc.id);
+        }
+      });
+    });
+  }
+
+  listenToCallStatus(callId) {
+    const unsub = onSnapshot(doc(db, 'calls', callId), (docSnap) => {
+      if (docSnap.exists()) {
+        const data = { id: docSnap.id, ...docSnap.data() };
+        this.currentCall = data;
+        if (this.onCallStatusChange) {
+          this.onCallStatusChange(data);
+        }
+      }
+    });
+    this.callListeners.set(callId, unsub);
   }
 
   // Start a voice call (simplified)
@@ -50,10 +92,8 @@ class SimpleCallingService {
       const callRef = await addDoc(collection(db, 'calls'), callData);
       this.currentCall = { id: callRef.id, ...callData };
 
-      // Simulate call connection after 3 seconds
-      setTimeout(() => {
-        this.simulateCallConnection(callRef.id);
-      }, 3000);
+      // Listen for status changes (answered, rejected, etc.)
+      this.listenToCallStatus(callRef.id);
 
       return {
         success: true,
@@ -91,10 +131,8 @@ class SimpleCallingService {
       const callRef = await addDoc(collection(db, 'calls'), callData);
       this.currentCall = { id: callRef.id, ...callData };
 
-      // Simulate call connection after 3 seconds
-      setTimeout(() => {
-        this.simulateCallConnection(callRef.id);
-      }, 3000);
+      // Listen for status changes
+      this.listenToCallStatus(callRef.id);
 
       return {
         success: true,

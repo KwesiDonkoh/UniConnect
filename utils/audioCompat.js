@@ -1,5 +1,5 @@
 // Updated audio compatibility layer using expo-audio and expo-permissions
-import { Audio } from 'expo-audio';
+import { Audio } from 'expo-av';
 import * as Permissions from 'expo-permissions';
 
 // This module provides a compatibility layer for audio functionality

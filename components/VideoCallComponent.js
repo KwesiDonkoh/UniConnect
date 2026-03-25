@@ -10,7 +10,9 @@ import {
   SafeAreaView,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { CameraView } from 'expo-camera';
+import { CameraView, Camera } from 'expo-camera';
+import { Audio } from 'expo-av';
+import * as Haptics from 'expo-haptics';
 import { LinearGradient } from 'expo-linear-gradient';
 
 const { width, height } = Dimensions.get('window');
@@ -36,8 +38,9 @@ const VideoCallComponent = ({
 
   useEffect(() => {
     (async () => {
-      const { status } = await Camera.requestCameraPermissionsAsync();
-      setHasPermission(status === 'granted');
+      const cameraStatus = await Camera.requestCameraPermissionsAsync();
+      const audioStatus = await Audio.requestPermissionsAsync();
+      setHasPermission(cameraStatus.status === 'granted' && audioStatus.status === 'granted');
     })();
   }, []);
 

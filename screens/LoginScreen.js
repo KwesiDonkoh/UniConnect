@@ -10,12 +10,14 @@ import {
   Animated,
   StatusBar,
   Dimensions,
+  ScrollView,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useApp } from '../context/AppContext';
 import { useTheme } from '../components/ThemeProvider';
-import { ModernButton, ModernInput, ModernCard } from '../components/ModernUI';
+import AuthFeatureShowcase from '../components/AuthFeatureShowcase';
+
 import { Colors, Typography, Spacing, BorderRadius, Shadows, Animations } from '../themes/modernTheme';
 
 const { width, height } = Dimensions.get('window');
@@ -128,7 +130,9 @@ export default function LoginScreen({ navigation, onLogin }) {
           </Animated.View>
 
           <Animated.View style={{ opacity: fadeAnim, transform: [{ translateY: slideAnim }] }}>
+            <AuthFeatureShowcase isDark={isDark} />
             <ModernCard variant="glass" style={styles.formCard}>
+
               <Text style={styles.formTitle}>Welcome Back</Text>
               <Text style={styles.formSubtitle}>Sign in to continue your journey</Text>
 
@@ -168,6 +172,29 @@ export default function LoginScreen({ navigation, onLogin }) {
               >
                 {isLoading ? 'Authenticating...' : 'Sign In'}
               </ModernButton>
+
+              <View style={styles.dividerContainer}>
+                <View style={styles.dividerLine} />
+                <Text style={styles.dividerText}>OR</Text>
+                <View style={styles.dividerLine} />
+              </View>
+
+              <View style={styles.socialRow}>
+                <TouchableOpacity style={styles.socialBtn}>
+                  <Ionicons name="logo-google" size={24} color="#EA4335" />
+                </TouchableOpacity>
+                <TouchableOpacity style={styles.socialBtn}>
+                  <Ionicons name="logo-apple" size={24} color={isDark ? "#FFFFFF" : "#000000"} />
+                </TouchableOpacity>
+                <TouchableOpacity style={styles.socialBtn}>
+                  <Ionicons name="logo-facebook" size={24} color="#1877F2" />
+                </TouchableOpacity>
+              </View>
+
+              <TouchableOpacity style={styles.biometricBtn} onPress={() => Alert.alert('Biometrics', 'Biometric authentication would start here.')}>
+                <Ionicons name="finger-print-outline" size={20} color="#6366F1" />
+                <Text style={styles.biometricText}>Sign in with Biometrics</Text>
+              </TouchableOpacity>
             </ModernCard>
 
             <TouchableOpacity 
@@ -277,5 +304,53 @@ const styles = StyleSheet.create({
     fontWeight: '800',
   },
   textWhite: { color: '#FFFFFF' },
+  dividerContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginVertical: 20,
+  },
+  dividerLine: {
+    flex: 1,
+    height: 1,
+    backgroundColor: 'rgba(148, 163, 184, 0.2)',
+  },
+  dividerText: {
+    marginHorizontal: 16,
+    color: '#64748B',
+    fontSize: 12,
+    fontWeight: '700',
+  },
+  socialRow: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    gap: 16,
+    marginBottom: 20,
+  },
+  socialBtn: {
+    width: 56,
+    height: 56,
+    borderRadius: 16,
+    backgroundColor: 'rgba(255, 255, 255, 0.05)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.1)',
+  },
+  biometricBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 12,
+    borderRadius: 12,
+    backgroundColor: 'rgba(99, 102, 241, 0.05)',
+    borderWidth: 1,
+    borderColor: 'rgba(99, 102, 241, 0.1)',
+  },
+  biometricText: {
+    marginLeft: 8,
+    color: '#6366F1',
+    fontSize: 14,
+    fontWeight: '600',
+  },
 });
 

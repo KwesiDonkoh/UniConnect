@@ -18,9 +18,8 @@ const { width, height } = Dimensions.get('window');
 export default function GlobalUniversityHub({ visible, onClose, user, initialTab = 'research' }) {
   const [activeTab, setActiveTab] = useState(initialTab);
 
-  // Sync activeTab when initialTab changes or modal becomes visible
   React.useEffect(() => {
-    if (visible) {
+    if (visible && initialTab) {
       setActiveTab(initialTab);
     }
   }, [visible, initialTab]);

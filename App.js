@@ -10,6 +10,7 @@ import { Ionicons } from '@expo/vector-icons';
 // Import screens
 import SplashScreen from './screens/SplashScreen';
 import SimpleLoginScreen from './screens/SimpleLoginScreen';
+import SignUpScreen from './screens/SignUpScreen';
 import TestLogin from './TestLogin';
 import ForgotPasswordScreen from './screens/ForgotPasswordScreen';
 // import LevelSelectionScreen from './screens/LevelSelectionScreen'; // Removed - level selection now happens during signup
@@ -278,6 +279,7 @@ function AppContent() {
           initialRouteName="Login"
         >
           <Stack.Screen name="Login" component={SimpleLoginScreen} />
+          <Stack.Screen name="SignUp" component={SignUpScreen} />
           <Stack.Screen name="ForgotPassword" component={ForgotPasswordScreen} />
         </Stack.Navigator>
       ) : (

@@ -25,13 +25,23 @@ import { VirtualClassroom } from '../components/VirtualClassroom';
 import { AIContentGenerator } from '../components/AIContentGenerator';
 import { SmartLectureRecorder } from '../components/SmartLectureRecorder';
 import { AIPlagiarismDetector } from '../components/AIPlagiarismDetector';
-import { FeatureWelcomeGuide } from '../components/FeatureWelcomeGuide';
+
 import { AIPerformancePrediction } from '../components/AIPerformancePrediction';
-import VoiceRecorder from '../components/VoiceRecorder';
 import TextEditor from '../components/TextEditor';
 import { AIPatentNavigator } from '../components/AIPatentNavigator';
 import SmartScheduleOptimizer from '../components/SmartScheduleOptimizer';
 import GlobalUniversityHub from '../components/GlobalUniversityHub';
+import PomodoroTimer from '../components/PomodoroTimer';
+import GPACalculator from '../components/GPACalculator';
+import StudyBuddy from '../components/StudyBuddy';
+import ExamTimer from '../components/ExamTimer';
+import QandA from '../components/QandA';
+import AssignmentManager from '../components/AssignmentManager';
+import FeatureWelcomeGuide from '../components/FeatureWelcomeGuide';
+import MentalHealthCorner from '../components/MentalHealthCorner';
+import DailyMotivation from '../components/DailyMotivation';
+import LibraryScanner from '../components/LibraryScanner';
+import AuthFeatureShowcase from '../components/AuthFeatureShowcase';
 
 
 const { width } = Dimensions.get('window');
@@ -43,7 +53,7 @@ export default function LecturerDashboard({ navigation }) {
   const [quickActionModal, setQuickActionModal] = useState(false);
   const [selectedAction, setSelectedAction] = useState(null);
   const [showWelcomeMessage, setShowWelcomeMessage] = useState(true);
-  
+
   // New AI-powered lecturer features
   const [showAILectureAssistant, setShowAILectureAssistant] = useState(false);
   const [showSmartGrading, setShowSmartGrading] = useState(false);
@@ -53,15 +63,26 @@ export default function LecturerDashboard({ navigation }) {
   const [showLectureRecorder, setShowLectureRecorder] = useState(false);
   const [showPlagiarismDetector, setShowPlagiarismDetector] = useState(false);
   const [showPerformancePrediction, setShowPerformancePrediction] = useState(false);
-  const [showVoiceRecorder, setShowVoiceRecorder] = useState(false);
   const [showTextEditor, setShowTextEditor] = useState(false);
+  const [selectedCourse, setSelectedCourse] = useState(null);
 
   const [showAILessonPlanner, setShowAILessonPlanner] = useState(false);
   const [showAIPatentNavigator, setShowAIPatentNavigator] = useState(false);
   const [showGlobalHub, setShowGlobalHub] = useState(false);
   const [initialHubTab, setInitialHubTab] = useState('research');
+  const [showIdModal, setShowIdModal] = useState(false);
+  const [showMotivation, setShowMotivation] = useState(true);
+  const [showProfile, setShowProfile] = useState(false);
+  const [showPomodoro, setShowPomodoro] = useState(false);
+  const [showGPA, setShowGPA] = useState(false);
+  const [showStudyBuddy, setShowStudyBuddy] = useState(false);
+  const [showExamTimer, setShowExamTimer] = useState(false);
+  const [showQandA, setShowQandA] = useState(false);
+  const [showAssignments, setShowAssignments] = useState(false);
   const [showWelcomeGuide, setShowWelcomeGuide] = useState(false);
-  const [selectedCourse, setSelectedCourse] = useState(null);
+  const [showMentalHealth, setShowMentalHealth] = useState(false);
+  const [showLibraryScanner, setShowLibraryScanner] = useState(false);
+
 
   // Safety check - if user is null, show loading
   if (!user) {
@@ -74,26 +95,26 @@ export default function LecturerDashboard({ navigation }) {
 
   // Get lecturer's teaching data - only courses they are actually teaching
   const courseDetails = Array.isArray(csModules) ? csModules : [];
-  
+
   // For lecturers, show only the courses they are assigned to teach
   // In a real app, this would come from the user's teachingCourses array
   const teachingCourses = user?.teachingCourses || [];
-  const actualTeachingCourses = courseDetails.filter(course => 
+  const actualTeachingCourses = courseDetails.filter(course =>
     teachingCourses.includes(course.id) || teachingCourses.includes(course.code)
   );
-  
+
   // For lecturers, strictly show only assigned teaching courses
   const displayCourses = actualTeachingCourses;
-  
+
   // Group courses by level for better organization
   const coursesByLevel = displayCourses.reduce((acc, course) => {
     // Determine level based on course code pattern or use semester as fallback
     const level = course.code?.startsWith('CSM1') ? '100' :
-                  course.code?.startsWith('CSM2') ? '200' :
-                  course.code?.startsWith('CSM3') ? '300' :
-                  course.code?.startsWith('CSM4') ? '400' : 
-                  `Level ${course.semester || 1}`;
-    
+      course.code?.startsWith('CSM2') ? '200' :
+        course.code?.startsWith('CSM3') ? '300' :
+          course.code?.startsWith('CSM4') ? '400' :
+            `Level ${course.semester || 1}`;
+
     if (!acc[level]) acc[level] = [];
     acc[level].push(course);
     return acc;
@@ -104,12 +125,12 @@ export default function LecturerDashboard({ navigation }) {
   const totalMaterials = displayCourses.length * 8; // Assume avg 8 materials per course
   const levelsTeaching = Object.keys(coursesByLevel).length;
   const pendingAssignments = Math.floor(Math.random() * 15) + 5; // Simulated
-  
+
   const getGreeting = () => {
     const hour = new Date().getHours();
     const firstName = user?.name?.split(' ')[0] || 'Professor';
     const title = user?.title || 'Dr.';
-    
+
     if (hour < 12) return `Good morning, ${title} ${firstName}`;
     if (hour < 17) return `Good afternoon, ${title} ${firstName}`;
     return `Good evening, ${title} ${firstName}`;
@@ -121,7 +142,7 @@ export default function LecturerDashboard({ navigation }) {
   const handleQuickAction = (action) => {
     // Set selected course for features that need it
     setSelectedCourse(displayCourses[0] || { name: 'Computer Science', code: 'CSM101' });
-    
+
     switch (action.id) {
       case 'ai-assistant':
         setShowAILectureAssistant(true);
@@ -153,6 +174,7 @@ export default function LecturerDashboard({ navigation }) {
       case 'ai-patent-navigator':
         setShowAIPatentNavigator(true);
         break;
+
       default:
         console.log('Unknown action:', action.id);
     }
@@ -163,28 +185,52 @@ export default function LecturerDashboard({ navigation }) {
   return (
     <SafeAreaView style={[styles.container, isDark && styles.darkContainer]}>
       <StatusBar style={isDark ? 'light' : 'dark'} />
-      
+
       {/* Top Header */}
       <View style={[styles.topBar, isDark && styles.darkTopBar]}>
         <Text style={[styles.topBarTitle, isDark && styles.darkTopBarTitle]}>Lecturer Dashboard</Text>
-        <View style={styles.headerActions}>
-          <TouchableOpacity 
-            style={styles.discoverButton}
-            onPress={() => setShowWelcomeGuide(true)}
-          >
-            <Ionicons name="sparkles" size={16} color="#FFFFFF" />
-            <Text style={styles.discoverButtonText}>Discover</Text>
-          </TouchableOpacity>
-          
-          <TouchableOpacity 
-            style={styles.themeToggle}
+        <View style={styles.headerIconsRow}>
+          <TouchableOpacity
+            style={styles.headerIconCircle}
             onPress={toggleTheme}
           >
-            <Ionicons 
-              name={isDark ? 'sunny' : 'moon'} 
-              size={22} 
-              color="#FFFFFF" 
+            <Ionicons
+              name={isDark ? 'sunny' : 'moon'}
+              size={22}
+              color="#FFFFFF"
             />
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={styles.headerIconCircle}
+            onPress={() => setShowWelcomeGuide(true)}
+          >
+            <Ionicons name="sparkles" size={22} color="#FFFFFF" />
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={styles.headerIconCircle}
+            onPress={() => setShowGlobalHub(true)}
+          >
+            <Ionicons name="compass-outline" size={22} color="#FFFFFF" />
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={styles.headerIconCircle}
+            onPress={() => {
+              const targetCourse = displayCourses?.[0] || { name: 'Curriculum', code: 'PLAN' };
+              setSelectedCourse(targetCourse);
+              setShowAILectureAssistant(true);
+            }}
+          >
+            <Ionicons name="infinite" size={24} color="#FFFFFF" />
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={styles.headerIconCircle}
+            onPress={() => navigation.navigate('Notifications')}
+          >
+            <Ionicons name="notifications-outline" size={22} color="#FFFFFF" />
           </TouchableOpacity>
         </View>
       </View>
@@ -194,7 +240,7 @@ export default function LecturerDashboard({ navigation }) {
         {showWelcomeMessage && (
           <View style={styles.welcomeCardContainer}>
             <View style={styles.welcomeCard}>
-              <TouchableOpacity 
+              <TouchableOpacity
                 style={styles.closeButton}
                 onPress={() => setShowWelcomeMessage(false)}
               >
@@ -209,7 +255,7 @@ export default function LecturerDashboard({ navigation }) {
                 setSelectedCourse(displayCourses[0] || { name: 'Computer Science', code: 'CSM101' });
                 setShowVirtualClassroom(true);
               }}>
-                <Ionicons name="chatbubbles" size={18} color="#FFFFFF" style={{marginRight: 8}} />
+                <Ionicons name="chatbubbles" size={18} color="#FFFFFF" style={{ marginRight: 8 }} />
                 <Text style={styles.startTeachingText}>Start Teaching</Text>
               </TouchableOpacity>
             </View>
@@ -230,7 +276,7 @@ export default function LecturerDashboard({ navigation }) {
                   <Text style={styles.profileAvatarText}>{user.name ? user.name.charAt(0).toUpperCase() : 'L'}</Text>
                 )}
               </View>
-              <TouchableOpacity 
+              <TouchableOpacity
                 style={styles.profileBadge}
                 onPress={() => {
                   Alert.alert('Update Photo', 'Would you like to change your profile picture?', [
@@ -250,15 +296,15 @@ export default function LecturerDashboard({ navigation }) {
               </View>
               <Text style={styles.profileDepartment}>{user.department || 'Computer Science'}</Text>
               <View style={styles.facultyBadge}>
-                  <Ionicons name="shield-checkmark" size={10} color="#FFFFFF" style={{ marginRight: 4 }} />
-                  <Text style={styles.facultyBadgeText}>VERIFIED FACULTY</Text>
+                <Ionicons name="shield-checkmark" size={10} color="#FFFFFF" style={{ marginRight: 4 }} />
+                <Text style={styles.facultyBadgeText}>VERIFIED FACULTY</Text>
               </View>
               <View style={styles.profileTeachingInfo}>
-                <Ionicons name="stats-chart" size={12} color="rgba(255,255,255,0.8)" style={{marginRight: 4}} />
+                <Ionicons name="stats-chart" size={12} color="rgba(255,255,255,0.8)" style={{ marginRight: 4 }} />
                 <Text style={styles.profileTeachingText}>Teaching {courseDetails.length} courses</Text>
               </View>
             </View>
-            <TouchableOpacity 
+            <TouchableOpacity
               style={styles.profileNotificationBtn}
               onPress={() => navigation.navigate('Notifications')}
             >
@@ -274,17 +320,29 @@ export default function LecturerDashboard({ navigation }) {
           </LinearGradient>
         </View>
 
+        {/* Discovery Showcase Section */}
+        <View style={styles.discoverySection}>
+          <AuthFeatureShowcase isDark={isDark} />
+        </View>
+
+        {/* Motivation Section - RESTORED & CONTROLLED */}
+        <DailyMotivation
+          visible={showMotivation}
+          onClose={() => setShowMotivation(false)}
+          isDark={isDark}
+        />
+
         {/* Your Teaching Impact (Visual Analytics) */}
         <View style={[styles.section, isDark && styles.darkSection, { marginTop: 25, marginBottom: 10 }]}>
           <View style={styles.sectionHeader}>
-            <View style={{flexDirection: 'row', alignItems: 'center'}}>
-              <Ionicons name="analytics" size={20} color={isDark ? '#818CF8' : '#4F46E5'} style={{marginRight: 8}} />
+            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+              <Ionicons name="analytics" size={20} color={isDark ? '#818CF8' : '#4F46E5'} style={{ marginRight: 8 }} />
               <Text style={[styles.sectionTitle, isDark && styles.darkSectionTitle, { marginBottom: 0, fontSize: 18 }]}>Teaching Impact</Text>
             </View>
-            <TouchableOpacity 
-              onPress={() => navigation.navigate('Analytics', { 
+            <TouchableOpacity
+              onPress={() => navigation.navigate('Analytics', {
                 courseCode: displayCourses[0]?.code || 'LECTURER_PORTFOLIO',
-                courseName: displayCourses[0]?.name || 'Teaching Portfolio' 
+                courseName: displayCourses[0]?.name || 'Teaching Portfolio'
               })}
             >
               <Text style={styles.seeHowText}>View Insights</Text>
@@ -296,7 +354,7 @@ export default function LecturerDashboard({ navigation }) {
               <Text style={styles.chartTitle}>Student Engagement Trend</Text>
               <Text style={styles.chartValue}>+12% this week</Text>
             </View>
-            
+
             <View style={styles.chartContainer}>
               {[60, 45, 80, 55, 90, 70, 85].map((height, index) => (
                 <View key={index} style={styles.barItem}>
@@ -311,14 +369,14 @@ export default function LecturerDashboard({ navigation }) {
         {/* Global University Hub - Lecturer Side */}
         <View style={[styles.section, isDark && styles.darkSection]}>
           <View style={styles.sectionHeader}>
-            <View style={{flexDirection: 'row', alignItems: 'center'}}>
-              <Ionicons name="globe-outline" size={20} color={isDark ? '#818CF8' : '#4F46E5'} style={{marginRight: 8}} />
+            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+              <Ionicons name="globe-outline" size={20} color={isDark ? '#818CF8' : '#4F46E5'} style={{ marginRight: 8 }} />
               <Text style={[styles.sectionTitle, isDark && styles.darkSectionTitle, { marginBottom: 0 }]}>Global Academic Hub</Text>
             </View>
           </View>
-          
+
           <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginTop: 15 }}>
-            <TouchableOpacity 
+            <TouchableOpacity
               style={styles.lecturerHubCard}
               onPress={() => {
                 setInitialHubTab('research');
@@ -327,13 +385,13 @@ export default function LecturerDashboard({ navigation }) {
             >
               <LinearGradient colors={['#4F46E5', '#3730A3']} style={styles.hubGradient}>
                 <View style={styles.hubIconCircle}>
-                   <Ionicons name="flask" size={20} color="#4F46E5" />
+                  <Ionicons name="flask" size={20} color="#4F46E5" />
                 </View>
                 <Text style={styles.hubTitle}>World Research</Text>
                 <Text style={styles.hubSub}>New global grants available</Text>
               </LinearGradient>
             </TouchableOpacity>
-            <TouchableOpacity 
+            <TouchableOpacity
               style={styles.lecturerHubCard}
               onPress={() => {
                 setInitialHubTab('research');
@@ -342,13 +400,13 @@ export default function LecturerDashboard({ navigation }) {
             >
               <LinearGradient colors={['#10B981', '#065F46']} style={styles.hubGradient}>
                 <View style={styles.hubIconCircle}>
-                   <Ionicons name="library" size={20} color="#10B981" />
+                  <Ionicons name="library" size={20} color="#10B981" />
                 </View>
                 <Text style={styles.hubTitle}>Publication Hub</Text>
                 <Text style={styles.hubSub}>Submit your recent papers</Text>
               </LinearGradient>
             </TouchableOpacity>
-            <TouchableOpacity 
+            <TouchableOpacity
               style={styles.lecturerHubCard}
               onPress={() => {
                 setInitialHubTab('faculty');
@@ -357,7 +415,7 @@ export default function LecturerDashboard({ navigation }) {
             >
               <LinearGradient colors={['#8B5CF6', '#6D28D9']} style={styles.hubGradient}>
                 <View style={styles.hubIconCircle}>
-                   <Ionicons name="earth" size={20} color="#8B5CF6" />
+                  <Ionicons name="earth" size={20} color="#8B5CF6" />
                 </View>
                 <Text style={styles.hubTitle}>Global Faculty</Text>
                 <Text style={styles.hubSub}>Connect with other lecturers</Text>
@@ -374,7 +432,7 @@ export default function LecturerDashboard({ navigation }) {
               <Text style={[styles.sectionSubtitle, isDark && styles.darkSectionSubtitle]}>AI assistance & quick shortcuts</Text>
             </View>
           </View>
-          
+
           <View style={styles.modernAIGrid}>
             <TouchableOpacity
               style={styles.modernAICard}
@@ -406,7 +464,7 @@ export default function LecturerDashboard({ navigation }) {
               </LinearGradient>
             </TouchableOpacity>
 
-            <TouchableOpacity 
+            <TouchableOpacity
               style={styles.modernAICard}
               onPress={() => {
                 const targetCourse = displayCourses[0] || { name: 'Curriculum', code: 'PLAN' };
@@ -421,7 +479,7 @@ export default function LecturerDashboard({ navigation }) {
               </LinearGradient>
             </TouchableOpacity>
 
-            <TouchableOpacity 
+            <TouchableOpacity
               style={styles.modernAICard}
               onPress={() => {
                 const targetCourse = displayCourses[0] || { name: 'Curriculum', code: 'PLAN' };
@@ -435,6 +493,8 @@ export default function LecturerDashboard({ navigation }) {
                 <Text style={styles.modernAIDescription}>Performance insights</Text>
               </LinearGradient>
             </TouchableOpacity>
+
+
 
             <TouchableOpacity
               style={styles.modernAICard}
@@ -451,7 +511,7 @@ export default function LecturerDashboard({ navigation }) {
               </LinearGradient>
             </TouchableOpacity>
 
-            <TouchableOpacity 
+            <TouchableOpacity
               style={styles.modernAICard}
               onPress={() => {
                 const targetCourse = displayCourses[0] || { name: 'Curriculum', code: 'PLAN' };
@@ -466,7 +526,7 @@ export default function LecturerDashboard({ navigation }) {
               </LinearGradient>
             </TouchableOpacity>
 
-            <TouchableOpacity 
+            <TouchableOpacity
               style={styles.modernAICard}
               onPress={() => {
                 const targetCourse = displayCourses[0] || { name: 'Curriculum', code: 'PLAN' };
@@ -481,7 +541,7 @@ export default function LecturerDashboard({ navigation }) {
               </LinearGradient>
             </TouchableOpacity>
 
-            <TouchableOpacity 
+            <TouchableOpacity
               style={styles.modernAICard}
               onPress={() => {
                 const targetCourse = displayCourses[0] || { name: 'Curriculum', code: 'PLAN' };
@@ -496,7 +556,7 @@ export default function LecturerDashboard({ navigation }) {
               </LinearGradient>
             </TouchableOpacity>
 
-            <TouchableOpacity 
+            <TouchableOpacity
               style={styles.modernAICard}
               onPress={() => {
                 const targetCourse = displayCourses[0] || { name: 'Curriculum', code: 'PLAN' };
@@ -535,15 +595,54 @@ export default function LecturerDashboard({ navigation }) {
               </LinearGradient>
             </TouchableOpacity>
 
-            <TouchableOpacity style={styles.modernAICard} onPress={() => setShowVoiceRecorder(true)}>
-              <LinearGradient colors={['#8E2DE2', '#4A00E0']} style={styles.modernAIGradient}>
-                <Ionicons name="mic" size={28} color="#FFFFFF" />
-                <Text style={styles.modernAITitle}>Voice Note</Text>
-                <Text style={styles.modernAIDescription}>Record and share</Text>
+            <TouchableOpacity
+              style={styles.modernAICard}
+              onPress={() => setShowQandA(true)}
+            >
+              <LinearGradient colors={['#8B5CF6', '#7C3AED']} style={styles.modernAIGradient}>
+                <Ionicons name="chatbubbles" size={28} color="#FFFFFF" />
+                <Text style={styles.modernAITitle}>Q&A Board</Text>
+                <Text style={styles.modernAIDescription}>Student questions</Text>
               </LinearGradient>
             </TouchableOpacity>
+
+            <TouchableOpacity
+              style={styles.modernAICard}
+              onPress={() => setShowAssignments(true)}
+            >
+              <LinearGradient colors={['#EF4444', '#B91C1C']} style={styles.modernAIGradient}>
+                <Ionicons name="time" size={28} color="#FFFFFF" />
+                <Text style={styles.modernAITitle}>Deadlines</Text>
+                <Text style={styles.modernAIDescription}>Assignment tracker</Text>
+              </LinearGradient>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={styles.modernAICard}
+              onPress={() => setShowLibraryScanner(true)}
+            >
+              <LinearGradient colors={['#F59E0B', '#D97706']} style={styles.modernAIGradient}>
+                <Ionicons name="library" size={28} color="#FFFFFF" />
+                <Text style={styles.modernAITitle}>Library Scanner</Text>
+                <Text style={styles.modernAIDescription}>Smart book finder</Text>
+              </LinearGradient>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={styles.modernAICard}
+              onPress={() => setShowMentalHealth(true)}
+            >
+              <LinearGradient colors={['#10B981', '#059669']} style={styles.modernAIGradient}>
+                <Ionicons name="heart" size={28} color="#FFFFFF" />
+                <Text style={styles.modernAITitle}>Mental Health</Text>
+                <Text style={styles.modernAIDescription}>Wellness corner</Text>
+              </LinearGradient>
+            </TouchableOpacity>
+
+
           </View>
         </View>
+
 
         {/* Courses Overview Section */}
         <View style={[styles.section, isDark && styles.darkSection]}>
@@ -607,7 +706,7 @@ export default function LecturerDashboard({ navigation }) {
                 <Text style={styles.activityTime}>2 hours ago</Text>
               </View>
             </View>
-            
+
             <View style={styles.activityCard}>
               <Ionicons name="people" size={24} color="#F59E0B" />
               <View style={styles.activityContent}>
@@ -616,7 +715,7 @@ export default function LecturerDashboard({ navigation }) {
                 <Text style={styles.activityTime}>1 day ago</Text>
               </View>
             </View>
-            
+
             <View style={styles.activityCard}>
               <Ionicons name="videocam" size={24} color="#8B5CF6" />
               <View style={styles.activityContent}>
@@ -721,23 +820,9 @@ export default function LecturerDashboard({ navigation }) {
         />
       )}
 
-      {/* 🌟 Welcome Guide for Discovering Amazing Lecturer Features */}
-      <FeatureWelcomeGuide
-        visible={showWelcomeGuide}
-        onClose={() => setShowWelcomeGuide(false)}
-        userType="lecturer"
-      />
+
 
       {/* 🎤 Voice Recorder Modal */}
-      <VoiceRecorder
-        visible={showVoiceRecorder}
-        onClose={() => setShowVoiceRecorder(false)}
-        onSend={(voiceData) => {
-          console.log('Voice message sent:', voiceData);
-          Alert.alert('Success!', 'Voice message recorded and sent successfully!');
-        }}
-        courseCode={selectedCourse?.code}
-      />
 
       {/* ✏️ Smart Text Editor Modal */}
       <TextEditor
@@ -750,7 +835,7 @@ export default function LecturerDashboard({ navigation }) {
         courseCode={selectedCourse?.code}
       />
       {/* Floating Professor AI Assistant */}
-      <TouchableOpacity 
+      <TouchableOpacity
         style={styles.floatingAIButton}
         onPress={() => setShowAILectureAssistant(true)}
         activeOpacity={0.8}
@@ -771,6 +856,19 @@ export default function LecturerDashboard({ navigation }) {
         user={user}
         initialTab={initialHubTab}
       />
+
+      <PomodoroTimer visible={showPomodoro} onClose={() => setShowPomodoro(false)} isDark={isDark} />
+      <GPACalculator visible={showGPA} onClose={() => setShowGPA(false)} isDark={isDark} />
+      <StudyBuddy visible={showStudyBuddy} onClose={() => setShowStudyBuddy(false)} isDark={isDark} />
+      <ExamTimer visible={showExamTimer} onClose={() => setShowExamTimer(false)} isDark={isDark} />
+      <QandA visible={showQandA} onClose={() => setShowQandA(false)} isDark={isDark} />
+      <AssignmentManager visible={showAssignments} onClose={() => setShowAssignments(false)} isDark={isDark} />
+      <FeatureWelcomeGuide visible={showWelcomeGuide} onClose={() => setShowWelcomeGuide(false)} isDark={isDark} />
+      <MentalHealthCorner visible={showMentalHealth} onClose={() => setShowMentalHealth(false)} isDark={isDark} />
+      <DailyMotivation visible={showMotivation} onClose={() => setShowMotivation(false)} isDark={isDark} />
+      <LibraryScanner visible={showLibraryScanner} onClose={() => setShowLibraryScanner(false)} isDark={isDark} />
+
+
     </SafeAreaView>
   );
 }
@@ -823,11 +921,25 @@ const styles = StyleSheet.create({
   },
   darkTopBar: {
     backgroundColor: '#1E293B',
+    borderBottomColor: '#334155',
   },
   topBarTitle: {
     color: '#FFFFFF',
     fontSize: 20,
     fontWeight: 'bold',
+  },
+  themeToggleGradient: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 5,
+    paddingHorizontal: 12,
+    borderRadius: 20,
+    gap: 6,
+  },
+  themeToggleText: {
+    fontSize: 12,
+    fontWeight: '800',
+    textTransform: 'uppercase',
   },
   darkTopBarTitle: {
     color: '#F8FAFC',
@@ -1055,9 +1167,28 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFFFFF',
     borderRadius: 12,
     overflow: 'hidden',
-    marginBottom: 12,
-    borderWidth: 1,
-    borderColor: '#E5E7EB',
+    paddingBottom: 15,
+    borderBottomWidth: 1,
+    borderBottomColor: '#E2E8F0',
+  },
+  discoverySection: {
+    width: '100%',
+    paddingHorizontal: 0,
+    marginTop: 15,
+    marginBottom: 10,
+  },
+  headerIconsRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  headerIconCircle: {
+    width: 38,
+    height: 38,
+    borderRadius: 19,
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   darkTeachingImpactCardOuter: {
     backgroundColor: '#1E293B',
@@ -1639,5 +1770,30 @@ const styles = StyleSheet.create({
     marginTop: -2,
     textTransform: "uppercase",
     textAlign: "center",
+  },
+  featureModalHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 20,
+    paddingTop: 56,
+    paddingBottom: 12,
+    backgroundColor: '#FFFFFF',
+    borderBottomWidth: 1,
+    borderBottomColor: '#F1F5F9',
+  },
+  featureModalBack: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: '#F1F5F9',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  featureModalTitle: {
+    fontSize: 18,
+    fontWeight: '800',
+    color: '#1E293B',
+    textAlign: 'center',
   },
 });

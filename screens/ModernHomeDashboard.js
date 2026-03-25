@@ -32,7 +32,7 @@ import EnhancedVoiceCall from '../components/EnhancedVoiceCall';
 import AIQuizGenerator from '../components/AIQuizGenerator';
 import SmartScheduleOptimizer from '../components/SmartScheduleOptimizer';
 import FeatureWelcomeGuide from '../components/FeatureWelcomeGuide';
-import VoiceRecorder from '../components/VoiceRecorder';
+// VoiceRecorder import removed
 import TextEditor from '../components/TextEditor';
 import ProgressTracker from '../components/ProgressTracker';
 import SemesterModules from '../components/SemesterModules';
@@ -43,18 +43,52 @@ import MindMap from '../components/MindMap';
 import KnowledgeTree from '../components/KnowledgeTree';
 import GlobalUniversityHub from '../components/GlobalUniversityHub';
 import PeerCommunityHub from '../components/PeerCommunityHub';
+import DailyMotivation from '../components/DailyMotivation';
+import AuthFeatureShowcase from '../components/AuthFeatureShowcase';
+import GPACalculator from '../components/GPACalculator';
+import StudyBuddy from '../components/StudyBuddy';
+import ExamTimer from '../components/ExamTimer';
+import SmartHallPass from '../components/SmartHallPass';
+import SISSyncProvider from '../components/SISSyncProvider';
+import LecturerAISuite from '../components/LecturerAISuite';
+import AICampusMap from '../components/AICampusMap';
+import VirtualTour360 from '../components/VirtualTour360';
+import AIResearchHub from '../components/AIResearchHub';
+import PeerCollaboration from '../components/PeerCollaboration';
+import CourseAnalytics from '../components/CourseAnalytics';
+import DreamJournal from '../components/DreamJournal';
+import TimeTravel from '../components/TimeTravel';
+import AINeuralSearch from '../components/AINeuralSearch';
+import HolographicWidgets from '../components/HolographicWidgets';
+import VoiceCommandCenter from '../components/VoiceCommandCenter';
+import PredictiveSuccessAI from '../components/PredictiveSuccessAI';
+import AcademicCompass from '../components/AcademicCompass';
+import AIStudyTutors from '../components/AIStudyTutors';
+import KNUSTSISSync from '../components/KNUSTSISSync';
+import NeuralAmbience from '../components/NeuralAmbience';
+import CareerVoyager from '../components/CareerVoyager';
+import ResearchLedger from '../components/ResearchLedger';
+import AppFeedback from '../components/AppFeedback';
+import AppRating from '../components/AppRating';
+import ContactSupport from '../components/ContactSupport';
+import GlobalNetwork from '../components/GlobalNetwork';
+import AIThesisMentor from '../components/AIThesisMentor';
+import VirtualCampusVR from '../components/VirtualCampusVR';
+import NeuralAttendance from '../components/NeuralAttendance';
+import CurriculumArchitect from '../components/CurriculumArchitect';
+import GlobalGrantLedger from '../components/GlobalGrantLedger';
 
 const { width, height } = Dimensions.get('window');
 
 export default function ModernHomeDashboard({ navigation }) {
   const { csModules, notifications, user } = useApp();
   const { isDark, toggleTheme: toggleGlobalTheme } = useTheme();
-  
+
   // Debug logging
   console.log('ModernHomeDashboard - User:', user?.uid, user?.userType);
   console.log('ModernHomeDashboard - Modules:', csModules?.length);
   console.log('ModernHomeDashboard - Notifications:', notifications?.length);
-  
+
   // Early return if user is not loaded yet
   if (!user || !csModules) {
     return (
@@ -64,16 +98,16 @@ export default function ModernHomeDashboard({ navigation }) {
       </SafeAreaView>
     );
   }
-  
+
   // State for animations and gamification
   const [refreshing, setRefreshing] = useState(false);
   const [studyStreak, setStudyStreak] = useState(7);
   const [dailyGoal, setDailyGoal] = useState(0.75);
   const [weeklyProgress, setWeeklyProgress] = useState(0.6);
   const [achievements, setAchievements] = useState([]);
-  
+
   // New feature modals
-  const [showVoiceRecorder, setShowVoiceRecorder] = useState(false);
+  // showVoiceRecorder state removed
   const [showTextEditor, setShowTextEditor] = useState(false);
   const [showMindMap, setShowMindMap] = useState(false);
   const [showAIAssistant, setShowAIAssistant] = useState(false);
@@ -93,6 +127,14 @@ export default function ModernHomeDashboard({ navigation }) {
   const [showSmartVoiceNotes, setShowSmartVoiceNotes] = useState(false);
   const [showWelcomeGuide, setShowWelcomeGuide] = useState(false);
   const [showWeekendActivities, setShowWeekendActivities] = useState(false);
+  const [showHallPass, setShowHallPass] = useState(false);
+  const [showSISSync, setShowSISSync] = useState(false);
+  const [showLecturerSuite, setShowLecturerSuite] = useState(false);
+  const [showCampusMap, setShowCampusMap] = useState(false);
+  const [showVirtualTour, setShowVirtualTour] = useState(false);
+  const [showResearchHub, setShowResearchHub] = useState(false);
+  const [showPeerCollab, setShowPeerCollab] = useState(false);
+  const [showAnalytics, setShowAnalytics] = useState(false);
   const [showProgressTracker, setShowProgressTracker] = useState(false);
   const [showSemesterModules, setShowSemesterModules] = useState(false);
   const [showQuickActionsModal, setShowQuickActionsModal] = useState(false);
@@ -100,6 +142,27 @@ export default function ModernHomeDashboard({ navigation }) {
   const [showReminderPicker, setShowReminderPicker] = useState(false);
   const [showIdModal, setShowIdModal] = useState(false);
   const [showHubDetail, setShowHubDetail] = useState(false);
+  const [showGPA, setShowGPA] = useState(false);
+  const [showStudyBuddy, setShowStudyBuddy] = useState(false);
+  const [showExamTimer, setShowExamTimer] = useState(false);
+  const [showMotivation, setShowMotivation] = useState(true);
+  const [showNeuralSearch, setShowNeuralSearch] = useState(false);
+  const [showVoiceCommand, setShowVoiceCommand] = useState(false);
+  const [showPredictiveAI, setShowPredictiveAI] = useState(false);
+  const [showCompass, setShowCompass] = useState(false);
+  const [showStudyTutors, setShowStudyTutors] = useState(false);
+  const [showNeuralAmbience, setShowNeuralAmbience] = useState(false);
+  const [showCareerVoyager, setShowCareerVoyager] = useState(false);
+  const [showResearchLedger, setShowResearchLedger] = useState(false);
+  const [showFeedback, setShowFeedback] = useState(false);
+  const [showRating, setShowRating] = useState(false);
+  const [showSupport, setShowSupport] = useState(false);
+  const [showGlobalNetwork, setShowGlobalNetwork] = useState(false);
+  const [showThesisMentor, setShowThesisMentor] = useState(false);
+  const [showVirtualCampus, setShowVirtualCampus] = useState(false);
+  const [showNeuralAttendance, setShowNeuralAttendance] = useState(false);
+  const [showCurriculumArchitect, setShowCurriculumArchitect] = useState(false);
+  const [showGrantLedger, setShowGrantLedger] = useState(false);
   const [selectedHubCategory, setSelectedHubCategory] = useState(null);
   const [showGlobalHub, setShowGlobalHub] = useState(false);
   const [showPeerHub, setShowPeerHub] = useState(false);
@@ -118,13 +181,13 @@ export default function ModernHomeDashboard({ navigation }) {
     filesUploaded: 0,
     callsMade: 0
   });
-  
+
   // Animation refs
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const slideAnim = useRef(new Animated.Value(50)).current;
   const scaleAnim = useRef(new Animated.Value(0.8)).current;
   const bounceAnim = useRef(new Animated.Value(0)).current;
-  
+
   // Draggable Floating Buttons
   const pan = useRef(new Animated.ValueXY({ x: 0, y: 0 })).current;
   const panResponder = useRef(
@@ -145,10 +208,10 @@ export default function ModernHomeDashboard({ navigation }) {
       }
     })
   ).current;
-  
+
   const currentLevelModules = user?.academicLevel ? (csModules?.[user.academicLevel] || []) : (csModules?.['100'] || []);
   const unreadNotifications = (notifications || []).filter(n => !n.read).length;
-  
+
   // Initialize animations
   useEffect(() => {
     Animated.sequence([
@@ -197,16 +260,16 @@ export default function ModernHomeDashboard({ navigation }) {
 
   const loadUserAchievements = async () => {
     if (!user?.uid) return;
-    
+
     try {
       achievementsService.setCurrentUser(user);
-      
+
       // Get user's achievements
       const result = await achievementsService.getUserAchievements(user.uid);
       if (result.success) {
         setAchievements(result.achievements.slice(0, 4)); // Show top 4
       }
-      
+
       // Get achievement progress
       const progressResult = await achievementsService.getAchievementProgress(user.uid);
       if (progressResult.success) {
@@ -222,7 +285,7 @@ export default function ModernHomeDashboard({ navigation }) {
 
   const loadUserStats = async () => {
     if (!user?.uid) return;
-    
+
     try {
       setUserStats({
         totalPoints: 275,
@@ -276,7 +339,7 @@ export default function ModernHomeDashboard({ navigation }) {
     setShowQuickActionsModal(false);
     setShowFocusMode(true);
   };
-  
+
   if (!user) {
     return (
       <View style={[styles.loadingContainer, isDark && styles.darkContainer]}>
@@ -354,9 +417,9 @@ export default function ModernHomeDashboard({ navigation }) {
     }, []);
 
     return (
-      <Animated.View style={{ 
+      <Animated.View style={{
         opacity: cardAnim,
-        transform: [{ 
+        transform: [{
           translateY: cardAnim.interpolate({
             inputRange: [0, 1],
             outputRange: [20, 0],
@@ -385,11 +448,11 @@ export default function ModernHomeDashboard({ navigation }) {
                 </View>
               )}
             </View>
-            
+
             <Text style={[styles.courseName, isDark && styles.darkText]} numberOfLines={2}>
               {item.name}
             </Text>
-            
+
             <View style={styles.courseFooter}>
               <View style={styles.courseProgress}>
                 <View style={[styles.progressBar, { width: '100%' }]}>
@@ -399,7 +462,7 @@ export default function ModernHomeDashboard({ navigation }) {
                   {Math.floor(Math.random() * 100)}% Complete
                 </Text>
               </View>
-              
+
               <TouchableOpacity style={styles.courseAction}>
                 <Ionicons name="arrow-forward" size={20} color="#FFFFFF" />
               </TouchableOpacity>
@@ -418,8 +481,8 @@ export default function ModernHomeDashboard({ navigation }) {
   return (
     <SafeAreaView style={[styles.container, isDark && styles.darkContainer]}>
       <StatusBar barStyle={isDark ? 'light-content' : 'dark-content'} />
-      
-      <Animated.View 
+
+      <Animated.View
         style={[
           styles.content,
           {
@@ -428,7 +491,7 @@ export default function ModernHomeDashboard({ navigation }) {
           },
         ]}
       >
-        <ScrollView 
+        <ScrollView
           showsVerticalScrollIndicator={false}
           contentContainerStyle={styles.scrollContent}
           refreshControl={
@@ -449,7 +512,7 @@ export default function ModernHomeDashboard({ navigation }) {
           >
             <View style={styles.headerContent}>
               <View style={styles.userInfo}>
-                <TouchableOpacity 
+                <TouchableOpacity
                   style={styles.idCardContainer}
                   onPress={() => setShowIdModal(true)}
                   activeOpacity={0.9}
@@ -461,7 +524,7 @@ export default function ModernHomeDashboard({ navigation }) {
                     {/* ID Card Decorative Elements */}
                     <View style={styles.idCardChip} />
                     <View style={styles.idCardStrip} />
-                    
+
                     <View style={styles.idCardHeader}>
                       <View style={styles.uniBranding}>
                         <View style={styles.uniLogoContainer}>
@@ -482,9 +545,9 @@ export default function ModernHomeDashboard({ navigation }) {
                       <View style={styles.idCardLeft}>
                         <View style={styles.idAvatarWrapper}>
                           {user.photoURL || user.profileImage || user.avatar ? (
-                            <Image 
-                              source={{ uri: user.photoURL || user.profileImage || user.avatar }} 
-                              style={styles.idAvatar} 
+                            <Image
+                              source={{ uri: user.photoURL || user.profileImage || user.avatar }}
+                              style={styles.idAvatar}
                             />
                           ) : (
                             <View style={styles.idAvatarPlaceholder}>
@@ -493,7 +556,7 @@ export default function ModernHomeDashboard({ navigation }) {
                               </Text>
                             </View>
                           )}
-                          <TouchableOpacity 
+                          <TouchableOpacity
                             style={styles.idCameraBadge}
                             onPress={(e) => {
                               e.stopPropagation();
@@ -514,13 +577,13 @@ export default function ModernHomeDashboard({ navigation }) {
                         <Text style={[styles.idName, isDark && styles.darkText]} numberOfLines={1}>
                           {user.name?.toUpperCase() || 'STUDENT NAME'}
                         </Text>
-                        
+
                         <View style={styles.idInfoGrid}>
                           <View style={styles.idInfoItem}>
                             <Text style={[styles.idInfoLabel, isDark && styles.darkTextSecondary]}>IDENTIFICATION NO.</Text>
                             <Text style={[styles.idInfoValue, isDark && styles.darkText]}>{user.studentId || 'CST-2024-001'}</Text>
                           </View>
-                          
+
                           <View style={styles.idInfoRow}>
                             <View style={[styles.idInfoItem, { flex: 1 }]}>
                               <Text style={[styles.idInfoLabel, isDark && styles.darkTextSecondary]}>LEVEL</Text>
@@ -558,28 +621,35 @@ export default function ModernHomeDashboard({ navigation }) {
                   </LinearGradient>
                 </TouchableOpacity>
               </View>
-              
+
               <View style={styles.headerActions}>
-                <TouchableOpacity 
+                <TouchableOpacity
                   style={styles.discoverButton}
                   onPress={() => setShowWelcomeGuide(true)}
                 >
                   <Ionicons name="sparkles" size={20} color="#FFFFFF" />
                   <Text style={styles.discoverButtonText}>Discover</Text>
                 </TouchableOpacity>
-                
-                <TouchableOpacity 
+
+                <TouchableOpacity
+                  style={[styles.headerIconCircle, { backgroundColor: 'rgba(99, 102, 241, 0.2)', marginLeft: 8 }]}
+                  onPress={() => setShowAIAssistant(true)}
+                >
+                  <Ionicons name="infinite" size={24} color="#FFFFFF" />
+                </TouchableOpacity>
+
+                <TouchableOpacity
                   style={styles.themeToggle}
                   onPress={toggleLocalTheme}
                 >
-                  <Ionicons 
-                    name={isDark ? 'sunny' : 'moon'} 
-                    size={24} 
-                    color="#FFFFFF" 
+                  <Ionicons
+                    name={isDark ? 'sunny' : 'moon'}
+                    size={24}
+                    color="#FFFFFF"
                   />
                 </TouchableOpacity>
-                
-                <TouchableOpacity 
+
+                <TouchableOpacity
                   style={styles.notificationButton}
                   onPress={() => navigation.navigate('Notifications')}
                 >
@@ -603,6 +673,7 @@ export default function ModernHomeDashboard({ navigation }) {
               </View>
             </View>
 
+
             {/* University Global Hub - New Section */}
             <View style={styles.hubSection}>
               <View style={styles.hubHeaderRow}>
@@ -614,13 +685,13 @@ export default function ModernHomeDashboard({ navigation }) {
                   <Text style={styles.seeAllText}>Explore Hub</Text>
                 </TouchableOpacity>
               </View>
-              
-              <ScrollView 
-                horizontal 
+
+              <ScrollView
+                horizontal
                 showsHorizontalScrollIndicator={false}
                 contentContainerStyle={styles.hubScroll}
               >
-                <TouchableOpacity 
+                <TouchableOpacity
                   style={styles.hubCard}
                   onPress={() => openHubDetail('News')}
                 >
@@ -634,7 +705,7 @@ export default function ModernHomeDashboard({ navigation }) {
                   </LinearGradient>
                 </TouchableOpacity>
 
-                <TouchableOpacity 
+                <TouchableOpacity
                   style={styles.hubCard}
                   onPress={() => openHubDetail('Events')}
                 >
@@ -648,7 +719,7 @@ export default function ModernHomeDashboard({ navigation }) {
                   </LinearGradient>
                 </TouchableOpacity>
 
-                <TouchableOpacity 
+                <TouchableOpacity
                   style={styles.hubCard}
                   onPress={() => openHubDetail('Groups')}
                 >
@@ -675,15 +746,15 @@ export default function ModernHomeDashboard({ navigation }) {
                   <Text style={[styles.seeAllText, { color: '#059669' }]}>Browse Notes</Text>
                 </TouchableOpacity>
               </View>
-              
+
               <Text style={styles.communitySub}>New materials from Level {user.academicLevel} peers</Text>
 
-              <ScrollView 
-                horizontal 
+              <ScrollView
+                horizontal
                 showsHorizontalScrollIndicator={false}
                 contentContainerStyle={styles.hubScroll}
               >
-                <TouchableOpacity 
+                <TouchableOpacity
                   style={styles.resourceCard}
                   onPress={() => openResourceDetail({ title: 'Operating Systems', author: 'Kwesi', time: '2h ago', icon: 'document-text', color: '#6366F1' })}
                 >
@@ -696,7 +767,7 @@ export default function ModernHomeDashboard({ navigation }) {
                   </View>
                 </TouchableOpacity>
 
-                <TouchableOpacity 
+                <TouchableOpacity
                   style={styles.resourceCard}
                   onPress={() => openResourceDetail({ title: 'React Native Guide', author: 'Ama', time: '5h ago', icon: 'code-slash', color: '#10B981' })}
                 >
@@ -709,7 +780,7 @@ export default function ModernHomeDashboard({ navigation }) {
                   </View>
                 </TouchableOpacity>
 
-                <TouchableOpacity 
+                <TouchableOpacity
                   style={styles.resourceCard}
                   onPress={() => openResourceDetail({ title: 'Data Structures', author: 'Kofi', time: '1d ago', icon: 'flask', color: '#F59E0B' })}
                 >
@@ -727,25 +798,25 @@ export default function ModernHomeDashboard({ navigation }) {
             {/* Study Streak and Progress */}
             <View style={[styles.statsSection, isDark && styles.darkSection]}>
               <Text style={[styles.statsSectionTitle, isDark && styles.darkText]}>Your Progress</Text>
-            <View style={styles.statsContainer}>
+              <View style={styles.statsContainer}>
                 <View style={[styles.statCard, isDark && styles.darkCard]}>
-                <Animated.View style={{ transform: [{ scale: bounceScale }] }}>
+                  <Animated.View style={{ transform: [{ scale: bounceScale }] }}>
                     <Ionicons name="flame" size={24} color="#F59E0B" />
-                </Animated.View>
+                  </Animated.View>
                   <Text style={[styles.statNumber, isDark && styles.darkText]}>{studyStreak}</Text>
                   <Text style={[styles.statLabel, isDark && styles.darkText]}>Day Streak</Text>
-              </View>
+                </View>
 
                 <View style={[styles.statCard, isDark && styles.darkCard]}>
-                <View style={styles.progressContainer}>
+                  <View style={styles.progressContainer}>
                     <Text style={[styles.progressLabel, isDark && styles.darkText]}>Daily Goal</Text>
-                  <View style={styles.circularProgress}>
+                    <View style={styles.circularProgress}>
                       <Text style={[styles.progressPercentage, isDark && styles.darkText]}>
-                      {Math.round(dailyGoal * 100)}%
-                    </Text>
+                        {Math.round(dailyGoal * 100)}%
+                      </Text>
+                    </View>
                   </View>
                 </View>
-              </View>
 
                 <View style={[styles.statCard, isDark && styles.darkCard]}>
                   <Ionicons name="trophy" size={24} color="#F59E0B" />
@@ -757,116 +828,168 @@ export default function ModernHomeDashboard({ navigation }) {
           </LinearGradient>
 
 
+          {/* Experience the Future of KNUST Showcase */}
+          <View style={[styles.showcaseSection, isDark && styles.darkSection]}>
+            <LinearGradient
+              colors={isDark ? ['#1E293B', '#334155'] : ['#6366F1', '#8B5CF6']}
+              style={styles.showcaseGradient}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 1 }}
+            >
+              <View style={styles.showcaseHeader}>
+                <Text style={styles.showcaseBadge}>THE FUTURE IS HERE</Text>
+                <Text style={styles.showcaseTitle}>Experience the Future of KNUST</Text>
+              </View>
 
-          {/* Quick Actions with Modern Cards */}
-          <View style={[styles.section, isDark && styles.darkSection]}>
-            <View style={styles.sectionHeader}>
-              <Text style={[styles.sectionTitle, isDark && styles.darkText]}>Quick Actions</Text>
-              <TouchableOpacity>
-                <Ionicons name="ellipsis-horizontal" size={20} color={isDark ? '#FFFFFF' : '#64748B'} />
+              <View style={styles.showcaseGrid}>
+                <TouchableOpacity style={styles.showcaseCard} onPress={() => setShowHallPass(true)}>
+                  <View style={styles.showcaseIconBg}><Ionicons name="qr-code" size={20} color="#FFFFFF" /></View>
+                  <Text style={styles.showcaseCardTitle}>Pass</Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity style={styles.showcaseCard} onPress={() => setShowSISSync(true)}>
+                  <View style={[styles.showcaseIconBg, { backgroundColor: '#10B981' }]}><Ionicons name="sync" size={20} color="#FFFFFF" /></View>
+                  <Text style={styles.showcaseCardTitle}>Sync</Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity style={styles.showcaseCard} onPress={() => setShowLecturerSuite(true)}>
+                  <View style={[styles.showcaseIconBg, { backgroundColor: '#F59E0B' }]}><Ionicons name="briefcase" size={20} color="#FFFFFF" /></View>
+                  <Text style={styles.showcaseCardTitle}>Lecturer</Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity style={styles.showcaseCard} onPress={() => setShowCampusMap(true)}>
+                  <View style={[styles.showcaseIconBg, { backgroundColor: '#EF4444' }]}><Ionicons name="map" size={20} color="#FFFFFF" /></View>
+                  <Text style={styles.showcaseCardTitle}>Map</Text>
+                </TouchableOpacity>
+              </View>
+
+              <View style={[styles.showcaseGrid, { marginTop: 12 }]}>
+                <TouchableOpacity style={styles.showcaseCard} onPress={() => setShowVirtualTour(true)}>
+                  <View style={[styles.showcaseIconBg, { backgroundColor: '#8B5CF6' }]}><Ionicons name="glasses" size={20} color="#FFFFFF" /></View>
+                  <Text style={styles.showcaseCardTitle}>Tour</Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity style={styles.showcaseCard} onPress={() => setShowResearchHub(true)}>
+                  <View style={[styles.showcaseIconBg, { backgroundColor: '#1E293B' }]}><Ionicons name="flask" size={20} color="#FFFFFF" /></View>
+                  <Text style={styles.showcaseCardTitle}>Research</Text>
+                </TouchableOpacity>
+
+                  <TouchableOpacity style={styles.showcaseCard} onPress={() => setShowPeerCollab(true)}>
+                  <View style={[styles.showcaseIconBg, { backgroundColor: '#F472B6' }]}><Ionicons name="people" size={20} color="#FFFFFF" /></View>
+                  <Text style={styles.showcaseCardTitle}>Peers</Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity style={styles.showcaseCard} onPress={() => setShowNeuralSearch(true)}>
+                  <View style={[styles.showcaseIconBg, { backgroundColor: '#6366F1' }]}><Ionicons name="sparkles" size={20} color="#FFFFFF" /></View>
+                  <Text style={styles.showcaseCardTitle}>Neural</Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity style={styles.showcaseCard} onPress={() => setShowVoiceCommand(true)}>
+                  <View style={[styles.showcaseIconBg, { backgroundColor: '#8B5CF6' }]}><Ionicons name="mic" size={20} color="#FFFFFF" /></View>
+                  <Text style={styles.showcaseCardTitle}>Voice</Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity style={styles.showcaseCard} onPress={() => setShowAnalytics(true)}>
+                  <View style={[styles.showcaseIconBg, { backgroundColor: '#38BDF8' }]}><Ionicons name="analytics" size={20} color="#FFFFFF" /></View>
+                  <Text style={styles.showcaseCardTitle}>Course Analytics</Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity style={styles.showcaseCard} onPress={() => setShowCompass(true)}>
+                  <View style={[styles.showcaseIconBg, { backgroundColor: '#A855F7' }]}><Ionicons name="compass" size={20} color="#FFFFFF" /></View>
+                  <Text style={styles.showcaseCardTitle}>Compass</Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity style={styles.showcaseCard} onPress={() => setShowStudyTutors(true)}>
+                  <View style={[styles.showcaseIconBg, { backgroundColor: '#F43F5E' }]}><Ionicons name="school" size={20} color="#FFFFFF" /></View>
+                  <Text style={styles.showcaseCardTitle}>AI Tutors</Text>
+                </TouchableOpacity>
+              </View>
+
+              <TouchableOpacity
+                style={styles.showcaseMainButton}
+                onPress={() => setShowWelcomeGuide(true)}
+              >
+                <Text style={styles.showcaseMainButtonText}>Explore All Future Tech</Text>
+                <Ionicons name="arrow-forward" size={18} color="#6366F1" />
               </TouchableOpacity>
-            </View>
-            
+            </LinearGradient>
             <View style={styles.quickActionsGrid}>
-              {/* Row 1: Core Study Tools */}
+              {/* Row 1: AI & Core Tools (Large Cards) */}
               <View style={styles.quickActionRow}>
-              <TouchableOpacity 
+                <TouchableOpacity
                   style={[styles.quickActionCard, isDark && styles.darkCard]}
-                onPress={() => setShowAIAssistant(true)}
-                activeOpacity={0.8}
-              >
-                <LinearGradient
-                  colors={['#667eea', '#764ba2']}
-                  style={styles.quickActionGradient}
+                  onPress={() => setShowAIAssistant(true)}
+                  activeOpacity={0.8}
                 >
-                    <Ionicons name="sparkles" size={22} color="#FFFFFF" />
-                </LinearGradient>
-                <Text style={[styles.quickActionText, isDark && styles.darkText]}>AI Tutor</Text>
-                <Text style={styles.quickActionSubtext}>Smart study buddy</Text>
-              </TouchableOpacity>
+                  <LinearGradient colors={['#6366F1', '#4F46E5']} style={styles.quickActionGradient}>
+                    <Ionicons name="sparkles" size={28} color="#FFFFFF" />
+                  </LinearGradient>
+                  <Text style={[styles.quickActionText, isDark && styles.darkText]}>AI Tutor</Text>
+                  <Text style={styles.quickActionSubtext}>Smart study buddy</Text>
+                </TouchableOpacity>
 
-              <TouchableOpacity 
+                <TouchableOpacity
                   style={[styles.quickActionCard, isDark && styles.darkCard]}
-                onPress={() => setShowSmartNotes(true)}
-                activeOpacity={0.8}
-              >
-                <LinearGradient
-                  colors={['#4facfe', '#00f2fe']}
-                  style={styles.quickActionGradient}
+                  onPress={() => setShowSmartNotes(true)}
+                  activeOpacity={0.8}
                 >
-                    <Ionicons name="document-text" size={22} color="#FFFFFF" />
-                </LinearGradient>
-                <Text style={[styles.quickActionText, isDark && styles.darkText]}>Smart Notes</Text>
+                  <LinearGradient colors={['#38BDF8', '#0284C7']} style={styles.quickActionGradient}>
+                    <Ionicons name="document-text" size={28} color="#FFFFFF" />
+                  </LinearGradient>
+                  <Text style={[styles.quickActionText, isDark && styles.darkText]}>Smart Notes</Text>
                   <Text style={styles.quickActionSubtext}>AI-powered notes</Text>
-              </TouchableOpacity>
+                </TouchableOpacity>
 
-              <TouchableOpacity 
+                <TouchableOpacity
                   style={[styles.quickActionCard, isDark && styles.darkCard]}
                   onPress={() => setShowMindMap(true)}
                   activeOpacity={0.8}
                 >
-                  <LinearGradient
-                    colors={['#10B981', '#059669']}
-                    style={styles.quickActionGradient}
-                  >
-                    <Ionicons name="git-network" size={22} color="#FFFFFF" />
+                  <LinearGradient colors={['#10B981', '#059669']} style={styles.quickActionGradient}>
+                    <Ionicons name="git-network" size={28} color="#FFFFFF" />
                   </LinearGradient>
                   <Text style={[styles.quickActionText, isDark && styles.darkText]}>Mind Maps</Text>
                   <Text style={styles.quickActionSubtext}>Visual learning</Text>
                 </TouchableOpacity>
               </View>
 
-              {/* Row 2: Interactive Learning */}
-              <View style={styles.quickActionRow}>
-                <TouchableOpacity 
-                  style={[styles.quickActionCard, isDark && styles.darkCard]}
-                onPress={() => setShowARMode(true)}
-                activeOpacity={0.8}
+              {/* Row 2: Secondary Tools (Horizontal Scrolling Pills) */}
+              <ScrollView
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                style={styles.pillRow}
+                contentContainerStyle={{ paddingRight: 40 }}
               >
-                <LinearGradient
-                  colors={['#fa709a', '#fee140']}
-                  style={styles.quickActionGradient}
-                >
-                    <Ionicons name="cube" size={22} color="#FFFFFF" />
-                </LinearGradient>
-                <Text style={[styles.quickActionText, isDark && styles.darkText]}>AR Learning</Text>
-                  <Text style={styles.quickActionSubtext}>3D visualization</Text>
-              </TouchableOpacity>
-
-              <TouchableOpacity 
-                  style={[styles.quickActionCard, isDark && styles.darkCard]}
-                  onPress={() => setShowGameCenter(true)}
-                activeOpacity={0.8}
-              >
-                <LinearGradient
-                    colors={['#FF6B6B', '#4ECDC4']}
-                  style={styles.quickActionGradient}
-                >
-                    <Ionicons name="game-controller" size={22} color="#FFFFFF" />
-                </LinearGradient>
-                  <Text style={[styles.quickActionText, isDark && styles.darkText]}>Game Center</Text>
-                  <Text style={styles.quickActionSubtext}>Learn & play</Text>
-              </TouchableOpacity>
-
-              <TouchableOpacity 
-                  style={[styles.quickActionCard, isDark && styles.darkCard]}
-                  onPress={() => setShowFocusMode(true)}
-                  activeOpacity={0.8}
-                >
-                  <LinearGradient
-                    colors={['#8B5CF6', '#7C3AED']}
-                    style={styles.quickActionGradient}
+                {[
+                  { id: 'ar', icon: 'cube', label: 'AR Learning', sub: '3D Visualization', onPress: () => setShowARMode(true), colors: ['#FCA5A5', '#EF4444'] },
+                  { id: 'game', icon: 'game-controller', label: 'Game Center', sub: 'Learn & play', onPress: () => setShowGameCenter(true), colors: ['#94A3B8', '#475569'] },
+                  { id: 'pomodoro', icon: 'timer', label: 'Pomodoro', sub: 'Focus timer', onPress: () => setShowFocusMode(true), colors: ['#10B981', '#059669'] },
+                  { id: 'gpa', icon: 'calculator', label: 'GPA Calc', sub: 'Track grades', onPress: () => setShowGPA(true), colors: ['#F59E0B', '#D97706'] },
+                  { id: 'buddy', icon: 'people', label: 'Study Buddy', sub: 'Find partners', onPress: () => setShowStudyBuddy(true), colors: ['#EC4899', '#BE185D'] },
+                  { id: 'exam', icon: 'hourglass', label: 'Exam Timer', sub: 'Countdown', onPress: () => setShowExamTimer(true), colors: ['#EF4444', '#B91C1C'] },
+                  { id: 'quiz', icon: 'help-circle', label: 'AI Quiz', sub: 'Smart testing', onPress: () => setShowQuizGenerator(true), colors: ['#6366F1', '#4F46E5'] },
+                  { id: 'schedule', icon: 'calendar', label: 'Schedule AI', sub: 'Optimized', onPress: () => setShowScheduleOptimizer(true), colors: ['#38BDF8', '#0284C7'] },
+                ].map((item) => (
+                  <TouchableOpacity
+                    key={item.id}
+                    style={[styles.pillCard, isDark && styles.darkPillCard]}
+                    onPress={item.onPress}
+                    activeOpacity={0.8}
                   >
-                    <Ionicons name="eye" size={22} color="#FFFFFF" />
-                  </LinearGradient>
-                  <Text style={[styles.quickActionText, isDark && styles.darkText]}>Focus Mode</Text>
-                  <Text style={styles.quickActionSubtext}>Stay focused</Text>
-                </TouchableOpacity>
-              </View>
+                    <LinearGradient colors={item.colors} style={styles.pillIconContainer}>
+                      <Ionicons name={item.icon} size={24} color="#FFFFFF" />
+                    </LinearGradient>
+                    <View style={styles.pillContent}>
+                      <Text style={[styles.pillLabel, isDark && styles.darkText]}>{item.label}</Text>
+                      <Text style={styles.pillSubtext} numberOfLines={2}>{item.sub}</Text>
+                    </View>
+                  </TouchableOpacity>
+                ))}
+              </ScrollView>
 
               {/* Row 3: Knowledge & Progress */}
               <View style={styles.quickActionRow}>
-                <TouchableOpacity 
+                <TouchableOpacity
                   style={[styles.quickActionCard, isDark && styles.darkCard]}
                   onPress={() => setShowKnowledgeTree(true)}
                   activeOpacity={0.8}
@@ -881,7 +1004,7 @@ export default function ModernHomeDashboard({ navigation }) {
                   <Text style={styles.quickActionSubtext}>Learning path</Text>
                 </TouchableOpacity>
 
-                <TouchableOpacity 
+                <TouchableOpacity
                   style={[styles.quickActionCard, isDark && styles.darkCard]}
                   onPress={() => setShowTimeTravel(true)}
                   activeOpacity={0.8}
@@ -896,9 +1019,9 @@ export default function ModernHomeDashboard({ navigation }) {
                   <Text style={styles.quickActionSubtext}>Study history</Text>
                 </TouchableOpacity>
 
-                <TouchableOpacity 
+                <TouchableOpacity
                   style={[styles.quickActionCard, isDark && styles.darkCard]}
-                  onPress={() => setShowTimeTravel(true)}
+                  onPress={() => setShowDreamJournal(true)}
                   activeOpacity={0.8}
                 >
                   <LinearGradient
@@ -914,118 +1037,133 @@ export default function ModernHomeDashboard({ navigation }) {
 
               {/* Row 4: Communication & AI */}
               <View style={styles.quickActionRow}>
-                <TouchableOpacity 
+                <TouchableOpacity
                   style={[styles.quickActionCard, isDark && styles.darkCard]}
-                onPress={() => navigation.navigate('CallHistory')}
-                activeOpacity={0.8}
-              >
-                <LinearGradient
-                  colors={['#ffecd2', '#fcb69f']}
-                  style={styles.quickActionGradient}
+                  onPress={() => navigation.navigate('CallHistory')}
+                  activeOpacity={0.8}
                 >
+                  <LinearGradient
+                    colors={['#ffecd2', '#fcb69f']}
+                    style={styles.quickActionGradient}
+                  >
                     <Ionicons name="call" size={22} color="#FFFFFF" />
-                </LinearGradient>
-                <Text style={[styles.quickActionText, isDark && styles.darkText]}>Voice Calls</Text>
-                <Text style={styles.quickActionSubtext}>Make HD calls</Text>
-              </TouchableOpacity>
+                  </LinearGradient>
+                  <Text style={[styles.quickActionText, isDark && styles.darkText]}>Voice Calls</Text>
+                  <Text style={styles.quickActionSubtext}>Make HD calls</Text>
+                </TouchableOpacity>
 
-              <TouchableOpacity 
+                <TouchableOpacity
                   style={[styles.quickActionCard, isDark && styles.darkCard]}
-                onPress={() => setShowQuizGenerator(true)}
-                activeOpacity={0.8}
-              >
-                <LinearGradient
-                  colors={['#ff6b6b', '#ee5a52']}
-                  style={styles.quickActionGradient}
+                  onPress={() => setShowQuizGenerator(true)}
+                  activeOpacity={0.8}
                 >
+                  <LinearGradient
+                    colors={['#ff6b6b', '#ee5a52']}
+                    style={styles.quickActionGradient}
+                  >
                     <Ionicons name="help-circle" size={22} color="#FFFFFF" />
-                </LinearGradient>
-                <Text style={[styles.quickActionText, isDark && styles.darkText]}>AI Quiz</Text>
-                <Text style={styles.quickActionSubtext}>Smart testing</Text>
-              </TouchableOpacity>
+                  </LinearGradient>
+                  <Text style={[styles.quickActionText, isDark && styles.darkText]}>AI Quiz</Text>
+                  <Text style={styles.quickActionSubtext}>Smart testing</Text>
+                </TouchableOpacity>
 
-              <TouchableOpacity 
+                <TouchableOpacity
                   style={[styles.quickActionCard, isDark && styles.darkCard]}
-                onPress={() => setShowScheduleOptimizer(true)}
-                activeOpacity={0.8}
-              >
-                <LinearGradient
-                  colors={['#74b9ff', '#0984e3']}
-                  style={styles.quickActionGradient}
+                  onPress={() => setShowScheduleOptimizer(true)}
+                  activeOpacity={0.8}
                 >
+                  <LinearGradient
+                    colors={['#74b9ff', '#0984e3']}
+                    style={styles.quickActionGradient}
+                  >
                     <Ionicons name="calendar" size={22} color="#FFFFFF" />
-                </LinearGradient>
+                  </LinearGradient>
                   <Text style={[styles.quickActionText, isDark && styles.darkText]}>Schedule AI</Text>
-                <Text style={styles.quickActionSubtext}>AI optimized</Text>
-              </TouchableOpacity>
+                  <Text style={styles.quickActionSubtext}>AI optimized</Text>
+                </TouchableOpacity>
               </View>
 
               {/* Row 5: Academic Tools */}
               <View style={styles.quickActionRow}>
-              <TouchableOpacity 
+                <TouchableOpacity
                   style={[styles.quickActionCard, isDark && styles.darkCard]}
-                onPress={() => navigation.navigate('AcademicCalendar')}
-                activeOpacity={0.8}
-              >
-                <LinearGradient
-                  colors={['#EC4899', '#8B5CF6']}
-                  style={styles.quickActionGradient}
-                >
-                    <Ionicons name="calendar" size={22} color="#FFFFFF" />
-                </LinearGradient>
-                <Text style={[styles.quickActionText, isDark && styles.darkText]}>Calendar</Text>
-                <Text style={styles.quickActionSubtext}>Academic events</Text>
-              </TouchableOpacity>
-
-              <TouchableOpacity
-                  style={[styles.quickActionCard, isDark && styles.darkCard]}
-                onPress={() => navigation.navigate('CourseRegistration')}
-                activeOpacity={0.8}
-              >
-                <LinearGradient
-                  colors={['#8B5CF6', '#7C3AED']}
-                  style={styles.quickActionGradient}
-                >
-                    <Ionicons name="school" size={22} color="#FFFFFF" />
-                </LinearGradient>
-                <Text style={[styles.quickActionText, isDark && styles.darkText]}>Register</Text>
-                <Text style={styles.quickActionSubtext}>Course Registration</Text>
-              </TouchableOpacity>
-
-              <TouchableOpacity
-                  style={[styles.quickActionCard, isDark && styles.darkCard]}
-                onPress={() => navigation.navigate('AcademicResults')}
-                activeOpacity={0.8}
-              >
-                <LinearGradient
-                  colors={['#10B981', '#059669']}
-                  style={styles.quickActionGradient}
-                >
-                    <Ionicons name="analytics" size={22} color="#FFFFFF" />
-                </LinearGradient>
-                <Text style={[styles.quickActionText, isDark && styles.darkText]}>Results</Text>
-                <Text style={styles.quickActionSubtext}>Grades & GPA</Text>
-              </TouchableOpacity>
-              </View>
-
-              {/* Row 6: Communication Tools */}
-              <View style={styles.quickActionRow}>
-                <TouchableOpacity 
-                  style={[styles.quickActionCard, isDark && styles.darkCard]}
-                  onPress={() => setShowVoiceRecorder(true)}
+                  onPress={() => navigation.navigate('AcademicCalendar')}
                   activeOpacity={0.8}
                 >
                   <LinearGradient
-                    colors={['#8E2DE2', '#4A00E0']}
+                    colors={['#EC4899', '#8B5CF6']}
                     style={styles.quickActionGradient}
                   >
-                      <Ionicons name="mic" size={22} color="#FFFFFF" />
+                    <Ionicons name="calendar" size={22} color="#FFFFFF" />
                   </LinearGradient>
-                  <Text style={[styles.quickActionText, isDark && styles.darkText]}>Voice Record</Text>
-                  <Text style={styles.quickActionSubtext}>Send audio</Text>
+                  <Text style={[styles.quickActionText, isDark && styles.darkText]}>Calendar</Text>
+                  <Text style={styles.quickActionSubtext}>Academic events</Text>
                 </TouchableOpacity>
 
-                <TouchableOpacity 
+                <TouchableOpacity
+                  style={[styles.quickActionCard, isDark && styles.darkCard]}
+                  onPress={() => navigation.navigate('CourseRegistration')}
+                  activeOpacity={0.8}
+                >
+                  <LinearGradient
+                    colors={['#8B5CF6', '#7C3AED']}
+                    style={styles.quickActionGradient}
+                  >
+                    <Ionicons name="school" size={22} color="#FFFFFF" />
+                  </LinearGradient>
+                  <Text style={[styles.quickActionText, isDark && styles.darkText]}>Register</Text>
+                  <Text style={styles.quickActionSubtext}>Course Registration</Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  style={[styles.quickActionCard, isDark && styles.darkCard]}
+                  onPress={() => navigation.navigate('AcademicResults')}
+                  activeOpacity={0.8}
+                >
+                  <LinearGradient
+                    colors={['#10B981', '#059669']}
+                    style={styles.quickActionGradient}
+                  >
+                    <Ionicons name="analytics" size={22} color="#FFFFFF" />
+                  </LinearGradient>
+                  <Text style={[styles.quickActionText, isDark && styles.darkText]}>Results</Text>
+                  <Text style={styles.quickActionSubtext}>Grades & GPA</Text>
+                </TouchableOpacity>
+              </View>
+
+              {/* Row 6: Global & Peer Hubs */}
+              <View style={styles.quickActionRow}>
+                <TouchableOpacity
+                  style={[styles.quickActionCard, isDark && styles.darkCard]}
+                  onPress={() => setShowGlobalHub(true)}
+                  activeOpacity={0.8}
+                >
+                  <LinearGradient
+                    colors={['#6366F1', '#4F46E5']}
+                    style={styles.quickActionGradient}
+                  >
+                    <Ionicons name="globe" size={22} color="#FFFFFF" />
+                  </LinearGradient>
+                  <Text style={[styles.quickActionText, isDark && styles.darkText]}>Global Hub</Text>
+                  <Text style={styles.quickActionSubtext}>University news</Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  style={[styles.quickActionCard, isDark && styles.darkCard]}
+                  onPress={() => setShowPeerHub(true)}
+                  activeOpacity={0.8}
+                >
+                  <LinearGradient
+                    colors={['#10B981', '#059669']}
+                    style={styles.quickActionGradient}
+                  >
+                    <Ionicons name="people" size={22} color="#FFFFFF" />
+                  </LinearGradient>
+                  <Text style={[styles.quickActionText, isDark && styles.darkText]}>Peer Hub</Text>
+                  <Text style={styles.quickActionSubtext}>Community</Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity
                   style={[styles.quickActionCard, isDark && styles.darkCard]}
                   onPress={() => navigation.navigate('MessagingWithCalls')}
                   activeOpacity={0.8}
@@ -1034,58 +1172,56 @@ export default function ModernHomeDashboard({ navigation }) {
                     colors={['#f12711', '#f5af19']}
                     style={styles.quickActionGradient}
                   >
-                      <Ionicons name="document-attach" size={22} color="#FFFFFF" />
+                    <Ionicons name="chatbubbles" size={22} color="#FFFFFF" />
                   </LinearGradient>
-                  <Text style={[styles.quickActionText, isDark && styles.darkText]}>Send Files</Text>
-                  <Text style={styles.quickActionSubtext}>Share documents</Text>
+                  <Text style={[styles.quickActionText, isDark && styles.darkText]}>Chat</Text>
+                  <Text style={styles.quickActionSubtext}>Messages</Text>
                 </TouchableOpacity>
-
-                <View style={[styles.quickActionCard, { backgroundColor: 'transparent', elevation: 0, borderWidth: 0 }]} />
               </View>
 
               {/* Row 7: Progress & Modules */}
               <View style={styles.quickActionRow}>
-              <TouchableOpacity
+                <TouchableOpacity
                   style={[styles.quickActionCard, isDark && styles.darkCard]}
                   onPress={() => setShowProgressTracker(true)}
-                activeOpacity={0.8}
-              >
-                <LinearGradient
-                    colors={['#F59E0B', '#D97706']}
-                  style={styles.quickActionGradient}
+                  activeOpacity={0.8}
                 >
+                  <LinearGradient
+                    colors={['#F59E0B', '#D97706']}
+                    style={styles.quickActionGradient}
+                  >
                     <Ionicons name="trending-up" size={22} color="#FFFFFF" />
-                </LinearGradient>
+                  </LinearGradient>
                   <Text style={[styles.quickActionText, isDark && styles.darkText]}>Progress</Text>
                   <Text style={styles.quickActionSubtext}>Track learning</Text>
-              </TouchableOpacity>
+                </TouchableOpacity>
 
-              <TouchableOpacity
+                <TouchableOpacity
                   style={[styles.quickActionCard, isDark && styles.darkCard]}
                   onPress={() => setShowSemesterModules(true)}
-                activeOpacity={0.8}
-              >
-                <LinearGradient
-                    colors={['#06B6D4', '#0891B2']}
-                  style={styles.quickActionGradient}
+                  activeOpacity={0.8}
                 >
+                  <LinearGradient
+                    colors={['#06B6D4', '#0891B2']}
+                    style={styles.quickActionGradient}
+                  >
                     <Ionicons name="library" size={22} color="#FFFFFF" />
-                </LinearGradient>
-                <Text style={[styles.quickActionText, isDark && styles.darkText]}>Modules</Text>
+                  </LinearGradient>
+                  <Text style={[styles.quickActionText, isDark && styles.darkText]}>Modules</Text>
                   <Text style={styles.quickActionSubtext}>Semester courses</Text>
-              </TouchableOpacity>
+                </TouchableOpacity>
 
-              <TouchableOpacity
+                <TouchableOpacity
                   style={[styles.quickActionCard, isDark && styles.darkCard]}
                   onPress={() => setShowWeekendActivities(true)}
-                activeOpacity={0.8}
-              >
-                <LinearGradient
-                    colors={['#EC4899', '#BE185D']}
-                  style={styles.quickActionGradient}
+                  activeOpacity={0.8}
                 >
+                  <LinearGradient
+                    colors={['#EC4899', '#BE185D']}
+                    style={styles.quickActionGradient}
+                  >
                     <Ionicons name="sunny" size={22} color="#FFFFFF" />
-                </LinearGradient>
+                  </LinearGradient>
                   <Text style={[styles.quickActionText, isDark && styles.darkText]}>Weekend</Text>
                   <Text style={styles.quickActionSubtext}>Study activities</Text>
                 </TouchableOpacity>
@@ -1097,7 +1233,7 @@ export default function ModernHomeDashboard({ navigation }) {
           <View style={[styles.section, isDark && styles.darkSection]}>
             <Text style={[styles.sectionTitle, isDark && styles.darkText]}>📚 Academic Tools</Text>
             <View style={styles.additionalFeaturesGrid}>
-                <TouchableOpacity 
+              <TouchableOpacity
                 style={[styles.additionalFeatureCard, isDark && styles.darkCard]}
                 onPress={() => setShowMindMap(true)}
               >
@@ -1110,7 +1246,7 @@ export default function ModernHomeDashboard({ navigation }) {
                 </LinearGradient>
               </TouchableOpacity>
 
-                <TouchableOpacity 
+              <TouchableOpacity
                 style={[styles.additionalFeatureCard, isDark && styles.darkCard]}
                 onPress={() => setShowKnowledgeTree(true)}
               >
@@ -1123,7 +1259,7 @@ export default function ModernHomeDashboard({ navigation }) {
                 </LinearGradient>
               </TouchableOpacity>
 
-                <TouchableOpacity 
+              <TouchableOpacity
                 style={[styles.additionalFeatureCard, isDark && styles.darkCard]}
                 onPress={() => setShowWeekendActivities(true)}
               >
@@ -1136,7 +1272,7 @@ export default function ModernHomeDashboard({ navigation }) {
                 </LinearGradient>
               </TouchableOpacity>
 
-                <TouchableOpacity 
+              <TouchableOpacity
                 style={[styles.additionalFeatureCard, isDark && styles.darkCard]}
                 onPress={() => setShowGameCenter(true)}
               >
@@ -1160,7 +1296,7 @@ export default function ModernHomeDashboard({ navigation }) {
                   <Text style={styles.seeAllText}>See All</Text>
                 </TouchableOpacity>
               </View>
-              
+
               <FlatList
                 data={currentLevelModules.slice(0, 5)}
                 renderItem={renderModernCourseCard}
@@ -1196,12 +1332,15 @@ export default function ModernHomeDashboard({ navigation }) {
                     </Text>
                     <Text style={[styles.achievementStatLabel, isDark && styles.darkText]}>Earned</Text>
                   </View>
-                  <View style={styles.achievementStat}>
+                  <TouchableOpacity
+                    style={styles.achievementStat}
+                    onPress={() => { Vibration.vibrate(30); setShowPredictiveAI(true); }}
+                  >
                     <Text style={[styles.achievementStatNumber, isDark && styles.darkText]}>
-                      {userStats?.totalPoints || (achievements.length > 0 ? achievements.reduce((sum, a) => sum + (a.points || 50), 0) : 185)}
+                      {userStats?.totalPoints || 1850}
                     </Text>
                     <Text style={[styles.achievementStatLabel, isDark && styles.darkText]}>Points</Text>
-                  </View>
+                  </TouchableOpacity>
                   <View style={styles.achievementStat}>
                     <Text style={[styles.achievementStatNumber, isDark && styles.darkText]}>
                       {achievementProgress?.percentage || 65}%
@@ -1209,28 +1348,28 @@ export default function ModernHomeDashboard({ navigation }) {
                     <Text style={[styles.achievementStatLabel, isDark && styles.darkText]}>Progress</Text>
                   </View>
                 </View>
-                
+
                 <View style={styles.levelProgress}>
                   <Text style={[styles.levelText, isDark && styles.darkText]}>
                     Level {Math.floor((userStats?.totalPoints || 185) / 100) + 1} • {((userStats?.totalPoints || 185) % 100)} XP to next level
                   </Text>
                   <View style={styles.levelProgressBar}>
-                    <View 
+                    <View
                       style={[
-                        styles.levelProgressFill, 
+                        styles.levelProgressFill,
                         { width: `${((userStats?.totalPoints || 185) % 100)}%` }
-                      ]} 
+                      ]}
                     />
                   </View>
                 </View>
               </LinearGradient>
             </View>
-            
+
             <ScrollView horizontal showsHorizontalScrollIndicator={false}>
               <View style={styles.achievementsRow}>
                 {achievements.length > 0 ? (
                   achievements.map((achievement, index) => (
-                    <TouchableOpacity 
+                    <TouchableOpacity
                       key={achievement.id}
                       style={[
                         styles.achievementCard,
@@ -1239,7 +1378,7 @@ export default function ModernHomeDashboard({ navigation }) {
                       onPress={() => {
                         Vibration.vibrate(50);
                         Alert.alert(
-                          'Achievement Unlocked! 🏆', 
+                          'Achievement Unlocked! 🏆',
                           `${achievement.icon} ${achievement.title}\n\n${achievement.description}\n\n+${achievement.points} points`
                         );
                       }}
@@ -1247,9 +1386,11 @@ export default function ModernHomeDashboard({ navigation }) {
                     >
                       <View style={[
                         styles.achievementIcon,
-                        { backgroundColor: achievement.rarity === 'epic' ? '#8B5CF620' : 
-                                           achievement.rarity === 'rare' ? '#F59E0B20' : 
-                                           '#10B98120' }
+                        {
+                          backgroundColor: achievement.rarity === 'epic' ? '#8B5CF620' :
+                            achievement.rarity === 'rare' ? '#F59E0B20' :
+                              '#10B98120'
+                        }
                       ]}>
                         <Text style={{ fontSize: 24 }}>
                           {achievement.icon}
@@ -1277,7 +1418,7 @@ export default function ModernHomeDashboard({ navigation }) {
                     { id: 6, title: 'Early Bird', icon: '🌅', points: 20, rarity: 'common', category: 'habit', description: 'Logged in before 8 AM for 5 days straight!' },
                     { id: 7, title: 'Weekend Warrior', icon: '⚔️', points: 40, rarity: 'rare', category: 'dedication', description: 'Attended weekend study sessions 3 times!' }
                   ].map((achievement, index) => (
-                    <TouchableOpacity 
+                    <TouchableOpacity
                       key={achievement.id}
                       style={[
                         styles.achievementCard,
@@ -1286,7 +1427,7 @@ export default function ModernHomeDashboard({ navigation }) {
                       onPress={() => {
                         Vibration.vibrate(50);
                         Alert.alert(
-                          `🎉 ${achievement.title}`, 
+                          `🎉 ${achievement.title}`,
                           `${achievement.icon} ${achievement.description}\n\n🏅 Category: ${achievement.category.charAt(0).toUpperCase() + achievement.category.slice(1)}\n💎 Rarity: ${achievement.rarity.charAt(0).toUpperCase() + achievement.rarity.slice(1)}\n⭐ Points: +${achievement.points} XP\n\nKeep up the great work!`
                         );
                       }}
@@ -1294,9 +1435,11 @@ export default function ModernHomeDashboard({ navigation }) {
                     >
                       <View style={[
                         styles.achievementIcon,
-                        { backgroundColor: achievement.rarity === 'epic' ? '#8B5CF620' : 
-                                           achievement.rarity === 'rare' ? '#F59E0B20' : 
-                                           '#10B98120' }
+                        {
+                          backgroundColor: achievement.rarity === 'epic' ? '#8B5CF620' :
+                            achievement.rarity === 'rare' ? '#F59E0B20' :
+                              '#10B98120'
+                        }
                       ]}>
                         <Text style={{ fontSize: 24 }}>
                           {achievement.icon}
@@ -1395,16 +1538,16 @@ export default function ModernHomeDashboard({ navigation }) {
           )}
 
           {/* Recent Activity */}
-                      <View style={[styles.section, isDark && styles.darkSection]}>
+          <View style={[styles.section, isDark && styles.darkSection]}>
             <View style={styles.sectionHeader}>
               <Text style={[styles.sectionTitle, isDark && styles.darkText]}>📋 Recent Activity</Text>
               <TouchableOpacity onPress={() => navigation.navigate('Notifications')}>
                 <Text style={styles.seeAllText}>View All</Text>
               </TouchableOpacity>
             </View>
-            
+
             {notifications.slice(0, 3).map((notification, index) => (
-              <TouchableOpacity 
+              <TouchableOpacity
                 key={notification.id}
                 style={[styles.activityCard, isDark && styles.darkCard]}
                 onPress={() => navigation.navigate('Notifications')}
@@ -1415,15 +1558,15 @@ export default function ModernHomeDashboard({ navigation }) {
                     styles.activityIcon,
                     { backgroundColor: notification.read ? '#F1F5F9' : '#EEF2FF' }
                   ]}>
-                    <Ionicons 
-                      name={notification.type === 'assignment' ? 'document-text' : 
-                            notification.type === 'material' ? 'book' : 
-                            notification.type === 'exam' ? 'school' : 'megaphone'} 
-                      size={20} 
-                      color={notification.read ? '#64748B' : '#4F46E5'} 
+                    <Ionicons
+                      name={notification.type === 'assignment' ? 'document-text' :
+                        notification.type === 'material' ? 'book' :
+                          notification.type === 'exam' ? 'school' : 'megaphone'}
+                      size={20}
+                      color={notification.read ? '#64748B' : '#4F46E5'}
                     />
                   </View>
-                  
+
                   <View style={styles.activityDetails}>
                     <Text style={[styles.activityTitle, isDark && styles.darkText]} numberOfLines={1}>
                       {notification.title}
@@ -1435,7 +1578,7 @@ export default function ModernHomeDashboard({ navigation }) {
                       {new Date(notification.timestamp).toLocaleDateString()}
                     </Text>
                   </View>
-                  
+
                   {!notification.read && <View style={styles.unreadDot} />}
                 </View>
               </TouchableOpacity>
@@ -1448,7 +1591,7 @@ export default function ModernHomeDashboard({ navigation }) {
       </Animated.View>
 
       {/* Modern Floating Action Button — opens Quick Actions modal */}
-      <TouchableOpacity 
+      <TouchableOpacity
         style={styles.fab}
         onPress={() => { Vibration.vibrate(50); setShowQuickActionsModal(true); }}
         activeOpacity={0.8}
@@ -1476,8 +1619,11 @@ export default function ModernHomeDashboard({ navigation }) {
               {[
                 { id: 'studyGroup', icon: 'people', label: 'Create Study Group', sub: 'Invite coursemates', onPress: createStudyGroup, colors: ['#6366F1', '#8B5CF6'] },
                 { id: 'reminder', icon: 'alarm', label: 'Set Reminder', sub: 'Assignments & classes', onPress: setReminder, colors: ['#F59E0B', '#D97706'] },
-                { id: 'pomodoro', icon: 'timer', label: 'Start Pomodoro', sub: 'Focus timer', onPress: startPomodoroTimer, colors: ['#10B981', '#059669'] },
-                { id: 'privateMsg', icon: 'chatbubble-ellipses', label: 'Private Message', sub: 'Direct chat', onPress: () => { setShowQuickActionsModal(false); navigation.navigate('PrivateMessaging'); }, colors: ['#EC4899', '#BE185D'] },
+                { id: 'pomodoro', icon: 'timer', label: 'Pomodoro Timer', sub: 'Focus timer', onPress: startPomodoroTimer, colors: ['#10B981', '#059669'] },
+                { id: 'gpa', icon: 'calculator', label: 'GPA Calculator', sub: 'Track your grades', onPress: () => { setShowQuickActionsModal(false); setShowGPA(true); }, colors: ['#F59E0B', '#D97706'] },
+                { id: 'buddy', icon: 'people', label: 'Study Buddy', sub: 'Find study partners', onPress: () => { setShowQuickActionsModal(false); setShowStudyBuddy(true); }, colors: ['#EC4899', '#BE185D'] },
+                { id: 'examTimer', icon: 'hourglass', label: 'Exam Timer', sub: 'Count down to exams', onPress: () => { setShowQuickActionsModal(false); setShowExamTimer(true); }, colors: ['#EF4444', '#DC2626'] },
+                { id: 'privateMsg', icon: 'chatbubble-ellipses', label: 'Private Message', sub: 'Direct chat', onPress: () => { setShowQuickActionsModal(false); navigation.navigate('PrivateMessaging'); }, colors: ['#6366F1', '#8B5CF6'] },
                 { id: 'courseRep', icon: 'ribbon', label: 'Course Rep', sub: 'Representatives', onPress: () => { setShowQuickActionsModal(false); navigation.navigate('CourseRepresentative'); }, colors: ['#8B5CF6', '#7C3AED'] },
                 { id: 'acadOverview', icon: 'school', label: 'Academic Overview', sub: 'Grades & progress', onPress: () => { setShowQuickActionsModal(false); navigation.navigate('AcademicOverview'); }, colors: ['#3B82F6', '#2563EB'] },
                 { id: 'acadCalendar', icon: 'calendar', label: 'Academic Calendar', sub: 'Events & deadlines', onPress: () => { setShowQuickActionsModal(false); navigation.navigate('AcademicCalendar'); }, colors: ['#EC4899', '#8B5CF6'] },
@@ -1572,6 +1718,9 @@ export default function ModernHomeDashboard({ navigation }) {
       </Modal>
 
       {/* Feature Modals */}
+      <AINeuralSearch visible={showNeuralSearch} onClose={() => setShowNeuralSearch(false)} navigation={navigation} isDark={isDark} />
+      <VoiceCommandCenter visible={showVoiceCommand} onClose={() => setShowVoiceCommand(false)} onCommand={(cmd) => Alert.alert('Neural Response', `Executing: ${cmd}`)} isDark={isDark} />
+      <PredictiveSuccessAI visible={showPredictiveAI} onClose={() => setShowPredictiveAI(false)} user={user} isDark={isDark} />
       <AIStudyAssistant visible={showAIAssistant} onClose={() => setShowAIAssistant(false)} course={selectedCourse} />
       <SmartNoteTaking visible={showSmartNotes} onClose={() => setShowSmartNotes(false)} course={selectedCourse} />
       <GamifiedProgress visible={showProgress} onClose={() => setShowProgress(false)} user={user} courses={csModules} />
@@ -1580,7 +1729,7 @@ export default function ModernHomeDashboard({ navigation }) {
       <AIQuizGenerator visible={showQuizGenerator} onClose={() => setShowQuizGenerator(false)} course={selectedCourse} topic="AI-Generated Questions" />
       <SmartScheduleOptimizer visible={showScheduleOptimizer} onClose={() => setShowScheduleOptimizer(false)} user={user} courses={csModules} />
       <FeatureWelcomeGuide visible={showWelcomeGuide} onClose={() => setShowWelcomeGuide(false)} userType="student" />
-      <VoiceRecorder visible={showVoiceRecorder} onClose={() => setShowVoiceRecorder(false)} onSend={(data) => Alert.alert('Success', 'Voice recording sent!')} courseCode={selectedCourse?.code} />
+      {/* VoiceRecorder modal removed */}
       <TextEditor visible={showTextEditor} onClose={() => setShowTextEditor(false)} onSave={(data) => Alert.alert('Success', 'Text saved!')} courseCode={selectedCourse?.code} />
       <ProgressTracker visible={showProgressTracker} onClose={() => setShowProgressTracker(false)} user={user} courses={csModules} />
       <SemesterModules visible={showSemesterModules} onClose={() => setShowSemesterModules(false)} user={user} courses={csModules} />
@@ -1589,8 +1738,44 @@ export default function ModernHomeDashboard({ navigation }) {
       <WeekendActivities visible={showWeekendActivities} onClose={() => setShowWeekendActivities(false)} user={user} />
       <MindMap visible={showMindMap} onClose={() => setShowMindMap(false)} user={user} />
       <KnowledgeTree visible={showKnowledgeTree} onClose={() => setShowKnowledgeTree(false)} user={user} />
+      <DailyMotivation visible={showMotivation} onClose={() => setShowMotivation(false)} isDark={isDark} />
       <GlobalUniversityHub visible={showGlobalHub} onClose={() => setShowGlobalHub(false)} user={user} />
       <PeerCommunityHub visible={showPeerHub} onClose={() => setShowPeerHub(false)} user={user} />
+      <GPACalculator visible={showGPA} onClose={() => setShowGPA(false)} isDark={isDark} />
+      <StudyBuddy visible={showStudyBuddy} onClose={() => setShowStudyBuddy(false)} user={user} />
+      <ExamTimer visible={showExamTimer} onClose={() => setShowExamTimer(false)} isDark={isDark} />
+      <SmartHallPass visible={showHallPass} onClose={() => setShowHallPass(false)} user={user} />
+      <SISSyncProvider visible={showSISSync} onClose={() => setShowSISSync(false)} onSyncComplete={() => Alert.alert('Sync Successful', 'Your profile and grades have been updated from KNUST SIS.')} />
+      {/* Lecturer AI Suite Modal */}
+      <LecturerAISuite
+        visible={showLecturerSuite}
+        onClose={() => setShowLecturerSuite(false)}
+        isDark={isDark}
+      />
+      <AICampusMap visible={showCampusMap} onClose={() => setShowCampusMap(false)} />
+      <VirtualTour360 visible={showVirtualTour} onClose={() => setShowVirtualTour(false)} />
+      <AIResearchHub visible={showResearchHub} onClose={() => setShowResearchHub(false)} />
+      <PeerCollaboration visible={showPeerCollab} onClose={() => setShowPeerCollab(false)} />
+      <CourseAnalytics visible={showAnalytics} onClose={() => setShowAnalytics(false)} isDark={isDark} />
+      <AcademicCompass visible={showCompass} onClose={() => setShowCompass(false)} isDark={isDark} />
+      <AIStudyTutors visible={showStudyTutors} onClose={() => setShowStudyTutors(false)} isDark={isDark} />
+      <KNUSTSISSync visible={showSISSync} onClose={() => setShowSISSync(false)} isDark={isDark} />
+      <NeuralAmbience visible={showNeuralAmbience} onClose={() => setShowNeuralAmbience(false)} isDark={isDark} />
+      <CareerVoyager visible={showCareerVoyager} onClose={() => setShowCareerVoyager(false)} isDark={isDark} />
+      <ResearchLedger visible={showResearchLedger} onClose={() => setShowResearchLedger(false)} isDark={isDark} />
+      <AppFeedback visible={showFeedback} onClose={() => setShowFeedback(false)} isDark={isDark} />
+      <AppRating visible={showRating} onClose={() => setShowRating(false)} isDark={isDark} />
+      <ContactSupport visible={showSupport} onClose={() => setShowSupport(false)} isDark={isDark} />
+      
+      <GlobalNetwork visible={showGlobalNetwork} onClose={() => setShowGlobalNetwork(false)} isDark={isDark} />
+      <AIThesisMentor visible={showThesisMentor} onClose={() => setShowThesisMentor(false)} isDark={isDark} />
+      <VirtualCampusVR visible={showVirtualCampus} onClose={() => setShowVirtualCampus(false)} isDark={isDark} />
+      <NeuralAttendance visible={showNeuralAttendance} onClose={() => setShowNeuralAttendance(false)} isDark={isDark} />
+      <CurriculumArchitect visible={showCurriculumArchitect} onClose={() => setShowCurriculumArchitect(false)} isDark={isDark} />
+      <GlobalGrantLedger visible={showGrantLedger} onClose={() => setShowGrantLedger(false)} isDark={isDark} />
+      
+      <DreamJournal visible={showDreamJournal} onClose={() => setShowDreamJournal(false)} isDark={isDark} />
+      <TimeTravel visible={showTimeTravel} onClose={() => setShowTimeTravel(false)} isDark={isDark} />
 
       {/* New Interactive Identity Modal */}
       <Modal visible={showIdModal} transparent animationType="fade" onRequestClose={() => setShowIdModal(false)}>
@@ -1606,8 +1791,8 @@ export default function ModernHomeDashboard({ navigation }) {
               </View>
               <View style={styles.qrContainer}>
                 <View style={styles.qrCode}>
-                   <Ionicons name="qr-code" size={180} color="#1E293B" />
-                   <View style={styles.qrScanLine} />
+                  <Ionicons name="qr-code" size={180} color="#1E293B" />
+                  <View style={styles.qrScanLine} />
                 </View>
                 <Text style={styles.qrHint}>Scan at University Entry Points</Text>
               </View>
@@ -1621,8 +1806,8 @@ export default function ModernHomeDashboard({ navigation }) {
                   <Text style={styles.idModalValue}>{user.studentId}</Text>
                 </View>
                 <View style={styles.idModalStatus}>
-                   <View style={styles.statusDotActive} />
-                   <Text style={styles.statusTextActive}>ACTIVE SESSION</Text>
+                  <View style={styles.statusDotActive} />
+                  <Text style={styles.statusTextActive}>ACTIVE SESSION</Text>
                 </View>
               </View>
             </LinearGradient>
@@ -1648,7 +1833,7 @@ export default function ModernHomeDashboard({ navigation }) {
                   </View>
                   <View style={styles.hubDetailInfo}>
                     <Text style={[styles.hubItemTitle, isDark && styles.darkText]}>
-                      {selectedHubCategory === 'News' ? `Update on AI Research #${i+1}` : `Tech Talk Event Group #${i+1}`}
+                      {selectedHubCategory === 'News' ? `Update on AI Research #${i + 1}` : `Tech Talk Event Group #${i + 1}`}
                     </Text>
                     <Text style={styles.hubItemSub}>Posted by University Admin • 1h ago</Text>
                   </View>
@@ -1689,7 +1874,7 @@ export default function ModernHomeDashboard({ navigation }) {
         </View>
       </Modal>
       {/* Restore Plus Button (Fixed) */}
-      <TouchableOpacity 
+      <TouchableOpacity
         style={styles.floatingPlusButtonFixed}
         onPress={() => setShowQuickActionsModal(true)}
         activeOpacity={0.8}
@@ -1703,7 +1888,7 @@ export default function ModernHomeDashboard({ navigation }) {
       </TouchableOpacity>
 
       {/* Standalone Draggable AI Assistant */}
-      <Animated.View 
+      <Animated.View
         style={[
           styles.draggableContainer,
           {
@@ -1712,7 +1897,7 @@ export default function ModernHomeDashboard({ navigation }) {
         ]}
         {...panResponder.panHandlers}
       >
-        <TouchableOpacity 
+        <TouchableOpacity
           style={styles.floatingAIButton}
           onPress={() => setShowAIAssistant(true)}
           activeOpacity={0.8}
@@ -2102,6 +2287,14 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 12,
   },
+  headerIconCircle: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: 'rgba(255, 255, 255, 0.15)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
   discoverButton: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -2368,8 +2561,67 @@ const styles = StyleSheet.create({
   // Quick Actions
   quickActionsGrid: {
     flexDirection: 'column',
-    gap: 16,
+    gap: 20,
+    marginTop: 10,
   },
+  pillRow: {
+    paddingLeft: 20,
+    paddingBottom: 10,
+  },
+  pillCard: {
+    width: 100,
+    height: 180,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 50,
+    padding: 12,
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginRight: 16,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 4,
+    borderWidth: 1,
+    borderColor: 'rgba(0,0,0,0.05)',
+  },
+  darkPillCard: {
+    backgroundColor: '#1E293B',
+    borderColor: 'rgba(255,255,255,0.1)',
+  },
+  pillIconContainer: {
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 0,
+  },
+  pillContent: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    width: '100%',
+  },
+  pillLabel: {
+    fontSize: 14,
+    fontWeight: '800',
+    color: '#1E293B',
+    textAlign: 'center',
+    lineHeight: 16,
+    marginBottom: 4,
+  },
+  pillSubtext: {
+    fontSize: 10,
+    color: '#64748B',
+    textAlign: 'center',
+    fontWeight: '500',
+  },
+  pillVerticalText: {
+    transform: [{ rotate: '0deg' }], // Keeping it normal but narrow
+  },
+
+  // Existing Quick Actions (Top Row / Main Cards)
   quickActionRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -2378,38 +2630,40 @@ const styles = StyleSheet.create({
   quickActionCard: {
     flex: 1,
     backgroundColor: '#FFFFFF',
-    borderRadius: 16,
-    padding: 16,
+    borderRadius: 24,
+    padding: 20,
     alignItems: 'center',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.08,
     shadowRadius: 4,
     elevation: 2,
+    minHeight: 140,
+    justifyContent: 'center',
   },
   darkCard: {
     backgroundColor: '#1A1A2E',
   },
   quickActionGradient: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
+    width: 56,
+    height: 56,
+    borderRadius: 28,
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: 8,
+    marginBottom: 12,
   },
   quickActionText: {
-    fontSize: 12,
-    fontWeight: '600',
+    fontSize: 15,
+    fontWeight: '700',
     color: '#1E293B',
     textAlign: 'center',
-    marginBottom: 2,
+    marginBottom: 4,
   },
   quickActionSubtext: {
-    fontSize: 10,
+    fontSize: 11,
     color: '#64748B',
     textAlign: 'center',
-    fontWeight: '400',
+    fontWeight: '500',
   },
 
   // Courses
@@ -2543,7 +2797,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
-  
+
   // Achievement Summary Styles
   achievementSummary: {
     marginBottom: 20,
@@ -3013,5 +3267,86 @@ const styles = StyleSheet.create({
     borderRadius: 30,
     justifyContent: 'center',
     alignItems: 'center',
+  },
+
+  // Showcase Section Styles
+  showcaseSection: {
+    marginHorizontal: 20,
+    marginTop: 20,
+    marginBottom: 24,
+    borderRadius: 24,
+    overflow: 'hidden',
+    shadowColor: '#6366F1',
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.2,
+    shadowRadius: 20,
+    elevation: 10,
+  },
+  showcaseGradient: {
+    padding: 24,
+  },
+  showcaseHeader: {
+    marginBottom: 20,
+  },
+  showcaseGrid: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    gap: 8,
+  },
+  showcaseCard: {
+    flex: 1,
+    backgroundColor: 'rgba(255, 255, 255, 0.15)',
+    paddingVertical: 10,
+    paddingHorizontal: 4,
+    borderRadius: 14,
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.2)',
+  },
+  showcaseIconBg: {
+    width: 36,
+    height: 36,
+    borderRadius: 10,
+    backgroundColor: '#6366F1',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 6,
+  },
+  showcaseCardTitle: {
+    fontSize: 9,
+    fontWeight: '800',
+    color: '#FFFFFF',
+    textAlign: 'center',
+  },
+  showcaseMainButton: {
+    backgroundColor: '#FFFFFF',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 12,
+    borderRadius: 14,
+    marginTop: 8,
+  },
+  showcaseMainButtonText: {
+    color: '#6366F1',
+    fontWeight: '800',
+    fontSize: 14,
+    marginRight: 8,
+  },
+  showcaseIconContainer: {
+    width: 80,
+    height: 80,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  showcaseIconPulse: {
+    width: 70,
+    height: 70,
+    borderRadius: 35,
+    backgroundColor: 'rgba(255, 255, 255, 0.15)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.3)',
   },
 });

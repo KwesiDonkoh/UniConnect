@@ -2,7 +2,7 @@ import React, { useState, useRef } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, Alert, Modal } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import AudioCompat from '../utils/audioCompat';
-import * as FileSystem from 'expo-file-system';
+import * as FileSystem from 'expo-file-system/legacy';
 
 export default function VoiceNoteRecorder({ onSend, courseCode, visible, onClose }) {
   const [isRecording, setIsRecording] = useState(false);

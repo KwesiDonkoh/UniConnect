@@ -20,6 +20,7 @@ import {
   Keyboard,
   Image,
 } from 'react-native';
+import * as Haptics from 'expo-haptics';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { setStringAsync } from 'expo-clipboard';
@@ -28,6 +29,7 @@ import { useTheme } from '../components/ThemeProvider';
 import chatService from '../services/chatService';
 import communicationService from '../services/communicationService';
 import VoiceMessagePlayer from '../components/VoiceMessagePlayer';
+import VoiceCallComponent from '../components/VoiceCallComponent';
 import VideoCallComponent from '../components/VideoCallComponent';
 import fileUploadService from '../services/fileUploadService';
 
@@ -770,9 +772,9 @@ export default function GroupChatScreen({ navigation }) {
       const result = await communicationService.startVoiceRecording();
       
       if (result.success) {
-    setIsRecording(true);
-        setRecordingTimer(0);
-    Vibration.vibrate(100);
+      setIsRecording(true);
+      setRecordingTimer(0);
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     
         // Start timer
     recordingTimerRef.current = setInterval(() => {
@@ -794,6 +796,7 @@ export default function GroupChatScreen({ navigation }) {
     try {
       const result = await communicationService.stopVoiceRecording();
     setIsRecording(false);
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
       
     if (recordingTimerRef.current) {
       clearInterval(recordingTimerRef.current);
@@ -1974,84 +1977,20 @@ export default function GroupChatScreen({ navigation }) {
         />
 
         {/* Voice Call Modal */}
-        <Modal
+        {/* Voice Call Component */}
+        <VoiceCallComponent
           visible={(showCallModal || activeCall !== null) && callType === 'voice'}
-          transparent={true}
-          animationType="slide"
-          onRequestClose={() => {
-            if (activeCall?.status === 'calling' && activeCall?.initiator !== user?.uid) {
-              handleIncomingCall('reject', activeCall);
-            } else {
-              endCurrentCall();
-            }
+          onClose={() => {
+            setShowCallModal(false);
+            setActiveCall(null);
+            endCurrentCall();
           }}
-        >
-          <View style={styles.callModalOverlay}>
-            <View style={styles.callModal}>
-              {activeCall && activeCall.initiator !== user?.uid ? (
-                // Incoming voice call UI
-                <View style={styles.incomingCallContainer}>
-                  <View style={styles.callInfo}>
-                    <Ionicons name="call" size={64} color="#4F46E5" />
-                    <Text style={styles.callTitle}>Incoming Voice Call</Text>
-                    <Text style={styles.callSubtitle}>
-                      {selectedCourse?.name || 'Group Chat'}
-                    </Text>
-                  </View>
-                  
-                  <View style={styles.incomingCallActions}>
-                    <TouchableOpacity 
-                      style={[styles.callActionButton, styles.rejectButton]}
-                      onPress={() => handleIncomingCall('reject', activeCall)}
-                    >
-                      <Ionicons name="call" size={32} color="#FFFFFF" 
-                        style={{ transform: [{ rotate: '135deg' }] }} />
-                    </TouchableOpacity>
-                    
-                    <TouchableOpacity 
-                      style={[styles.callActionButton, styles.acceptButton]}
-                      onPress={() => handleIncomingCall('accept', activeCall)}
-                    >
-                      <Ionicons name="call" size={32} color="#FFFFFF" />
-                    </TouchableOpacity>
-                  </View>
-                </View>
-              ) : (
-                // Active voice call UI
-                <View style={styles.activeCallContainer}>
-                  <View style={styles.callInfo}>
-                    <Ionicons name="call" size={64} color="#4F46E5" />
-                    <Text style={styles.callTitle}>
-                      {activeCall?.status === 'calling' ? 'Calling...' : 'Connected'}
-                    </Text>
-                    <Text style={styles.callSubtitle}>
-                      {selectedCourse?.name || 'Group Chat'}
-                    </Text>
-                    <Text style={styles.callDuration}>Voice Call</Text>
-                  </View>
-                  
-                  <View style={styles.activeCallActions}>
-                    <TouchableOpacity style={styles.callControlButton}>
-                      <Ionicons name="mic-off" size={24} color="#FFFFFF" />
-                    </TouchableOpacity>
-                    
-                    <TouchableOpacity style={styles.callControlButton}>
-                      <Ionicons name="volume-high" size={24} color="#FFFFFF" />
-                    </TouchableOpacity>
-                    
-                    <TouchableOpacity 
-                      style={[styles.callActionButton, styles.endCallButton]}
-                      onPress={endCurrentCall}
-                    >
-                      <Ionicons name="call" size={32} color="#FFFFFF" 
-                        style={{ transform: [{ rotate: '135deg' }] }} />
-                    </TouchableOpacity>
-                  </View>
-                </View>
-              )}
-            </View>
-          </View>
-        </Modal>
+          isIncoming={activeCall && activeCall.initiator !== user?.uid}
+          callerName={selectedCourse?.name || 'Group Chat'}
+          onAccept={() => handleIncomingCall('accept', activeCall)}
+          onReject={() => handleIncomingCall('reject', activeCall)}
+          isActive={activeCall?.status === 'active'}
+        />
 
         {/* Attachment Options Modal */}
         <Modal
