@@ -13,7 +13,8 @@ import {
   writeBatch,
   arrayUnion,
   arrayRemove,
-  getDoc
+  getDoc,
+  Timestamp
 } from 'firebase/firestore';
 import { auth, db } from '../config/firebaseConfig';
 
@@ -39,12 +40,28 @@ class NotificationService {
     if (!this.currentUserId) return;
 
     try {
-      const userDoc = await getDoc(doc(db, 'users', this.currentUserId));
+      const userDocRef = doc(db, 'users', this.currentUserId);
+      const userDoc = await getDoc(userDocRef);
+      
       if (userDoc.exists()) {
-        this.userProfile = { id: this.currentUserId, ...userDoc.data() };
+        const data = userDoc.data();
+        this.userProfile = { 
+          id: this.currentUserId, 
+          ...data,
+          userType: data.userType || 'student', // Default fallback
+          academicLevel: data.academicLevel || '100'
+        };
+      } else {
+        // Handle case where auth user exists but Firestore doc doesn't (yet)
+        this.userProfile = {
+          id: this.currentUserId,
+          userType: 'student',
+          academicLevel: '100',
+          fullName: 'Student'
+        };
       }
     } catch (error) {
-      console.error('Error initializing user profile for notifications:', error);
+      console.error('Error initializing user profile for notifications:', error.message);
     }
   }
 
@@ -92,14 +109,22 @@ class NotificationService {
   }
 
   // Get notifications for current user
+  // Get notifications for current user
   async getUserNotifications() {
     if (!this.currentUserId || !this.userProfile) return [];
 
     try {
       const notificationsRef = collection(db, 'notifications');
-      
-      // Simple query to avoid index requirements
-      let q = query(notificationsRef);
+      const sixtyDaysAgo = new Date();
+      sixtyDaysAgo.setDate(sixtyDaysAgo.getDate() - 60);
+
+      // Only fetch notifications from the last 60 days to keep performance high
+      // Note: This requires a composite index if we combine with other filters, 
+      // so we use a simple date filter and finish the logic in isNotificationForUser
+      const q = query(
+        notificationsRef,
+        where('timestamp', '>=', Timestamp.fromDate(sixtyDaysAgo))
+      );
 
       const snapshot = await getDocs(q);
       const notifications = [];
@@ -110,18 +135,18 @@ class NotificationService {
           notifications.push({
             id: doc.id,
             ...data,
-            timestamp: data.timestamp?.toDate?.() || new Date(),
+            timestamp: data.timestamp?.toDate?.() || new Date(data.timestamp),
             read: data.readBy?.includes(this.currentUserId) || false,
             deleted: data.deletedBy?.includes(this.currentUserId) || false
           });
         }
       });
 
-      // Sort by timestamp in memory and filter out expired/deleted notifications
+      // Sort by timestamp in memory
       const sortedNotifications = notifications.sort((a, b) => b.timestamp - a.timestamp);
       return sortedNotifications.filter(notification => 
         !notification.deleted && 
-        (!notification.expiresAt || new Date() < notification.expiresAt)
+        (!notification.expiresAt || new Date() < notification.expiresAt?.toDate?.())
       );
     } catch (error) {
       console.error('Error getting user notifications:', error);
@@ -169,8 +194,15 @@ class NotificationService {
       return () => {};
     }
 
+    const sixtyDaysAgo = new Date();
+    sixtyDaysAgo.setDate(sixtyDaysAgo.getDate() - 60);
+
     const notificationsRef = collection(db, 'notifications');
-    const q = query(notificationsRef, orderBy('timestamp', 'desc'));
+    const q = query(
+      notificationsRef,
+      where('timestamp', '>=', Timestamp.fromDate(sixtyDaysAgo)),
+      orderBy('timestamp', 'desc')
+    );
 
     const unsubscribe = onSnapshot(q, (snapshot) => {
       const notifications = [];
@@ -181,17 +213,17 @@ class NotificationService {
           notifications.push({
             id: doc.id,
             ...data,
-            timestamp: data.timestamp?.toDate?.() || new Date(),
+            timestamp: data.timestamp?.toDate?.() || new Date(data.timestamp),
             read: data.readBy?.includes(this.currentUserId) || false,
             deleted: data.deletedBy?.includes(this.currentUserId) || false
           });
         }
       });
 
-      // Filter out expired and deleted notifications
+      // Filter out expired and deleted
       const validNotifications = notifications.filter(notification => 
         !notification.deleted && 
-        (!notification.expiresAt || new Date() < notification.expiresAt)
+        (!notification.expiresAt || new Date() < notification.expiresAt?.toDate?.())
       );
 
       callback(validNotifications);

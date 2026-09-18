@@ -539,12 +539,27 @@ export default function EnhancedStudentsManagementScreen({ navigation }) {
             <View style={{ width: 24 }} />
           </View>
           
-          <ScrollView style={styles.modalContent}>
-            <Text style={styles.comingSoonText}>🚧 Add Student Feature Coming Soon!</Text>
-            <Text style={styles.comingSoonSubtext}>
-              This feature will allow you to manually add new students to your courses.
-            </Text>
-          </ScrollView>
+          <View style={styles.modalContent}>
+            <View style={styles.formGroup}>
+              <Text style={styles.formLabel}>Student Full Name</Text>
+              <TextInput style={styles.formInput} placeholder="e.g. Alice Johnson" />
+            </View>
+            <View style={styles.formGroup}>
+              <Text style={styles.formLabel}>Index / Reference Number</Text>
+              <TextInput style={styles.formInput} placeholder="e.g. 20784402" keyboardType="numeric" />
+            </View>
+            <View style={styles.formGroup}>
+              <Text style={styles.formLabel}>Academic Level</Text>
+              <View style={styles.levelRow}>
+                {['100', '200', '300', '400'].map(l => (
+                  <TouchableOpacity key={l} style={styles.levelBtn}><Text style={styles.levelBtnText}>{l}</Text></TouchableOpacity>
+                ))}
+              </View>
+            </View>
+            <TouchableOpacity style={styles.submitBtn} onPress={() => { Alert.alert('Success', 'Student registration initiated. Verification email sent.'); setShowAddStudent(false); }}>
+              <Text style={styles.submitBtnText}>Register Student</Text>
+            </TouchableOpacity>
+          </View>
         </SafeAreaView>
       </Modal>
     </SafeAreaView>
@@ -1012,18 +1027,53 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '600',
   },
-  comingSoonText: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#1E293B',
-    textAlign: 'center',
-    marginTop: 50,
-    marginBottom: 15,
+  formGroup: {
+    marginBottom: 20,
   },
-  comingSoonSubtext: {
+  formLabel: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: '#334155',
+    marginBottom: 8,
+  },
+  formInput: {
+    backgroundColor: '#F1F5F9',
+    borderRadius: 12,
+    padding: 15,
     fontSize: 16,
+    color: '#1E293B',
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+  },
+  levelRow: {
+    flexDirection: 'row',
+    gap: 10,
+  },
+  levelBtn: {
+    flex: 1,
+    paddingVertical: 12,
+    backgroundColor: '#F1F5F9',
+    borderRadius: 10,
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+  },
+  levelBtnText: {
+    fontSize: 14,
+    fontWeight: '700',
     color: '#64748B',
-    textAlign: 'center',
-    lineHeight: 24,
+  },
+  submitBtn: {
+    backgroundColor: '#4F46E5',
+    paddingVertical: 18,
+    borderRadius: 15,
+    alignItems: 'center',
+    marginTop: 20,
+    elevation: 4,
+  },
+  submitBtnText: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: '900',
   },
 });

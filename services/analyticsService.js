@@ -369,7 +369,8 @@ class AnalyticsService {
       userCounts[data.senderId] = (userCounts[data.senderId] || 0) + 1;
       
       // Count messages per hour
-      const hour = data.timestamp?.toDate().getHours() || 0;
+      const timestamp = data.timestamp?.toDate?.() || new Date(data.timestamp);
+      const hour = timestamp.getHours() || 0;
       hourCounts[hour]++;
     });
 
@@ -379,7 +380,7 @@ class AnalyticsService {
       .slice(0, 5)
       .map(([userId, count]) => ({ userId, messageCount: count }));
 
-    // Get peak hours
+    // Get peak hour
     const peakHour = hourCounts.indexOf(Math.max(...hourCounts));
 
     return {
@@ -390,7 +391,7 @@ class AnalyticsService {
 
   generateDailyActivityChart(startDate, endDate, dataSources) {
     const days = [];
-    const currentDate = new Date(startDate);
+    let currentDate = new Date(startDate);
     
     while (currentDate <= endDate) {
       const dayStr = currentDate.toISOString().split('T')[0];
@@ -405,7 +406,9 @@ class AnalyticsService {
     dataSources.forEach(source => {
       source.data.forEach(doc => {
         const data = doc.data();
-        const docDate = data[source.field]?.toDate();
+        const dateRaw = data[source.field];
+        const docDate = dateRaw?.toDate?.() || (dateRaw ? new Date(dateRaw) : null);
+        
         if (docDate) {
           const dayStr = docDate.toISOString().split('T')[0];
           const dayIndex = days.findIndex(d => d.date === dayStr);
@@ -419,6 +422,38 @@ class AnalyticsService {
     return days;
   }
 
+  // --- Missing methods implementation ---
+
+  async getSubmissionTrends(courseCode, startDate, endDate) {
+    // Already covered by data sources in getEngagementMetrics, 
+    // but here we can provide specific late vs on-time analysis if metadata exists
+    const trends = { onTime: 0, late: 0, missing: 0 };
+    const q = query(
+      collection(db, 'submissions'),
+      where('courseCode', '==', courseCode),
+      where('submittedAt', '>=', Timestamp.fromDate(startDate))
+    );
+    const snap = await getDocs(q);
+    snap.forEach(doc => {
+      const data = doc.data();
+      if (data.status === 'late') trends.late++;
+      else trends.onTime++;
+    });
+    return trends;
+  }
+
+  async getGradeDistribution(courseCode) {
+    const q = query(
+      collection(db, 'submissions'),
+      where('courseCode', '==', courseCode),
+      where('grade', '!=', null)
+    );
+    const snap = await getDocs(q);
+    const grades = [];
+    snap.forEach(doc => grades.push(doc.data().grade));
+    return this.calculatePerformanceDistribution(grades);
+  }
+
   calculatePerformanceDistribution(grades) {
     const distribution = {
       'A (90-100)': 0,
@@ -429,29 +464,150 @@ class AnalyticsService {
     };
     
     grades.forEach(grade => {
-      if (grade >= 90) distribution['A (90-100)']++;
-      else if (grade >= 80) distribution['B (80-89)']++;
-      else if (grade >= 70) distribution['C (70-79)']++;
-      else if (grade >= 60) distribution['D (60-69)']++;
+      const g = Number(grade);
+      if (g >= 90) distribution['A (90-100)']++;
+      else if (g >= 80) distribution['B (80-89)']++;
+      else if (g >= 70) distribution['C (70-79)']++;
+      else if (g >= 60) distribution['D (60-69)']++;
       else distribution['F (0-59)']++;
     });
     
     return distribution;
   }
 
+  generateAttendanceTrends(records) {
+    const dayMap = {};
+    records.forEach(r => {
+      const dateRaw = r.date;
+      const date = dateRaw?.toDate?.() || new Date(dateRaw);
+      const dateStr = date.toISOString().split('T')[0];
+      if (!dayMap[dateStr]) dayMap[dateStr] = { present: 0, total: 0 };
+      dayMap[dateStr].total++;
+      if (r.status === 'present') dayMap[dateStr].present++;
+    });
+
+    return Object.entries(dayMap).map(([date, counts]) => ({
+      date,
+      rate: Math.round((counts.present / counts.total) * 100)
+    })).sort((a, b) => a.date.localeCompare(b.date));
+  }
+
+  getStudentAttendanceRanking(records) {
+    const studentMap = {};
+    records.forEach(r => {
+      if (!studentMap[r.userId]) studentMap[r.userId] = { present: 0, total: 0, name: r.userName || 'Student' };
+      studentMap[r.userId].total++;
+      if (r.status === 'present') studentMap[r.userId].present++;
+    });
+
+    return Object.entries(studentMap).map(([id, stats]) => ({
+      userId: id,
+      userName: stats.name,
+      rate: Math.round((stats.present / stats.total) * 100)
+    })).sort((a, b) => b.rate - a.rate).slice(0, 10);
+  }
+
+  generateCommunicationTrends(startDate, endDate, callsSnapshot, voiceSnapshot) {
+    // Simplified version: just return daily counts for calls vs voice
+    const data = {};
+    callsSnapshot.forEach(doc => {
+      const d = doc.data().createdAt?.toDate?.() || new Date();
+      const s = d.toISOString().split('T')[0];
+      if (!data[s]) data[s] = { calls: 0, voice: 0 };
+      data[s].calls++;
+    });
+    voiceSnapshot.forEach(doc => {
+      const d = doc.data().timestamp?.toDate?.() || new Date();
+      const s = d.toISOString().split('T')[0];
+      if (!data[s]) data[s] = { calls: 0, voice: 0 };
+      data[s].voice++;
+    });
+    return Object.entries(data).map(([date, counts]) => ({ date, ...counts }));
+  }
+
+  getTopPerformers(submissions) {
+    const studentMap = {};
+    submissions.forEach(s => {
+      if (!studentMap[s.userId]) studentMap[s.userId] = { total: 0, count: 0, name: s.studentName || 'Student' };
+      studentMap[s.userId].total += s.grade;
+      studentMap[s.userId].count++;
+    });
+
+    return Object.entries(studentMap).map(([id, stats]) => ({
+      userId: id,
+      userName: stats.name,
+      average: Math.round((stats.total / stats.count) * 10) / 10
+    })).sort((a, b) => b.average - a.average).slice(0, 5);
+  }
+
+  calculateImprovementTrends(submissions) {
+    // Simple logic: compare last 2 grades per student
+    const studentGrades = {};
+    submissions.filter(s => s.timestamp).sort((a, b) => b.timestamp - a.timestamp).forEach(s => {
+      if (!studentGrades[s.userId]) studentGrades[s.userId] = [];
+      if (studentGrades[s.userId].length < 2) studentGrades[s.userId].push(s.grade);
+    });
+
+    let improvingCount = 0;
+    let decliningCount = 0;
+    Object.values(studentGrades).forEach(grades => {
+      if (grades.length === 2) {
+        if (grades[0] > grades[1]) improvingCount++; // grades[0] is most recent
+        else if (grades[0] < grades[1]) decliningCount++;
+      }
+    });
+
+    return { improving: improvingCount, declining: decliningCount, stable: Object.keys(studentGrades).length - improvingCount - decliningCount };
+  }
+
+  extractTrendingTopics(chatSnapshot) {
+    const stopWords = ['the', 'is', 'at', 'which', 'and', 'a', 'to', 'in', 'for', 'of', 'on', 'with'];
+    const wordCounts = {};
+    chatSnapshot.forEach(doc => {
+      const text = doc.data().text || '';
+      const words = text.toLowerCase().match(/\w+/g) || [];
+      words.forEach(word => {
+        if (word.length > 3 && !stopWords.includes(word)) {
+          wordCounts[word] = (wordCounts[word] || 0) + 1;
+        }
+      });
+    });
+
+    return Object.entries(wordCounts)
+      .sort(([,a], [,b]) => b - a)
+      .slice(0, 10)
+      .map(([word, count]) => ({ topic: word, frequency: count }));
+  }
+
+  getPopularTimes(chatSnapshot) {
+    const hourly = new Array(24).fill(0);
+    chatSnapshot.forEach(doc => {
+      const d = doc.data().timestamp?.toDate?.() || new Date();
+      hourly[d.getHours()]++;
+    });
+    return hourly.map((count, hour) => ({ hour, messages: count }));
+  }
+
+  convertToCSV(data) {
+    if (!data) return '';
+    try {
+      const json = JSON.stringify(data, null, 2);
+      return `UniConnect Analytics Export - ${new Date().toISOString()}\n\n${json}`;
+    } catch (e) {
+      return 'Export failed';
+    }
+  }
+
   // Real-time analytics updates
   listenToAnalytics(courseCode, callback) {
-    // This would set up real-time listeners for key metrics
-    const unsubscribe = onSnapshot(
-      collection(db, 'analytics', courseCode),
-      (snapshot) => {
-        const analytics = {};
-        snapshot.forEach(doc => {
-          analytics[doc.id] = doc.data();
-        });
-        callback(analytics);
-      }
-    );
+    const q = query(collection(db, 'analytics'), where('courseCode', '==', courseCode));
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      const analytics = {};
+      snapshot.forEach(doc => {
+        analytics[doc.id] = doc.data();
+      });
+      callback(analytics);
+    });
 
     this.listeners.set(courseCode, unsubscribe);
     return unsubscribe;
@@ -461,11 +617,9 @@ class AnalyticsService {
   async exportAnalytics(courseCode, format = 'json') {
     try {
       const analytics = await this.getCourseAnalytics(courseCode);
-      
       if (format === 'csv') {
         return this.convertToCSV(analytics.analytics);
       }
-      
       return analytics.analytics;
     } catch (error) {
       console.error('Error exporting analytics:', error);
@@ -473,7 +627,6 @@ class AnalyticsService {
     }
   }
 
-  // Clean up listeners
   cleanup() {
     this.listeners.forEach(unsubscribe => unsubscribe());
     this.listeners.clear();

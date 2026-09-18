@@ -307,7 +307,7 @@ Want to dive deeper or move to a related topic? I'm excited to keep learning wit
       const response = await claudeAiService.generateResponse(inputText.trim(), {
         userType: 'student',
         course: course,
-        academicLevel: user?.academicLevel || '100'
+        academicLevel: '100'
       });
 
       const aiResponse = {
@@ -318,11 +318,6 @@ Want to dive deeper or move to a related topic? I'm excited to keep learning wit
       };
 
       setMessages(prev => [...prev, aiResponse]);
-      
-      // Log the interaction for premium analytics
-      if (user?.uid) {
-        claudeAiService.logInteraction(user.uid, inputText.trim(), response);
-      }
     } catch (error) {
       console.error('Claude AI Error:', error);
       const errorMsg = {

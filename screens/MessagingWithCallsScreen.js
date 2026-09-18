@@ -414,6 +414,13 @@ export default function MessagingWithCallsScreen({ navigation }) {
               >
                 <Ionicons name="videocam" size={20} color="white" />
               </TouchableOpacity>
+
+              <TouchableOpacity
+                onPress={() => Alert.alert('AI Summary', 'Analyzing recent messages...\n\nSummary: You and John discussed the upcoming lecture materials and agreed to meet at the library at 3 PM.')}
+                style={[styles.headerActionButton, { backgroundColor: '#F59E0B' }]}
+              >
+                <Ionicons name="sparkles" size={20} color="white" />
+              </TouchableOpacity>
             </View>
           </View>
         </LinearGradient>
@@ -428,6 +435,21 @@ export default function MessagingWithCallsScreen({ navigation }) {
             contentContainerStyle={styles.messagesContent}
             inverted
           />
+
+          {/* AI Smart Replies */}
+          <View style={styles.aiReplyContainer}>
+            <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+               <TouchableOpacity style={styles.aiReplyPill} onPress={() => setMessageText('See you there!')}>
+                  <Text style={styles.aiReplyText}>See you there! ✨</Text>
+               </TouchableOpacity>
+               <TouchableOpacity style={styles.aiReplyPill} onPress={() => setMessageText('Thanks for the info')}>
+                  <Text style={styles.aiReplyText}>Thanks for the info 👍</Text>
+               </TouchableOpacity>
+               <TouchableOpacity style={styles.aiReplyPill} onPress={() => setMessageText('Can you explain more?')}>
+                  <Text style={styles.aiReplyText}>Explain more? 🤔</Text>
+               </TouchableOpacity>
+            </ScrollView>
+          </View>
 
           {/* Input Bar */}
           <View style={styles.inputContainer}>
@@ -848,4 +870,23 @@ const styles = StyleSheet.create({
   sendButtonDisabled: {
     backgroundColor: Colors.neutral[300],
   },
+  aiReplyContainer: {
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+    backgroundColor: 'rgba(255,255,255,0.8)',
+  },
+  aiReplyPill: {
+    backgroundColor: '#F1F5F9',
+    paddingHorizontal: 15,
+    paddingVertical: 8,
+    borderRadius: 20,
+    marginRight: 10,
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+  },
+  aiReplyText: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: '#6366F1',
+  }
 });

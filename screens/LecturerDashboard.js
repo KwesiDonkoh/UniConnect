@@ -325,6 +325,32 @@ export default function LecturerDashboard({ navigation }) {
           <AuthFeatureShowcase isDark={isDark} />
         </View>
 
+        {/* AI Teaching Pulse & Research */}
+        <View style={{ paddingHorizontal: 20, marginTop: 25 }}>
+          <View style={{ backgroundColor: isDark ? '#1E293B' : '#EEF2FF', borderRadius: 24, padding: 20, borderWidth: 1, borderColor: isDark ? '#334155' : '#C7D2FE' }}>
+             <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 15 }}>
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+                   <View style={{ width: 40, height: 40, borderRadius: 20, backgroundColor: '#4F46E515', justifyContent: 'center', alignItems: 'center' }}>
+                      <Ionicons name="bulb" size={24} color="#4F46E5" />
+                   </View>
+                   <View>
+                      <Text style={{ fontSize: 16, fontWeight: '800', color: isDark ? '#F1F5F9' : '#1E293B' }}>AI Teaching Pulse</Text>
+                      <Text style={{ fontSize: 12, color: '#64748B' }}>Smart pedagogical suggestion</Text>
+                   </View>
+                </View>
+                <TouchableOpacity onPress={() => Alert.alert('New Tip', 'AI is analyzing student engagement data...')}>
+                   <Ionicons name="refresh" size={20} color="#4F46E5" />
+                </TouchableOpacity>
+             </View>
+             <Text style={{ fontSize: 14, color: isDark ? '#CBD5E1' : '#475569', lineHeight: 22, fontStyle: 'italic' }}>
+               "Based on recent quiz results, your CSM251 students are struggling with 'Pointers'. Try using a visual memory-map analogy in tomorrow's lecture."
+             </Text>
+             <TouchableOpacity style={{ marginTop: 15, paddingVertical: 10, backgroundColor: '#4F46E5', borderRadius: 12, alignItems: 'center' }}>
+                <Text style={{ color: '#FFF', fontWeight: '800', fontSize: 13 }}>Generate Visual Aids</Text>
+             </TouchableOpacity>
+          </View>
+        </View>
+
         {/* Motivation Section - RESTORED & CONTROLLED */}
         <DailyMotivation
           visible={showMotivation}
@@ -340,9 +366,9 @@ export default function LecturerDashboard({ navigation }) {
               <Text style={[styles.sectionTitle, isDark && styles.darkSectionTitle, { marginBottom: 0, fontSize: 18 }]}>Teaching Impact</Text>
             </View>
             <TouchableOpacity
-              onPress={() => navigation.navigate('Analytics', {
-                courseCode: displayCourses[0]?.code || 'LECTURER_PORTFOLIO',
-                courseName: displayCourses[0]?.name || 'Teaching Portfolio'
+              onPress={() => navigation.navigate('PerformanceAnalytics', {
+                courseCode: (displayCourses && displayCourses[0]?.code) || 'LECTURER_PORTFOLIO',
+                courseName: (displayCourses && displayCourses[0]?.name) || 'Teaching Portfolio'
               })}
             >
               <Text style={styles.seeHowText}>View Insights</Text>
@@ -599,10 +625,43 @@ export default function LecturerDashboard({ navigation }) {
               style={styles.modernAICard}
               onPress={() => setShowQandA(true)}
             >
-              <LinearGradient colors={['#8B5CF6', '#7C3AED']} style={styles.modernAIGradient}>
-                <Ionicons name="chatbubbles" size={28} color="#FFFFFF" />
-                <Text style={styles.modernAITitle}>Q&A Board</Text>
-                <Text style={styles.modernAIDescription}>Student questions</Text>
+              <LinearGradient colors={['#F59E0B', '#FBBF24']} style={styles.modernAIGradient}>
+                <Ionicons name="help-circle" size={28} color="#FFFFFF" />
+                <Text style={styles.modernAITitle}>Q&A Hub</Text>
+                <Text style={styles.modernAIDescription}>Interactive sessions</Text>
+              </LinearGradient>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={styles.modernAICard}
+              onPress={() => navigation.navigate('AIResearchAssistant')}
+            >
+              <LinearGradient colors={['#4F46E5', '#3730A3']} style={styles.modernAIGradient}>
+                <Ionicons name="sparkles" size={28} color="#FFFFFF" />
+                <Text style={styles.modernAITitle}>Research AI</Text>
+                <Text style={styles.modernAIDescription}>Grant & Thesis AI</Text>
+              </LinearGradient>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={styles.modernAICard}
+              onPress={() => navigation.navigate('PerformanceAnalytics')}
+            >
+              <LinearGradient colors={['#10B981', '#047857']} style={styles.modernAIGradient}>
+                <Ionicons name="analytics" size={28} color="#FFFFFF" />
+                <Text style={styles.modernAITitle}>Deep Insights</Text>
+                <Text style={styles.modernAIDescription}>Cluster analysis</Text>
+              </LinearGradient>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={styles.modernAICard}
+              onPress={() => navigation.navigate('CampusSocialHub')}
+            >
+              <LinearGradient colors={['#F59E0B', '#D97706']} style={styles.modernAIGradient}>
+                <Ionicons name="share-social" size={28} color="#FFFFFF" />
+                <Text style={styles.modernAITitle}>Faculty Hub</Text>
+                <Text style={styles.modernAIDescription}>Departmental feed</Text>
               </LinearGradient>
             </TouchableOpacity>
 

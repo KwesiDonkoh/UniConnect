@@ -16,6 +16,7 @@ import {
   increment
 } from 'firebase/firestore';
 import { db } from '../config/firebaseConfig';
+import notificationService from './notificationService';
 
 class AssignmentService {
   constructor() {
@@ -379,24 +380,64 @@ class AssignmentService {
     return distribution;
   }
 
-  // Notify students about new assignment
+  // Notify students about new assignment — wired to notificationService
   async notifyStudentsAboutAssignment(assignmentId, assignmentData) {
     try {
-      // This would integrate with your notification service
-      // For now, we'll just log it
-      console.log(`New assignment notification: ${assignmentData.title} for ${assignmentData.courseCode}`);
+      if (!notificationService.currentUserId) return { success: true };
+
+      const dueDateStr = assignmentData.dueDate
+        ? (assignmentData.dueDate instanceof Date
+          ? assignmentData.dueDate.toLocaleDateString()
+          : new Date(assignmentData.dueDate).toLocaleDateString())
+        : 'No due date set';
+
+      await notificationService.createAssignmentNotification(assignmentData.courseCode, {
+        id: assignmentId,
+        title: assignmentData.title,
+        description: `New assignment "${assignmentData.title}" posted for ${assignmentData.courseCode}. Due: ${dueDateStr}. Points: ${assignmentData.maxPoints || assignmentData.points || 'N/A'}`,
+        priority: assignmentData.priority || 'high',
+        dueDate: assignmentData.dueDate,
+        points: assignmentData.maxPoints || assignmentData.points,
+        academicLevel: assignmentData.academicLevel || null,
+      });
       return { success: true };
     } catch (error) {
-      console.error('Error notifying students:', error);
+      console.error('Error notifying students about assignment:', error);
       return { success: false, error: error.message };
     }
   }
 
-  // Notify student about grade
+  // Notify student about grade — wired to notificationService
   async notifyStudentAboutGrade(studentId, submissionId, grade) {
     try {
-      // This would integrate with your notification service
-      console.log(`Grade notification: Student ${studentId} received grade ${grade} for submission ${submissionId}`);
+      if (!notificationService.currentUserId) return { success: true };
+
+      // Fetch the submission to get course/assignment context
+      const submissionDoc = await getDoc(doc(db, 'submissions', submissionId));
+      const submissionData = submissionDoc.exists() ? submissionDoc.data() : {};
+
+      let assignmentTitle = 'Your Assignment';
+      let courseCode = submissionData.courseCode || '';
+      if (submissionData.assignmentId) {
+        const assignmentDoc = await getDoc(doc(db, 'assignments', submissionData.assignmentId));
+        if (assignmentDoc.exists()) {
+          assignmentTitle = assignmentDoc.data().title || assignmentTitle;
+          courseCode = courseCode || assignmentDoc.data().courseCode || '';
+        }
+      }
+
+      await notificationService.createNotification({
+        title: `🏆 Grade Received: ${assignmentTitle}`,
+        message: `Your submission for "${assignmentTitle}"${
+          courseCode ? ` in ${courseCode}` : ''
+        } has been graded. You received ${grade}%.`,
+        type: 'grade',
+        course: courseCode,
+        courseCode,
+        priority: 'high',
+        recipients: [studentId],
+        metadata: { submissionId, grade, assignmentTitle },
+      });
       return { success: true };
     } catch (error) {
       console.error('Error notifying student about grade:', error);

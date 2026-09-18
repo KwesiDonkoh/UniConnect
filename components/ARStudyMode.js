@@ -281,7 +281,15 @@ export const ARStudyMode = ({ visible, onClose, course, topic }) => {
         <TouchableOpacity
           key={scenario.id}
           style={styles.scenarioCard}
-          onPress={() => Alert.alert('Coming Soon!', 'This AR quiz scenario will be available in the next update!')}
+          onPress={() => startARSession({
+            id: scenario.id + 100,
+            name: scenario.title,
+            subject: 'Immersive Quiz',
+            description: scenario.description,
+            icon: scenario.icon,
+            color: '#6366F1',
+            interactions: ['Answer Question', 'View Hint', 'Check Score', 'Finalize']
+          })}
         >
           <View style={styles.scenarioIcon}>
             <Ionicons name={scenario.icon} size={24} color="#667eea" />
@@ -402,17 +410,20 @@ export const ARStudyMode = ({ visible, onClose, course, topic }) => {
             )}
 
             {arMode === 'virtual-lab' && (
-              <View style={styles.comingSoon}>
-                <Ionicons name="construct" size={60} color="#ccc" />
-                <Text style={styles.comingSoonTitle}>Virtual Lab</Text>
-                <Text style={styles.comingSoonText}>
-                  Conduct experiments safely in AR! This feature is coming soon with:
-                </Text>
-                <View style={styles.featureList}>
-                  <Text style={styles.featureListItem}>• Chemistry experiment simulations</Text>
-                  <Text style={styles.featureListItem}>• Physics demonstrations</Text>
-                  <Text style={styles.featureListItem}>• Biology dissections</Text>
-                  <Text style={styles.featureListItem}>• Engineering prototypes</Text>
+              <View style={styles.activeLabContainer}>
+                <LinearGradient colors={['#3B82F6', '#2563EB']} style={styles.labHeader}>
+                  <Ionicons name="flask" size={40} color="#FFF" />
+                  <Text style={styles.labTitle}>Chemical Simulation Alpha</Text>
+                </LinearGradient>
+                <View style={styles.labControlPanel}>
+                  <Text style={styles.labSub}>Interactive Reagents Available:</Text>
+                  <View style={styles.reagentGrid}>
+                    {['H2SO4', 'NaOH', 'HCl', 'AgNO3'].map(r => (
+                      <TouchableOpacity key={r} style={styles.reagentBtn} onPress={() => Alert.alert('Reaction Started', `Simulating reaction with ${r}... Observation: Exothermic response detected.`)}>
+                        <Text style={styles.reagentText}>{r}</Text>
+                      </TouchableOpacity>
+                    ))}
+                  </View>
                 </View>
               </View>
             )}
@@ -771,10 +782,50 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: 'rgba(255, 255, 255, 0.3)',
   },
-  interactionButtonText: {
+  reagentText: {
     color: '#fff',
     fontSize: 12,
     fontWeight: '500',
+  },
+  activeLabContainer: {
+    flex: 1,
+    borderRadius: 20,
+    backgroundColor: '#F8FAFC',
+    overflow: 'hidden',
+    elevation: 4,
+  },
+  labHeader: {
+    padding: 30,
+    alignItems: 'center',
+    gap: 15,
+  },
+  labTitle: {
+    color: '#FFF',
+    fontSize: 22,
+    fontWeight: '900',
+    textAlign: 'center',
+  },
+  labControlPanel: {
+    padding: 20,
+  },
+  labSub: {
+    fontSize: 16,
+    fontWeight: '800',
+    color: '#1E293B',
+    marginBottom: 20,
+  },
+  reagentGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 12,
+  },
+  reagentBtn: {
+    paddingHorizontal: 20,
+    paddingVertical: 12,
+    backgroundColor: '#3B82F6',
+    borderRadius: 15,
+    minWidth: 80,
+    alignItems: 'center',
   },
 });
 

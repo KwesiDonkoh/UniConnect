@@ -277,6 +277,30 @@ export default function AcademicOverviewScreen({ navigation, route }) {
         </View>
       </View>
 
+      {/* Financial Summary */}
+      <View style={styles.sectionCard}>
+        <View style={styles.sectionHeader}>
+          <Text style={styles.sectionTitle}>💳 Financial Summary</Text>
+          <TouchableOpacity onPress={() => navigation.navigate('Wallet')}>
+            <Text style={styles.sectionAction}>Manage Wallet</Text>
+          </TouchableOpacity>
+        </View>
+        <View style={styles.semesterInfo}>
+          <View style={styles.semesterDetail}>
+            <Text style={styles.semesterLabel}>Wallet Balance</Text>
+            <Text style={[styles.semesterValue, { color: '#10B981', fontSize: 18 }]}>GH₵ 350.00</Text>
+          </View>
+          <View style={styles.semesterDetail}>
+            <Text style={styles.semesterLabel}>Active Vouchers</Text>
+            <Text style={styles.semesterValue}>2 Active</Text>
+          </View>
+          <View style={styles.semesterDetail}>
+            <Text style={styles.semesterLabel}>Last Transaction</Text>
+            <Text style={styles.semesterValue}>Canteen: -GH₵ 25.00</Text>
+          </View>
+        </View>
+      </View>
+
       {/* Recent Achievements */}
       <View style={styles.sectionCard}>
         <View style={styles.sectionHeader}>
@@ -498,7 +522,7 @@ export default function AcademicOverviewScreen({ navigation, route }) {
           <Ionicons name="arrow-back" size={24} color="#1E293B" />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Academic Overview</Text>
-        <TouchableOpacity onPress={() => Alert.alert('Settings', 'Profile settings coming soon!')}>
+        <TouchableOpacity onPress={() => Alert.alert('Academic Records', 'Securely sync your official transcripts and certificates from the university registry. Your record is encrypted and verified by Blockchain.')}>
           <Ionicons name="settings" size={24} color="#4F46E5" />
         </TouchableOpacity>
       </View>

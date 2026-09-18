@@ -23,6 +23,7 @@ import { BlurView } from 'expo-blur';
 
 import * as ImagePicker from 'expo-image-picker';
 import { Colors, Typography, Spacing, BorderRadius, Shadows, Animations } from '../themes/modernTheme';
+import { UNIVERSITY_DATA } from '../data/universityData';
 
 const { width, height } = Dimensions.get('window');
 
@@ -36,6 +37,10 @@ export default function SignUpScreen({ navigation }) {
     confirmPassword: '',
     userType: 'student',
     academicLevel: '100',
+    degreeType: 'Undergraduate',
+    university: '',
+    college: '',
+    programme: '',
     department: '',
     selectedCourses: [],
     profileImage: null,
@@ -85,23 +90,29 @@ export default function SignUpScreen({ navigation }) {
     { id: 'lecturer', title: 'Lecturer', icon: 'briefcase-outline', desc: 'Join as an educator' },
   ];
 
-  const academicLevels = [
-    { id: '100', title: 'Level 100', icon: 'star-outline' },
-    { id: '200', title: 'Level 200', icon: 'ribbon-outline' },
-    { id: '300', title: 'Level 300', icon: 'medal-outline' },
-    { id: '400', title: 'Level 400', icon: 'trophy-outline' },
+  const degreeTypes = [
+    { id: 'Undergraduate', title: 'Undergraduate', icon: 'school-outline' },
+    { id: 'Postgraduate', title: 'Postgraduate', icon: 'ribbon-outline' },
+    { id: 'PhD', title: 'Doctorate / PhD', icon: 'medal-outline' },
+    { id: 'Others', title: 'Others', icon: 'ellipsis-horizontal-outline' },
   ];
 
-  const departments = [
-    'Computer Science',
-    'Electrical Engineering',
-    'Mechanical Engineering',
-    'Civil Engineering',
-    'Geomatic Engineering',
-    'Agricultural Engineering',
-    'Chemical Engineering',
-    'Materials Engineering',
+  const academicLevels = [
+    { id: '100', title: 'Year 1', icon: 'star-outline' },
+    { id: '200', title: 'Year 2', icon: 'ribbon-outline' },
+    { id: '300', title: 'Year 3', icon: 'medal-outline' },
+    { id: '400', title: 'Year 4', icon: 'trophy-outline' },
+    { id: '500', title: 'Year 5+', icon: 'infinite-outline' },
   ];
+
+  const collegeIcons = {
+    'CHSS': 'book-outline',
+    'COE': 'settings-outline',
+    'CABE': 'business-outline',
+    'CANR': 'leaf-outline',
+    'COS': 'flask-outline',
+    'CHS': 'medical-outline'
+  };
 
   const allCourses = [
     // Level 100
@@ -163,8 +174,8 @@ export default function SignUpScreen({ navigation }) {
       Alert.alert('Incomplete', 'Please tell us your name.');
       return;
     }
-    if (step === 2 && (!formData.identifier || !formData.department)) {
-      Alert.alert('Incomplete', 'Identification and Department are required.');
+    if (step === 2 && (!formData.identifier || !formData.university || (formData.university.includes('KNUST') && (!formData.college || !formData.programme)))) {
+      Alert.alert('Incomplete', 'Identification, University and academic details are required.');
       return;
     }
     setStep(s => s + 1);
@@ -306,31 +317,178 @@ export default function SignUpScreen({ navigation }) {
                 keyboardType="number-pad"
               />
 
-              <View style={styles.academicSection}>
-                <Text style={styles.inputLabel}>Department / Faculty</Text>
-                <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.deptScroll}>
-                  {departments.map(dept => (
+              <View style={styles.inputGroup}>
+                <Text style={styles.inputLabel}>Academic Status</Text>
+                <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.typeScroll}>
+                  {degreeTypes.map(type => (
                     <TouchableOpacity
-                      key={dept}
-                      onPress={() => setFormData(p => ({ ...p, department: dept }))}
+                      key={type.id}
+                      onPress={() => setFormData(p => ({ ...p, degreeType: type.id }))}
                       style={[
-                        styles.deptBadge,
-                        formData.department === dept && styles.deptBadgeActive,
-                        isDark && styles.darkDeptBadge
+                        styles.typeCard,
+                        formData.degreeType === type.id && styles.typeCardActive,
+                        isDark && styles.darkTypeCard
                       ]}
                     >
-                      {formData.department === dept && <Ionicons name="checkmark" size={12} color="#FFFFFF" style={{ marginRight: 4 }} />}
+                      <Ionicons 
+                        name={type.icon} 
+                        size={24} 
+                        color={formData.degreeType === type.id ? '#FFFFFF' : '#6366F1'} 
+                      />
                       <Text style={[
-                        styles.deptBadgeText,
-                        formData.department === dept && styles.textWhite,
-                        isDark && (formData.department === dept ? styles.textWhite : styles.textWhite70)
+                        styles.typeTitle,
+                        formData.degreeType === type.id && styles.textWhite,
+                        isDark && (formData.degreeType === type.id ? styles.textWhite : styles.textWhite70)
                       ]}>
-                        {dept}
+                        {type.title}
                       </Text>
                     </TouchableOpacity>
                   ))}
                 </ScrollView>
+
+                {formData.degreeType === 'Undergraduate' && (
+                  <>
+                    <Text style={[styles.inputLabel, { marginTop: 15 }]}>Year / Level</Text>
+                    <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.typeScroll}>
+                      {academicLevels.map(level => (
+                        <TouchableOpacity
+                          key={level.id}
+                          onPress={() => setFormData(p => ({ ...p, academicLevel: level.id }))}
+                          style={[
+                            styles.levelCircle,
+                            formData.academicLevel === level.id && styles.levelCircleActive,
+                            isDark && styles.darkLevelCircle
+                          ]}
+                        >
+                          <Text style={[
+                            styles.levelText,
+                            formData.academicLevel === level.id && styles.textWhite,
+                            isDark && (formData.academicLevel === level.id ? styles.textWhite : styles.textWhite70)
+                          ]}>
+                            {level.id}
+                          </Text>
+                        </TouchableOpacity>
+                      ))}
+                    </ScrollView>
+                  </>
+                )}
               </View>
+
+              <View style={styles.academicSection}>
+                <Text style={styles.inputLabel}>Select Your University</Text>
+                <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.deptScroll}>
+                  {UNIVERSITY_DATA.universities.map(uni => (
+                    <TouchableOpacity
+                      key={uni.id}
+                      onPress={() => setFormData(p => ({ ...p, university: uni.name, college: '', programme: '', department: '' }))}
+                      style={[
+                        styles.deptBadge,
+                        formData.university === uni.name && styles.deptBadgeActive,
+                        isDark && styles.darkDeptBadge
+                      ]}
+                    >
+                      <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                        <Ionicons 
+                          name="business-outline" 
+                          size={16} 
+                          color={formData.university === uni.name ? '#FFFFFF' : '#6366F1'} 
+                          style={{ marginRight: 8 }} 
+                        />
+                        <Text style={[
+                          styles.deptBadgeText,
+                          formData.university === uni.name && styles.textWhite,
+                          isDark && (formData.university === uni.name ? styles.textWhite : styles.textWhite70)
+                        ]}>
+                          {uni.name}
+                        </Text>
+                      </View>
+                    </TouchableOpacity>
+                  ))}
+                </ScrollView>
+              </View>
+
+              {formData.university && (formData.university.includes('Kwame Nkrumah') || formData.university.includes('KNUST')) ? (
+                <>
+                  <View style={styles.academicSection}>
+                    <Text style={styles.inputLabel}>Select Your College</Text>
+                    <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.deptScroll}>
+                      {UNIVERSITY_DATA.knustColleges.map(college => (
+                        <TouchableOpacity
+                          key={college.id}
+                          onPress={() => setFormData(p => ({ ...p, college: college.name, programme: '', department: college.name }))}
+                          style={[
+                            styles.deptBadge,
+                            formData.college === college.name && styles.deptBadgeActive,
+                            isDark && styles.darkDeptBadge
+                          ]}
+                        >
+                          <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                            <Ionicons 
+                              name={collegeIcons[college.id] || 'school-outline'} 
+                              size={16} 
+                              color={formData.college === college.name ? '#FFFFFF' : '#6366F1'} 
+                              style={{ marginRight: 8 }} 
+                            />
+                            <Text style={[
+                              styles.deptBadgeText,
+                              formData.college === college.name && styles.textWhite,
+                              isDark && (formData.college === college.name ? styles.textWhite : styles.textWhite70)
+                            ]}>
+                              {college.name}
+                            </Text>
+                          </View>
+                        </TouchableOpacity>
+                      ))}
+                    </ScrollView>
+                  </View>
+
+                  {formData.college && (
+                    <View style={styles.academicSection}>
+                      <Text style={styles.inputLabel}>Select Your Programme / Course</Text>
+                      <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.deptScroll}>
+                        {UNIVERSITY_DATA.knustColleges.find(c => c.name === formData.college)?.programmes.map(prog => (
+                          <TouchableOpacity
+                            key={prog}
+                            onPress={() => setFormData(p => ({ ...p, programme: prog }))}
+                            style={[
+                              styles.deptBadge,
+                              formData.programme === prog && styles.deptBadgeActive,
+                              isDark && styles.darkDeptBadge
+                            ]}
+                          >
+                            <Text style={[
+                              styles.deptBadgeText,
+                              formData.programme === prog && styles.textWhite,
+                              isDark && (formData.programme === prog ? styles.textWhite : styles.textWhite70)
+                            ]}>
+                              {prog}
+                            </Text>
+                          </TouchableOpacity>
+                        ))}
+                      </ScrollView>
+                    </View>
+                  )}
+                </>
+              ) : formData.university ? (
+                <>
+                  <ModernInput
+                    label="Faculty / Department"
+                    value={formData.department}
+                    onChangeText={(val) => setFormData(p => ({ ...p, department: val, college: val }))}
+                    icon="business"
+                    variant="outline"
+                    placeholder="e.g. Faculty of Arts"
+                  />
+                  <ModernInput
+                    label="Programme / Course"
+                    value={formData.programme}
+                    onChangeText={(val) => setFormData(p => ({ ...p, programme: val }))}
+                    icon="book"
+                    variant="outline"
+                    placeholder="e.g. BSc. Economics"
+                  />
+                </>
+              ) : null}
 
               <ModernInput
                 label="University Email"
@@ -599,6 +757,31 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3,
     shadowRadius: 8,
+  },
+  levelCircle: {
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+    backgroundColor: '#FFFFFF',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 12,
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+    ...Shadows.small,
+  },
+  darkLevelCircle: {
+    backgroundColor: '#1E293B',
+    borderColor: '#334155',
+  },
+  levelCircleActive: {
+    backgroundColor: '#6366F1',
+    borderColor: '#6366F1',
+  },
+  levelText: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: '#64748B',
   },
   typeName: {
     fontSize: 15,

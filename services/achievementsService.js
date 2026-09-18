@@ -193,11 +193,11 @@ class AchievementsService {
   async updateUserPoints(userId, pointsToAdd) {
     try {
       const userStatsRef = doc(db, 'userStats', userId);
-      const userStatsSnapshot = await getDocs(query(collection(db, 'userStats'), where('userId', '==', userId)));
+      const userStatsSnapshot = await getDoc(userStatsRef);
       
       let currentPoints = 0;
-      if (!userStatsSnapshot.empty) {
-        currentPoints = userStatsSnapshot.docs[0].data().totalPoints || 0;
+      if (userStatsSnapshot.exists()) {
+        currentPoints = userStatsSnapshot.data().totalPoints || 0;
       }
 
       const newTotalPoints = currentPoints + pointsToAdd;
@@ -223,7 +223,7 @@ class AchievementsService {
         return []; // Return empty array instead of undefined
       }
 
-      const achievementsRef = collection(db, 'achievements');
+      const achievementsRef = collection(db, 'userAchievements');
       const q = query(
         achievementsRef, 
         where('userId', '==', userId)
@@ -386,58 +386,10 @@ class AchievementsService {
     }
   }
 
-  // Fix: Add safe achievement unlocking
+  // Standardize: unlockAchievement now just calls awardAchievement
   async unlockAchievement(userId, achievementId) {
-    try {
-      if (!userId || !achievementId) {
-        console.warn('Missing userId or achievementId for achievement unlock');
-        return false;
-      }
-
-      // Check if achievement already exists
-      const existingQuery = query(
-        collection(db, 'achievements'),
-        where('userId', '==', userId),
-        where('achievementId', '==', achievementId)
-      );
-      
-      const existingSnapshot = await getDocs(existingQuery);
-      
-      if (!existingSnapshot.empty) {
-        console.log('Achievement already unlocked:', achievementId);
-        return false; // Already unlocked
-      }
-
-      // Get achievement definition
-      const definitions = this.getAchievementDefinitions();
-      const achievementDef = definitions[achievementId];
-      
-      if (!achievementDef) {
-        console.warn('Achievement definition not found:', achievementId);
-        return false;
-      }
-
-      // Create achievement record
-      const achievementData = {
-        userId,
-        achievementId,
-        title: achievementDef.title,
-        description: achievementDef.description,
-        icon: achievementDef.icon,
-        category: achievementDef.category,
-        points: achievementDef.points,
-        rarity: achievementDef.rarity,
-        earnedAt: serverTimestamp(),
-      };
-
-      await addDoc(collection(db, 'achievements'), achievementData);
-      
-      console.log('Achievement unlocked:', achievementId);
-      return true;
-    } catch (error) {
-      console.error('Error unlocking achievement:', error);
-      return false;
-    }
+    const result = await this.awardAchievement(userId, achievementId);
+    return result.success;
   }
 
   // Clean up listeners

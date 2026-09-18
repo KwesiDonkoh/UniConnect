@@ -15,6 +15,7 @@ import {
   increment
 } from 'firebase/firestore';
 import { db } from '../config/firebaseConfig';
+import notificationService from './notificationService';
 
 class GradebookService {
   constructor() {
@@ -531,15 +532,75 @@ class GradebookService {
     return distribution;
   }
 
-  // Notification method
+  // Notification method — wired to notificationService
   async notifyStudentAboutGrade(studentId, gradeData) {
     try {
-      console.log(`Grade notification: Student ${studentId} received grade for ${gradeData.assignmentName}`);
+      if (!notificationService.currentUserId) return { success: true };
+
+      const percentage = gradeData.maxPoints > 0
+        ? Math.round((gradeData.points / gradeData.maxPoints) * 100)
+        : 0;
+      const letterGrade = this.calculateLetterGrade(percentage);
+
+      await notificationService.createNotification({
+        title: `📊 Grade Posted: ${gradeData.assignmentName || gradeData.category || 'Assessment'}`,
+        message: `You received ${gradeData.points}/${gradeData.maxPoints} (${percentage}% — ${letterGrade}) in ${gradeData.courseCode}.`,
+        type: 'grade',
+        course: gradeData.courseCode,
+        courseCode: gradeData.courseCode,
+        priority: 'high',
+        recipients: [studentId],
+        metadata: {
+          gradeId: gradeData.id,
+          points: gradeData.points,
+          maxPoints: gradeData.maxPoints,
+          percentage,
+          letterGrade,
+        },
+      });
       return { success: true };
     } catch (error) {
       console.error('Error notifying student about grade:', error);
       return { success: false, error: error.message };
     }
+  }
+
+  // Helper: calculate average score for a grade category
+  calculateCategoryAverage(grades, categoryName) {
+    const catGrades = grades.filter(g => (g.category || 'Uncategorized') === categoryName && g.maxPoints > 0);
+    if (catGrades.length === 0) return 0;
+    const total = catGrades.reduce((sum, g) => sum + ((g.points / g.maxPoints) * 100), 0);
+    return Math.round((total / catGrades.length) * 100) / 100;
+  }
+
+  // Stub report generators
+  generateDetailedReport(gradebook) {
+    return {
+      type: 'detailed',
+      timestamp: new Date().toISOString(),
+      ...this.generateSummaryReport(gradebook),
+      studentBreakdowns: Object.values(gradebook.gradebook || {}).map(entry => ({
+        student: entry.student?.fullName || entry.student?.name || 'Unknown',
+        grades: entry.grades,
+        overallGrade: entry.overallGrade,
+        letterGrade: entry.letterGrade,
+      })),
+    };
+  }
+
+  generateAnalyticsReport(gradebook) {
+    const summary = this.generateSummaryReport(gradebook);
+    return {
+      type: 'analytics',
+      timestamp: new Date().toISOString(),
+      ...summary,
+      passRate: summary.gradeDistribution
+        ? (
+            (summary.gradeDistribution['A'] + summary.gradeDistribution['B'] + summary.gradeDistribution['C']) /
+            Math.max(gradebook.students?.length || 1, 1)
+          ) * 100
+        : 0,
+    };
   }
 
   // Clean up listeners

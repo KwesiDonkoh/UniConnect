@@ -490,10 +490,6 @@ I'm here to make your teaching more effective and engaging! What aspect would yo
       };
 
       setMessages(prev => [...prev, aiResponse]);
-      
-      if (user?.uid) {
-        claudeAiService.logInteraction(user.uid, inputText.trim(), response);
-      }
     } catch (error) {
       console.error('Claude AI Error:', error);
       const errorMsg = {

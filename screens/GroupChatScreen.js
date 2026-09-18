@@ -38,11 +38,11 @@ const { width, height } = Dimensions.get('window');
 export default function GroupChatScreen({ navigation }) {
   const { csModules, user } = useApp();
   const { isDark } = useTheme();
-  
+
   // Debug logging for student section issues
   console.log('GroupChatScreen - User:', user?.uid, user?.userType);
   console.log('GroupChatScreen - Modules:', csModules?.length);
-  
+
   // Early return if user data is not available
   if (!user) {
     return (
@@ -52,7 +52,7 @@ export default function GroupChatScreen({ navigation }) {
       </SafeAreaView>
     );
   }
-  
+
   if (!csModules || csModules.length === 0) {
     return (
       <SafeAreaView style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#F8FAFC' }}>
@@ -61,7 +61,7 @@ export default function GroupChatScreen({ navigation }) {
         <Text style={{ marginTop: 8, fontSize: 14, color: '#64748B', textAlign: 'center', paddingHorizontal: 40 }}>
           You haven't been enrolled in any courses yet. Contact your administrator.
         </Text>
-        <TouchableOpacity 
+        <TouchableOpacity
           style={{ marginTop: 20, backgroundColor: '#4F46E5', paddingHorizontal: 20, paddingVertical: 10, borderRadius: 8 }}
           onPress={() => navigation.goBack()}
         >
@@ -98,7 +98,7 @@ export default function GroupChatScreen({ navigation }) {
   const [inputHeight, setInputHeight] = useState(44);
   const [sortedCourses, setSortedCourses] = useState([]);
   const [keyboardHeight, setKeyboardHeight] = useState(0);
-  
+
   // Communication states
   const [incomingCalls, setIncomingCalls] = useState([]);
   const [activeCall, setActiveCall] = useState(null);
@@ -106,7 +106,7 @@ export default function GroupChatScreen({ navigation }) {
   const [callType, setCallType] = useState('voice'); // 'voice' or 'video'
   const [voiceMessageUri, setVoiceMessageUri] = useState(null);
   const [recordingTimer, setRecordingTimer] = useState(0);
-  
+
   const flatListRef = useRef(null);
   const typingTimeoutRef = useRef(null);
   const recordingRef = useRef(null);
@@ -117,7 +117,7 @@ export default function GroupChatScreen({ navigation }) {
   // File handling helper functions
   const getFileIconForType = (fileType) => {
     if (!fileType) return 'document-outline';
-    
+
     if (fileType.includes('pdf')) return 'document-text-outline';
     if (fileType.includes('image')) return 'image-outline';
     if (fileType.includes('video')) return 'videocam-outline';
@@ -125,7 +125,7 @@ export default function GroupChatScreen({ navigation }) {
     if (fileType.includes('text') || fileType.includes('document')) return 'document-outline';
     if (fileType.includes('spreadsheet') || fileType.includes('excel')) return 'grid-outline';
     if (fileType.includes('presentation') || fileType.includes('powerpoint')) return 'easel-outline';
-    
+
     return 'attach-outline';
   };
 
@@ -144,18 +144,18 @@ export default function GroupChatScreen({ navigation }) {
         `Downloading "${fileMessage.fileName}"...`,
         [{ text: 'OK' }]
       );
-      
+
       // In a real app, you would implement actual download functionality
       // For now, we'll simulate the download process
       console.log('Download initiated for:', fileMessage.fileName);
       console.log('File URL:', fileMessage.fileUrl);
-      
+
       // Update download count if supported
       if (fileMessage.canDownload) {
         // Update download statistics
         console.log('Download count updated');
       }
-      
+
       Alert.alert('Success!', `"${fileMessage.fileName}" has been downloaded! 📥`);
     } catch (error) {
       console.error('Download error:', error);
@@ -170,22 +170,22 @@ export default function GroupChatScreen({ navigation }) {
         `Save "${fileMessage.fileName}" to your device?`,
         [
           { text: 'Cancel', style: 'cancel' },
-          { 
-            text: 'Save', 
+          {
+            text: 'Save',
             onPress: async () => {
               try {
                 // In a real app, you would implement device saving functionality
                 // This might involve using expo-file-system to save to the device's downloads folder
                 console.log('Saving to device:', fileMessage.fileName);
                 console.log('File URL:', fileMessage.fileUrl);
-                
+
                 // Simulate save process
                 Alert.alert(
                   'Saved!',
                   `"${fileMessage.fileName}" has been saved to your device! 💾\n\nYou can find it in your Downloads folder.`,
                   [{ text: 'Great!' }]
                 );
-                
+
                 // Update save count if supported
                 if (fileMessage.canSave) {
                   console.log('Save count updated');
@@ -206,7 +206,7 @@ export default function GroupChatScreen({ navigation }) {
 
   const showFileDetails = (fileMessage) => {
     const uploadDate = fileMessage.uploadedAt ? new Date(fileMessage.uploadedAt).toLocaleDateString() : 'Unknown';
-    
+
     Alert.alert(
       'File Details',
       `📄 File: ${fileMessage.fileName}\n` +
@@ -233,15 +233,15 @@ export default function GroupChatScreen({ navigation }) {
         `Share "${fileMessage.fileName}" with others?`,
         [
           { text: 'Cancel', style: 'cancel' },
-          { 
-            text: 'Share Link', 
+          {
+            text: 'Share Link',
             onPress: async () => {
               try {
                 const result = await fileUploadService.shareUrl(
-                  fileMessage.fileUrl, 
+                  fileMessage.fileUrl,
                   fileMessage.fileName
                 );
-                
+
                 if (result.success) {
                   Alert.alert('Success!', 'File link shared successfully! 📤');
                 } else {
@@ -253,19 +253,19 @@ export default function GroupChatScreen({ navigation }) {
               }
             }
           },
-          { 
-            text: 'Download & Share', 
+          {
+            text: 'Download & Share',
             onPress: async () => {
               try {
                 // Download file first, then share it
                 const downloadResult = await fileUploadService.downloadFileToDevice(
-                  fileMessage.fileUrl, 
+                  fileMessage.fileUrl,
                   fileMessage.fileName
                 );
-                
+
                 if (downloadResult.success) {
                   const shareResult = await fileUploadService.shareFile(downloadResult.localPath);
-                  
+
                   if (shareResult.success) {
                     Alert.alert('Success!', 'File downloaded and shared successfully! 📤');
                   } else {
@@ -291,9 +291,9 @@ export default function GroupChatScreen({ navigation }) {
   // Get modules based on user type with general channels
   const getAvailableModules = () => {
     let courses = [];
-    
+
     console.log('Getting available modules for user:', user?.userType, 'csModules:', csModules?.length);
-    
+
     // Add general collaboration channels
     if (user?.userType === 'lecturer') {
       courses.push({
@@ -305,7 +305,7 @@ export default function GroupChatScreen({ navigation }) {
         instructor: 'All Faculty',
         description: 'General collaboration space for all lecturers'
       });
-      
+
       // For lecturers, csModules already contains all modules from AppContext
       if (csModules && Array.isArray(csModules)) {
         courses.push(...csModules);
@@ -320,13 +320,13 @@ export default function GroupChatScreen({ navigation }) {
         instructor: 'Student Community',
         description: 'General collaboration space for all students'
       });
-      
+
       // For students, csModules already contains level-specific modules from AppContext
       if (csModules && Array.isArray(csModules)) {
         courses.push(...csModules);
       }
     }
-    
+
     console.log('Available modules calculated:', courses.length);
     return courses;
   };
@@ -340,7 +340,7 @@ export default function GroupChatScreen({ navigation }) {
       loadSortedChatList();
       loadRecentMessages();
       loadUnreadCounts();
-      
+
       // Setup communication service
       setupCommunicationListeners();
     }
@@ -352,7 +352,7 @@ export default function GroupChatScreen({ navigation }) {
       if (recordingTimerRef.current) {
         clearInterval(recordingTimerRef.current);
       }
-      
+
       // Cleanup communication service
       communicationService.cleanup();
     };
@@ -363,13 +363,13 @@ export default function GroupChatScreen({ navigation }) {
     // Listen to incoming calls
     const unsubscribe = communicationService.listenToIncomingCalls((calls) => {
       setIncomingCalls(calls);
-      
+
       // Show incoming call notification if there's a new call
-      const newCall = calls.find(call => 
-        call.status === 'calling' && 
+      const newCall = calls.find(call =>
+        call.status === 'calling' &&
         call.initiator !== user?.uid
       );
-      
+
       if (newCall && !activeCall) {
         setActiveCall(newCall);
         setCallType(newCall.type);
@@ -428,10 +428,10 @@ export default function GroupChatScreen({ navigation }) {
     try {
       const messages = await chatService.getRecentMessages(currentLevelModules);
       setRecentMessages(messages || {});
-      } catch (error) {
+    } catch (error) {
       console.error('Error loading recent messages:', error);
       setRecentMessages({});
-      }
+    }
   };
 
   // Setup real-time message listener for selected course
@@ -445,7 +445,7 @@ export default function GroupChatScreen({ navigation }) {
       (newMessages) => {
         console.log('Received real-time messages:', newMessages.length);
         setMessages(newMessages);
-        
+
         // Auto-scroll to bottom when new messages arrive
         setTimeout(() => {
           flatListRef.current?.scrollToEnd({ animated: true });
@@ -480,7 +480,7 @@ export default function GroupChatScreen({ navigation }) {
     if (text.trim() === '') {
       setFilteredCourses([]);
     } else {
-      const filtered = currentLevelModules.filter(course => 
+      const filtered = currentLevelModules.filter(course =>
         course.name.toLowerCase().includes(text.toLowerCase()) ||
         course.code.toLowerCase().includes(text.toLowerCase())
       );
@@ -567,7 +567,7 @@ export default function GroupChatScreen({ navigation }) {
           setNewMessage('');
           setReplyToMessage(null);
           setInputHeight(44);
-          
+
           // Update recent messages and reload sorted list
           loadRecentMessages();
           loadSortedChatList();
@@ -586,7 +586,7 @@ export default function GroupChatScreen({ navigation }) {
   // Handle typing with better debouncing
   const handleTyping = (text) => {
     setNewMessage(text);
-    
+
     if (selectedCourse && user?.uid) {
       // Start typing indicator when user starts typing
       if (text.length > 0) {
@@ -594,15 +594,15 @@ export default function GroupChatScreen({ navigation }) {
       } else {
         chatService.stopTyping(selectedCourse.code);
       }
-      
+
       // Clear previous timeout
       if (typingTimeoutRef.current) {
         clearTimeout(typingTimeoutRef.current);
       }
-      
+
       // Set timeout to clear typing status after 3 seconds of inactivity
       if (text.length > 0) {
-      typingTimeoutRef.current = setTimeout(() => {
+        typingTimeoutRef.current = setTimeout(() => {
           chatService.stopTyping(selectedCourse.code);
         }, 3000);
       }
@@ -638,17 +638,17 @@ export default function GroupChatScreen({ navigation }) {
       Alert.alert('Error', 'You can only edit your own messages');
       return;
     }
-    
+
     // Check if message is too old to edit (48 hours)
     const messageTime = message.timestamp?.toDate?.() || new Date(0);
     const now = new Date();
     const hoursDiff = (now - messageTime) / (1000 * 60 * 60);
-    
+
     if (hoursDiff > 48) {
       Alert.alert('Cannot Edit', 'This message is too old to edit (48 hour limit)');
       return;
     }
-    
+
     setEditingMessage(message);
     setNewMessage(message.text);
     setShowMessageActions(false);
@@ -661,14 +661,14 @@ export default function GroupChatScreen({ navigation }) {
       return;
     }
 
-        // Check if message is within delete-for-everyone time limit (30 minutes)
+    // Check if message is within delete-for-everyone time limit (30 minutes)
     const messageTime = message.timestamp?.toDate?.() || new Date(0);
     const now = new Date();
     const minutesDiff = (now - messageTime) / (1000 * 60);
-    
+
     const deleteOptions = [
-        { text: 'Cancel', style: 'cancel' },
-        {
+      { text: 'Cancel', style: 'cancel' },
+      {
         text: 'Delete for Me',
         onPress: async () => {
           try {
@@ -690,27 +690,27 @@ export default function GroupChatScreen({ navigation }) {
     if (minutesDiff <= 30) {
       deleteOptions.push({
         text: 'Delete for Everyone',
-          style: 'destructive',
-          onPress: async () => {
-            try {
+        style: 'destructive',
+        onPress: async () => {
+          try {
             const result = await chatService.deleteMessage(selectedCourse.code, message.id, true);
-              if (result.success) {
-                setShowMessageActions(false);
+            if (result.success) {
+              setShowMessageActions(false);
               Vibration.vibrate(100);
-              } else {
+            } else {
               Alert.alert('Error', result.error || 'Failed to delete message');
             }
-            } catch (error) {
-              Alert.alert('Error', 'Could not delete message');
-            }
+          } catch (error) {
+            Alert.alert('Error', 'Could not delete message');
           }
+        }
       });
     }
 
     Alert.alert(
       'Delete Message',
-      minutesDiff <= 30 ? 
-        'Choose how you want to delete this message:' : 
+      minutesDiff <= 30 ?
+        'Choose how you want to delete this message:' :
         'You can only delete this message for yourself (30 minute limit for everyone has passed):',
       deleteOptions
     );
@@ -733,7 +733,7 @@ export default function GroupChatScreen({ navigation }) {
     const now = new Date();
     const diffMs = now - date;
     const diffHours = diffMs / (1000 * 60 * 60);
-    
+
     if (diffHours < 1) return 'now';
     if (diffHours < 24) return `${Math.floor(diffHours)}h`;
     if (diffHours < 168) return `${Math.floor(diffHours / 24)}d`;
@@ -770,17 +770,17 @@ export default function GroupChatScreen({ navigation }) {
 
       console.log('Starting voice recording...');
       const result = await communicationService.startVoiceRecording();
-      
+
       if (result.success) {
-      setIsRecording(true);
-      setRecordingTimer(0);
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-    
+        setIsRecording(true);
+        setRecordingTimer(0);
+        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+
         // Start timer
-    recordingTimerRef.current = setInterval(() => {
+        recordingTimerRef.current = setInterval(() => {
           setRecordingTimer(prev => prev + 1);
-    }, 1000);
-        
+        }, 1000);
+
         console.log('Voice recording started successfully');
       } else {
         console.error('Recording failed:', result.error);
@@ -795,24 +795,24 @@ export default function GroupChatScreen({ navigation }) {
   const stopRecording = async () => {
     try {
       const result = await communicationService.stopVoiceRecording();
-    setIsRecording(false);
+      setIsRecording(false);
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-      
-    if (recordingTimerRef.current) {
-      clearInterval(recordingTimerRef.current);
-    }
-      
+
+      if (recordingTimerRef.current) {
+        clearInterval(recordingTimerRef.current);
+      }
+
       if (result.success) {
         setVoiceMessageUri(result.uri);
-        
+
         // Show voice message preview
         Alert.alert(
           'Voice Message Recorded',
           `Duration: ${communicationService.formatRecordingDuration(Math.floor(result.duration / 1000))}`,
           [
             { text: 'Cancel', style: 'cancel', onPress: () => setVoiceMessageUri(null) },
-            { 
-              text: 'Send', 
+            {
+              text: 'Send',
               onPress: () => sendVoiceMessage(result.uri, result.duration)
             }
           ]
@@ -820,7 +820,7 @@ export default function GroupChatScreen({ navigation }) {
       } else {
         Alert.alert('Recording Error', result.error || 'Failed to stop recording');
       }
-      
+
       setRecordingTimer(0);
     } catch (error) {
       setIsRecording(false);
@@ -834,7 +834,7 @@ export default function GroupChatScreen({ navigation }) {
       await communicationService.cancelVoiceRecording();
       setIsRecording(false);
       setRecordingTimer(0);
-      
+
       if (recordingTimerRef.current) {
         clearInterval(recordingTimerRef.current);
       }
@@ -848,10 +848,10 @@ export default function GroupChatScreen({ navigation }) {
 
     try {
       console.log('Sending voice message via communicationService:', { audioUri, duration });
-      
+
       // Show loading indicator
       setIsLoading(true);
-      
+
       // Use the enhanced communicationService.sendVoiceMessage that uploads to Firebase Storage
       const result = await communicationService.sendVoiceMessage(
         selectedCourse.code,
@@ -863,20 +863,20 @@ export default function GroupChatScreen({ navigation }) {
           senderType: user?.userType || 'student'
         }
       );
-      
+
       if (result.success) {
         console.log('Voice message sent successfully:', result.messageId);
         setVoiceMessageUri(null);
         setIsLoading(false);
-        
+
         // Scroll to bottom to show new message
         setTimeout(() => {
           flatListRef.current?.scrollToEnd({ animated: true });
         }, 100);
-        
+
         // Show success feedback
         Alert.alert(
-          'Voice Message Sent', 
+          'Voice Message Sent',
           'Your voice message has been delivered successfully!',
           [{ text: 'OK' }]
         );
@@ -884,7 +884,7 @@ export default function GroupChatScreen({ navigation }) {
         console.error('Voice message sending failed:', result.error);
         setIsLoading(false);
         Alert.alert(
-          'Send Failed', 
+          'Send Failed',
           result.error || 'Failed to send voice message. Please try again.',
           [
             { text: 'Cancel' },
@@ -895,16 +895,16 @@ export default function GroupChatScreen({ navigation }) {
     } catch (error) {
       console.error('Error sending voice message:', error);
       setIsLoading(false);
-      
+
       let errorMessage = 'Unable to send voice message';
       if (error.message?.includes('network')) {
         errorMessage = 'Network error. Please check your internet connection and try again.';
       } else if (error.message?.includes('upload')) {
         errorMessage = 'Failed to upload voice message. Please check your storage permissions.';
       }
-      
+
       Alert.alert(
-        'Send Error', 
+        'Send Error',
         errorMessage,
         [
           { text: 'Cancel' },
@@ -929,7 +929,7 @@ export default function GroupChatScreen({ navigation }) {
     try {
       console.log('Initiating voice call for:', selectedCourse.code);
       const result = await communicationService.createGroupCall(selectedCourse.code, 'voice');
-      
+
       if (result.success) {
         setCallType('voice');
         setActiveCall({ type: 'voice', course: selectedCourse.code, status: 'calling' });
@@ -960,7 +960,7 @@ export default function GroupChatScreen({ navigation }) {
     try {
       console.log('Initiating video call for:', selectedCourse.code);
       const result = await communicationService.createGroupCall(selectedCourse.code, 'video');
-      
+
       if (result.success) {
         setCallType('video');
         setActiveCall({ type: 'video', course: selectedCourse.code, status: 'calling' });
@@ -1026,10 +1026,10 @@ export default function GroupChatScreen({ navigation }) {
 
   const handleAttachmentSelect = async (type) => {
     setShowAttachmentModal(false);
-    
+
     try {
       let result;
-      
+
       switch (type) {
         case 'camera':
           result = await fileUploadService.takePhoto();
@@ -1048,14 +1048,14 @@ export default function GroupChatScreen({ navigation }) {
           result = await fileUploadService.pickFile('document');
           break;
       }
-      
+
       if (result.success) {
         const file = result.file || (result.files && result.files[0]);
         if (file) {
-          const fileType = type === 'camera' ? 'image' : 
-                          type === 'video_camera' ? 'video' : 
-                          type === 'image' ? 'image' :
-                          type === 'video' ? 'video' : 'file';
+          const fileType = type === 'camera' ? 'image' :
+            type === 'video_camera' ? 'video' :
+              type === 'image' ? 'image' :
+                type === 'video' ? 'video' : 'file';
           await uploadAndSendFile(file, fileType);
         }
       } else {
@@ -1069,9 +1069,9 @@ export default function GroupChatScreen({ navigation }) {
 
   const uploadAndSendFile = async (file, type) => {
     if (!selectedCourse) return;
-    
+
     const fileId = `upload_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-    
+
     // Add to uploading files
     setUploadingFiles(prev => [...prev, {
       id: fileId,
@@ -1083,11 +1083,11 @@ export default function GroupChatScreen({ navigation }) {
     try {
       // Upload file
       const result = await fileUploadService.uploadFile(
-        file, 
-        selectedCourse.code, 
+        file,
+        selectedCourse.code,
         'chat_media',
         (progress) => {
-          setUploadingFiles(prev => 
+          setUploadingFiles(prev =>
             prev.map(f => f.id === fileId ? { ...f, progress } : f)
           );
         }
@@ -1095,9 +1095,9 @@ export default function GroupChatScreen({ navigation }) {
 
       if (result.success) {
         // Send message with file
-        const messageType = type === 'image' ? 'image' : 
-                           type === 'video' ? 'video' : 'file';
-        
+        const messageType = type === 'image' ? 'image' :
+          type === 'video' ? 'video' : 'file';
+
         await chatService.sendMessage(
           selectedCourse.code,
           messageType === 'file' ? `📎 ${file.name}` : '', // Add file name for files, empty for media
@@ -1192,7 +1192,7 @@ export default function GroupChatScreen({ navigation }) {
 
   const deleteMessage = (message, deleteForEveryone = false) => {
     const deleteText = deleteForEveryone ? 'Delete for Everyone' : 'Delete for Me';
-    const warningText = deleteForEveryone 
+    const warningText = deleteForEveryone
       ? 'This message will be deleted for everyone in the chat.'
       : 'This message will only be deleted for you.';
 
@@ -1258,7 +1258,7 @@ export default function GroupChatScreen({ navigation }) {
               {item.code.substring(0, 3).toUpperCase()}
             </Text>
           </LinearGradient>
-          
+
           {/* Chat Info */}
           <View style={styles.chatInfo}>
             <View style={styles.chatHeader}>
@@ -1271,7 +1271,7 @@ export default function GroupChatScreen({ navigation }) {
                 </Text>
               )}
             </View>
-            
+
             <View style={styles.chatSubInfo}>
               <Text style={styles.courseCode}>{item.code}</Text>
               <Text style={styles.separator}>•</Text>
@@ -1279,12 +1279,12 @@ export default function GroupChatScreen({ navigation }) {
               <Text style={styles.separator}>•</Text>
               <Text style={styles.courseSemester}>Sem {item.semester}</Text>
             </View>
-            
+
             {lastMessage ? (
               <View style={styles.lastMessageContainer}>
                 <Text style={[styles.lastMessage, hasUnread && styles.unreadMessage]} numberOfLines={1}>
-                  {lastMessage.senderName ? 
-                    `${lastMessage.senderName}: ${String(lastMessage.text || '')}` : 
+                  {lastMessage.senderName ?
+                    `${lastMessage.senderName}: ${String(lastMessage.text || '')}` :
                     String(lastMessage.text || 'No message content')
                   }
                 </Text>
@@ -1294,7 +1294,7 @@ export default function GroupChatScreen({ navigation }) {
             )}
           </View>
         </View>
-        
+
         {/* Unread Badge */}
         <View style={styles.chatItemRight}>
           {hasUnread && (
@@ -1317,11 +1317,11 @@ export default function GroupChatScreen({ navigation }) {
       console.warn('Invalid message object or messages array:', item, messages);
       return null;
     }
-    
+
     const isCurrentUser = item.senderId === user?.uid;
-    const showAvatar = !isCurrentUser && (index === 0 || 
+    const showAvatar = !isCurrentUser && (index === 0 ||
       messages[index - 1]?.senderId !== item.senderId);
-    const showTimestamp = index === messages.length - 1 || 
+    const showTimestamp = index === messages.length - 1 ||
       messages[index + 1]?.senderId !== item.senderId ||
       (messages[index + 1]?.timestamp - item.timestamp) > 300000; // 5 minutes
     const isSelected = selectedMessage?.id === item.id;
@@ -1347,7 +1347,7 @@ export default function GroupChatScreen({ navigation }) {
             </Text>
           </LinearGradient>
         )}
-        
+
         <View style={[
           styles.messageBubble,
           isCurrentUser ? styles.currentUserBubble : styles.otherUserBubble,
@@ -1366,7 +1366,7 @@ export default function GroupChatScreen({ navigation }) {
               </View>
             </View>
           )}
-          
+
           {showAvatar && !isCurrentUser && (
             <View style={styles.messageHeaderInfo}>
               <Text style={styles.senderName}>{String(item.senderName || '')}</Text>
@@ -1378,16 +1378,16 @@ export default function GroupChatScreen({ navigation }) {
               )}
             </View>
           )}
-          
+
           {/* Voice Message */}
           {item.type === 'voice' && item.voiceUri ? (
-            <VoiceMessagePlayer 
+            <VoiceMessagePlayer
               message={item}
               isCurrentUser={isCurrentUser}
             />
           ) : item.type === 'image' && item.fileUrl ? (
             <TouchableOpacity style={styles.mediaMessage}>
-              <Image 
+              <Image
                 source={{ uri: item.fileUrl }}
                 style={styles.messageImage}
                 resizeMode="cover"
@@ -1420,7 +1420,7 @@ export default function GroupChatScreen({ navigation }) {
             </TouchableOpacity>
           ) : item.type === 'file' && item.fileUrl ? (
             <View style={styles.fileMessageContainer}>
-              <TouchableOpacity 
+              <TouchableOpacity
                 style={styles.fileMessage}
                 onPress={() => Alert.alert(
                   'File Options',
@@ -1434,10 +1434,10 @@ export default function GroupChatScreen({ navigation }) {
                 )}
               >
                 <View style={styles.fileIcon}>
-                  <Ionicons 
-                    name={getFileIconForType(item.fileType)} 
-                    size={24} 
-                    color="#FFFFFF" 
+                  <Ionicons
+                    name={getFileIconForType(item.fileType)}
+                    size={24}
+                    color="#FFFFFF"
                   />
                 </View>
                 <View style={styles.fileInfo}>
@@ -1455,56 +1455,56 @@ export default function GroupChatScreen({ navigation }) {
                   </Text>
                 </View>
                 <View style={styles.fileActions}>
-                  <TouchableOpacity 
+                  <TouchableOpacity
                     style={styles.fileActionButton}
                     onPress={() => downloadFile(item)}
                   >
-                    <Ionicons 
-                      name="download-outline" 
-                      size={16} 
-                      color={isCurrentUser ? 'rgba(255,255,255,0.9)' : '#4F46E5'} 
+                    <Ionicons
+                      name="download-outline"
+                      size={16}
+                      color={isCurrentUser ? 'rgba(255,255,255,0.9)' : '#4F46E5'}
                     />
                   </TouchableOpacity>
-                                  <TouchableOpacity 
-                  style={styles.fileActionButton}
-                  onPress={() => saveFileToDevice(item)}
-                >
-                  <Ionicons 
-                    name="save-outline" 
-                    size={16} 
-                    color={isCurrentUser ? 'rgba(255,255,255,0.9)' : '#10B981'} 
-                  />
-                </TouchableOpacity>
-                <TouchableOpacity 
-                  style={styles.fileActionButton}
-                  onPress={() => shareFile(item)}
-                >
-                  <Ionicons 
-                    name="share-outline" 
-                    size={16} 
-                    color={isCurrentUser ? 'rgba(255,255,255,0.9)' : '#F59E0B'} 
-                  />
-                </TouchableOpacity>
+                  <TouchableOpacity
+                    style={styles.fileActionButton}
+                    onPress={() => saveFileToDevice(item)}
+                  >
+                    <Ionicons
+                      name="save-outline"
+                      size={16}
+                      color={isCurrentUser ? 'rgba(255,255,255,0.9)' : '#10B981'}
+                    />
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={styles.fileActionButton}
+                    onPress={() => shareFile(item)}
+                  >
+                    <Ionicons
+                      name="share-outline"
+                      size={16}
+                      color={isCurrentUser ? 'rgba(255,255,255,0.9)' : '#F59E0B'}
+                    />
+                  </TouchableOpacity>
                 </View>
               </TouchableOpacity>
             </View>
           ) : (
-          <Text
-            style={[
-              styles.messageText,
-              isCurrentUser ? styles.currentUserText : styles.otherUserText
-            ]}
-            selectable={true}
-          >
+            <Text
+              style={[
+                styles.messageText,
+                isCurrentUser ? styles.currentUserText : styles.otherUserText
+              ]}
+              selectable={true}
+            >
               {String(item.text || '')}
-          </Text>
+            </Text>
           )}
-          
+
           {/* Edit indicator */}
           {item.edited && (
             <Text style={styles.editedText}>edited</Text>
           )}
-          
+
           {/* Message reactions */}
           {item.reactions && Object.keys(item.reactions).length > 0 && (
             <View style={styles.reactionsContainer}>
@@ -1525,7 +1525,7 @@ export default function GroupChatScreen({ navigation }) {
               ))}
             </View>
           )}
-          
+
           {showTimestamp && (
             <View style={styles.messageFooter}>
               <Text style={[
@@ -1553,7 +1553,7 @@ export default function GroupChatScreen({ navigation }) {
   const renderTypingIndicator = () => {
     if (typingUsers.length === 0) return null;
 
-    const typingText = typingUsers.length === 1 
+    const typingText = typingUsers.length === 1
       ? `${String(typingUsers[0]?.userName || 'Someone')} is typing...`
       : `${typingUsers.length} people are typing...`;
 
@@ -1576,7 +1576,7 @@ export default function GroupChatScreen({ navigation }) {
     return (
       <SafeAreaView style={[styles.container, isDark && styles.darkContainer]}>
         <StatusBar barStyle={isDark ? "light-content" : "dark-content"} backgroundColor={isDark ? "#0F172A" : "#FFFFFF"} />
-        
+
         {/* Header */}
         <View style={[styles.header, isDark && styles.darkHeader]}>
           <View style={styles.headerContent}>
@@ -1638,7 +1638,7 @@ export default function GroupChatScreen({ navigation }) {
     <SafeAreaView style={[styles.container, isDark && styles.darkContainer]}>
       <View style={[styles.keyboardAvoidingView, isDark && styles.darkKeyboardAvoidingView]}>
         <StatusBar barStyle={isDark ? "light-content" : "dark-content"} backgroundColor={isDark ? "#0F172A" : "#FFFFFF"} />
-        
+
         {/* Chat Header */}
         <View style={[styles.chatHeader, isDark && styles.darkChatHeader]}>
           <TouchableOpacity
@@ -1647,7 +1647,7 @@ export default function GroupChatScreen({ navigation }) {
           >
             <Ionicons name="chevron-back" size={24} color="#4F46E5" />
           </TouchableOpacity>
-          
+
           <View style={styles.chatHeaderInfo}>
             <Text style={[styles.chatTitle, isDark && styles.darkChatTitle]} numberOfLines={1}>
               {selectedCourse?.name}
@@ -1656,27 +1656,48 @@ export default function GroupChatScreen({ navigation }) {
               {onlineUsers.length > 0 ? `${onlineUsers.length + 1} online` : selectedCourse?.code}
             </Text>
           </View>
-          
+
           {/* Call Buttons */}
           <View style={styles.callButtons}>
             <TouchableOpacity 
-              style={styles.callButton} 
+              style={[styles.callButton, { backgroundColor: '#EEF2FF', borderColor: '#C7D2FE' }]}
+              onPress={() => Alert.alert('AI Summary', 'Generating a smart digest of the last 50 messages...')}
+            >
+              <Ionicons name="sparkles" size={20} color="#4F46E5" />
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={styles.callButton}
               onPress={initiateVoiceCall}
             >
               <Ionicons name="call" size={20} color="#4F46E5" />
             </TouchableOpacity>
-            
-            <TouchableOpacity 
-              style={styles.callButton} 
+
+            <TouchableOpacity
+              style={styles.callButton}
               onPress={initiateVideoCall}
             >
               <Ionicons name="videocam" size={20} color="#4F46E5" />
             </TouchableOpacity>
-          
-          <TouchableOpacity style={styles.chatMenuButton}>
-            <Ionicons name="ellipsis-vertical" size={20} color="#4F46E5" />
-          </TouchableOpacity>
+
+            <TouchableOpacity style={styles.chatMenuButton}>
+              <Ionicons name="ellipsis-vertical" size={20} color="#4F46E5" />
+            </TouchableOpacity>
           </View>
+        </View>
+
+        {/* Study Group Milestones Tracker */}
+        <View style={{ backgroundColor: isDark ? '#1E293B' : '#FFF', paddingHorizontal: 16, paddingVertical: 10, borderBottomWidth: 1, borderBottomColor: isDark ? '#334155' : '#F1F5F9' }}>
+           <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                 <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: '#10B981' }} />
+                 <Text style={{ fontSize: 12, fontWeight: '700', color: isDark ? '#F1F5F9' : '#1E293B' }}>Next Milestone: Group Assignment 1</Text>
+              </View>
+              <Text style={{ fontSize: 11, color: '#EF4444', fontWeight: '800' }}>2 DAYS LEFT</Text>
+           </View>
+           <View style={{ height: 4, backgroundColor: isDark ? '#334155' : '#E2E8F0', borderRadius: 2, marginTop: 8 }}>
+              <View style={{ width: '65%', height: '100%', backgroundColor: '#10B981', borderRadius: 2 }} />
+           </View>
         </View>
 
         {/* Messages List */}
@@ -1734,15 +1755,38 @@ export default function GroupChatScreen({ navigation }) {
             </View>
           )}
 
+          {/* AI Smart Replies */}
+          {!replyToMessage && !editingMessage && newMessage === '' && (
+            <View style={{ paddingHorizontal: 12, paddingBottom: 10 }}>
+              <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8 }}>
+                {[
+                  "Could you explain that further? 💡",
+                  "I'll work on the slides! 💻",
+                  "When is the deadline? 📅",
+                  "Great work everyone! 🌟",
+                  "Can we meet at the library? 📚"
+                ].map((suggestion, i) => (
+                  <TouchableOpacity 
+                    key={i} 
+                    style={{ backgroundColor: isDark ? '#334155' : '#F1F5F9', paddingHorizontal: 12, paddingVertical: 8, borderRadius: 16, borderWidth: 1, borderColor: isDark ? '#475569' : '#E2E8F0' }}
+                    onPress={() => setNewMessage(suggestion)}
+                  >
+                    <Text style={{ fontSize: 13, color: isDark ? '#E2E8F0' : '#475569', fontWeight: '600' }}>{suggestion}</Text>
+                  </TouchableOpacity>
+                ))}
+              </ScrollView>
+            </View>
+          )}
+
           {/* Input Row */}
           <View style={styles.inputRow}>
-            <TouchableOpacity 
+            <TouchableOpacity
               style={styles.attachButton}
               onPress={showAttachmentOptions}
             >
               <Ionicons name="add" size={24} color="#4F46E5" />
             </TouchableOpacity>
-            
+
             <View style={[styles.textInputContainer, { minHeight: Math.max(44, inputHeight + 16) }]}>
               <TextInput
                 ref={inputRef}
@@ -1751,11 +1795,11 @@ export default function GroupChatScreen({ navigation }) {
                   { height: Math.max(44, inputHeight) }
                 ]}
                 placeholder={
-                  editingMessage 
+                  editingMessage
                     ? 'Edit your message...'
-                    : replyToMessage 
-                    ? 'Reply...' 
-                    : `Message ${selectedCourse?.code}...`
+                    : replyToMessage
+                      ? 'Reply...'
+                      : `Message ${selectedCourse?.code}...`
                 }
                 placeholderTextColor="#94A3B8"
                 value={newMessage}
@@ -1770,7 +1814,7 @@ export default function GroupChatScreen({ navigation }) {
                 selectionColor="#4F46E5"
                 scrollEnabled={false}
               />
-              
+
               {newMessage.length > 0 && (
                 <View style={styles.characterCount}>
                   <Text style={styles.characterCountText}>
@@ -1778,22 +1822,22 @@ export default function GroupChatScreen({ navigation }) {
                   </Text>
                 </View>
               )}
-              
-              <TouchableOpacity 
+
+              <TouchableOpacity
                 style={[
                   styles.emojiPickerButton,
                   showEmojiPicker && styles.emojiPickerButtonActive
                 ]}
                 onPress={toggleEmojiPicker}
               >
-                <Ionicons 
-                  name={showEmojiPicker ? "happy" : "happy-outline"} 
-                  size={20} 
-                  color={showEmojiPicker ? "#4F46E5" : "#64748B"} 
+                <Ionicons
+                  name={showEmojiPicker ? "happy" : "happy-outline"}
+                  size={20}
+                  color={showEmojiPicker ? "#4F46E5" : "#64748B"}
                 />
               </TouchableOpacity>
             </View>
-            
+
             {newMessage.trim() ? (
               <TouchableOpacity
                 style={[styles.sendButton, styles.sendButtonActive]}
@@ -1803,10 +1847,10 @@ export default function GroupChatScreen({ navigation }) {
                 {isSending ? (
                   <ActivityIndicator size="small" color="#FFFFFF" />
                 ) : (
-                  <Ionicons 
-                    name={editingMessage ? "checkmark" : "send"} 
-                    size={20} 
-                    color="#FFFFFF" 
+                  <Ionicons
+                    name={editingMessage ? "checkmark" : "send"}
+                    size={20}
+                    color="#FFFFFF"
                   />
                 )}
               </TouchableOpacity>
@@ -1816,10 +1860,10 @@ export default function GroupChatScreen({ navigation }) {
                 onPressIn={startRecording}
                 onPressOut={stopRecording}
               >
-                <Ionicons 
-                  name="mic" 
-                  size={20} 
-                  color="#FFFFFF" 
+                <Ionicons
+                  name="mic"
+                  size={20}
+                  color="#FFFFFF"
                 />
               </TouchableOpacity>
             )}
@@ -1878,23 +1922,23 @@ export default function GroupChatScreen({ navigation }) {
           onRequestClose={() => setShowMessageActions(false)}
         >
           <View style={styles.messageActionsOverlay}>
-            <TouchableOpacity 
+            <TouchableOpacity
               style={styles.messageActionsBackdrop}
               onPress={() => setShowMessageActions(false)}
             />
             <View style={styles.messageActionsModal}>
               <View style={styles.messageActionsHeader}>
                 <Text style={styles.messageActionsTitle}>Message Actions</Text>
-                <TouchableOpacity 
+                <TouchableOpacity
                   onPress={() => setShowMessageActions(false)}
                   style={styles.closeActionsButton}
                 >
                   <Ionicons name="close" size={24} color="#64748B" />
                 </TouchableOpacity>
               </View>
-              
+
               <View style={styles.messageActionsGrid}>
-                <TouchableOpacity 
+                <TouchableOpacity
                   style={styles.actionButton}
                   onPress={() => copyMessage(selectedMessage)}
                 >
@@ -1904,7 +1948,7 @@ export default function GroupChatScreen({ navigation }) {
                   <Text style={styles.actionText}>Copy</Text>
                 </TouchableOpacity>
 
-                <TouchableOpacity 
+                <TouchableOpacity
                   style={styles.actionButton}
                   onPress={() => replyToMessageHandler(selectedMessage)}
                 >
@@ -1916,7 +1960,7 @@ export default function GroupChatScreen({ navigation }) {
 
                 {selectedMessage?.senderId === user?.uid && (
                   <>
-                    <TouchableOpacity 
+                    <TouchableOpacity
                       style={styles.actionButton}
                       onPress={() => editMessageHandler(selectedMessage)}
                     >
@@ -1926,7 +1970,7 @@ export default function GroupChatScreen({ navigation }) {
                       <Text style={styles.actionText}>Edit</Text>
                     </TouchableOpacity>
 
-                    <TouchableOpacity 
+                    <TouchableOpacity
                       style={styles.actionButton}
                       onPress={() => deleteMessageHandler(selectedMessage)}
                     >
@@ -2003,7 +2047,7 @@ export default function GroupChatScreen({ navigation }) {
             <View style={styles.attachmentModalContent}>
               <View style={styles.attachmentModalHeader}>
                 <Text style={styles.attachmentModalTitle}>Share Content</Text>
-                <TouchableOpacity 
+                <TouchableOpacity
                   onPress={() => setShowAttachmentModal(false)}
                   style={styles.attachmentModalClose}
                 >
@@ -2012,7 +2056,7 @@ export default function GroupChatScreen({ navigation }) {
               </View>
 
               <View style={styles.attachmentOptions}>
-                <TouchableOpacity 
+                <TouchableOpacity
                   style={styles.attachmentOption}
                   onPress={() => handleAttachmentSelect('image')}
                 >
@@ -2025,7 +2069,7 @@ export default function GroupChatScreen({ navigation }) {
                   <Text style={styles.attachmentOptionText}>Photos</Text>
                 </TouchableOpacity>
 
-                <TouchableOpacity 
+                <TouchableOpacity
                   style={styles.attachmentOption}
                   onPress={() => handleAttachmentSelect('video')}
                 >
@@ -2038,7 +2082,7 @@ export default function GroupChatScreen({ navigation }) {
                   <Text style={styles.attachmentOptionText}>Videos</Text>
                 </TouchableOpacity>
 
-                <TouchableOpacity 
+                <TouchableOpacity
                   style={styles.attachmentOption}
                   onPress={() => handleAttachmentSelect('document')}
                 >
@@ -2051,7 +2095,7 @@ export default function GroupChatScreen({ navigation }) {
                   <Text style={styles.attachmentOptionText}>Documents</Text>
                 </TouchableOpacity>
 
-                <TouchableOpacity 
+                <TouchableOpacity
                   style={styles.attachmentOption}
                   onPress={() => handleAttachmentSelect('camera')}
                 >
@@ -2064,7 +2108,7 @@ export default function GroupChatScreen({ navigation }) {
                   <Text style={styles.attachmentOptionText}>Camera</Text>
                 </TouchableOpacity>
 
-                <TouchableOpacity 
+                <TouchableOpacity
                   style={styles.attachmentOption}
                   onPress={() => handleAttachmentSelect('video_camera')}
                 >
@@ -2086,11 +2130,11 @@ export default function GroupChatScreen({ navigation }) {
                     <View key={file.id} style={styles.uploadProgressItem}>
                       <Text style={styles.uploadProgressFileName}>{file.name}</Text>
                       <View style={styles.uploadProgressBar}>
-                        <View 
+                        <View
                           style={[
                             styles.uploadProgressFill,
                             { width: `${file.progress}%` }
-                          ]} 
+                          ]}
                         />
                       </View>
                       <Text style={styles.uploadProgressPercent}>{Math.round(file.progress)}%</Text>
@@ -2123,7 +2167,7 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#0F172A',
   },
-  
+
   // Header Styles
   header: {
     backgroundColor: '#FFFFFF',
@@ -3230,7 +3274,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#1E293B',
   },
-  
+
   // Enhanced file message styles
   fileMessageContainer: {
     marginVertical: 4,

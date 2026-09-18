@@ -119,6 +119,42 @@ export default function GlobalUniversityHub({ visible, onClose, user, initialTab
     </View>
   );
 
+  const renderEvents = () => (
+    <View style={styles.tabContent}>
+      <Text style={styles.sectionTitle}>Upcoming Global Events</Text>
+      <View style={styles.searchBar}>
+        <Ionicons name="search" size={20} color="#94A3B8" />
+        <TextInput placeholder="Search events..." style={styles.searchInput} />
+      </View>
+
+      {[
+        { title: 'Global AI Summit 2026', host: 'Stanford University', date: 'Oct 15, 2026', type: 'Virtual', students: '5.2k' },
+        { title: 'Web3 & Blockchain Hackathon', host: 'MIT', date: 'Nov 2, 2026', type: 'Hybrid', students: '1.8k' },
+        { title: 'International Education Symposium', host: 'Oxford', date: 'Dec 10, 2026', type: 'In-Person', students: '3.4k' },
+      ].map((event, i) => (
+        <TouchableOpacity key={i} style={styles.paperCard}>
+          <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+            <View style={[styles.hubIconCircle, { backgroundColor: '#FEF3C7', marginRight: 15 }]}>
+              <Ionicons name="calendar" size={20} color="#F59E0B" />
+            </View>
+            <View style={{ flex: 1 }}>
+              <Text style={styles.paperTitle}>{event.title}</Text>
+              <Text style={styles.paperAuthors}>{event.host} • {event.date}</Text>
+            </View>
+            <View style={{ alignItems: 'flex-end' }}>
+              <View style={[styles.journalBadge, { backgroundColor: event.type === 'Virtual' ? '#DCFCE7' : '#E0E7FF' }]}>
+                <Text style={[styles.journalText, { color: event.type === 'Virtual' ? '#10B981' : '#4F46E5' }]}>{event.type}</Text>
+              </View>
+              <TouchableOpacity style={[styles.readButton, { marginTop: 8 }]}>
+                <Text style={styles.readButtonText}>Register</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </TouchableOpacity>
+      ))}
+    </View>
+  );
+
   return (
     <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
       <View style={styles.modalOverlay}>
@@ -148,7 +184,7 @@ export default function GlobalUniversityHub({ visible, onClose, user, initialTab
             {activeTab === 'research' && renderResearch()}
             {activeTab === 'patents' && renderPatents()}
             {activeTab === 'faculty' && renderFaculty()}
-            {activeTab === 'events' && <View style={styles.tabContent}><Text style={styles.emptyText}>Global events calendar coming soon!</Text></View>}
+            {activeTab === 'events' && renderEvents()}
           </ScrollView>
         </View>
       </View>

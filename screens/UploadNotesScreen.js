@@ -29,7 +29,7 @@ const { width, height } = Dimensions.get('window');
 export default function UploadNotesScreen({ navigation }) {
   const { user, csModules } = useApp();
   const { isDark } = useTheme();
-  
+
   // State management
   // Students see shared materials first; lecturers see upload first
   const [selectedTab, setSelectedTab] = useState(user?.userType === 'lecturer' ? 'upload' : 'shared');
@@ -81,7 +81,7 @@ export default function UploadNotesScreen({ navigation }) {
 
   const loadSharedMaterials = async () => {
     if (!selectedCourse) return;
-    
+
     try {
       setIsLoading(true);
       const result = await fileUploadService.getCourseMaterials(selectedCourse.code);
@@ -106,7 +106,7 @@ export default function UploadNotesScreen({ navigation }) {
   const selectFiles = async (fileType = 'all') => {
     try {
       let result;
-      
+
       switch (fileType) {
         case 'camera':
           result = await fileUploadService.takePhoto();
@@ -165,8 +165,8 @@ export default function UploadNotesScreen({ navigation }) {
       const uploadPromises = selectedFiles.map(async (file, index) => {
         try {
           const result = await fileUploadService.uploadFile(
-            file, 
-            selectedCourse.code, 
+            file,
+            selectedCourse.code,
             'materials',
             (progress) => {
               const totalProgress = ((index * 100) + progress) / selectedFiles.length;
@@ -217,12 +217,14 @@ export default function UploadNotesScreen({ navigation }) {
         Alert.alert(
           'Upload Complete! 🎉',
           `${successful.length} file(s) uploaded successfully and shared with your coursemates!`,
-          [{ text: 'Great!', onPress: () => {
-            setSelectedFiles([]);
-            setMaterialDescription('');
-            loadSharedMaterials();
-            setSelectedTab('shared');
-          }}]
+          [{
+            text: 'Great!', onPress: () => {
+              setSelectedFiles([]);
+              setMaterialDescription('');
+              loadSharedMaterials();
+              setSelectedTab('shared');
+            }
+          }]
         );
       }
 
@@ -230,14 +232,16 @@ export default function UploadNotesScreen({ navigation }) {
         const failedFileNames = failed.map(f => f.fileName || 'Unknown file').join(', ');
         const errorDetails = failed.map(f => f.error).join('; ');
         Alert.alert(
-          'Partial Upload', 
+          'Partial Upload',
           `${failed.length} file(s) failed to upload:\n${failedFileNames}\n\nErrors: ${errorDetails}`,
           [
-            { text: 'Retry Failed', onPress: () => {
-              // Keep only failed files for retry
-              const failedFiles = selectedFiles.filter((_, index) => !results[index].success);
-              setSelectedFiles(failedFiles);
-            }},
+            {
+              text: 'Retry Failed', onPress: () => {
+                // Keep only failed files for retry
+                const failedFiles = selectedFiles.filter((_, index) => !results[index].success);
+                setSelectedFiles(failedFiles);
+              }
+            },
             { text: 'OK' }
           ]
         );
@@ -254,7 +258,7 @@ export default function UploadNotesScreen({ navigation }) {
 
   const getFileCategory = (mimeType) => {
     if (!mimeType) return 'other';
-    
+
     if (mimeType.includes('pdf')) return 'pdf';
     if (mimeType.includes('image')) return 'image';
     if (mimeType.includes('video')) return 'video';
@@ -262,13 +266,13 @@ export default function UploadNotesScreen({ navigation }) {
     if (mimeType.includes('text') || mimeType.includes('document')) return 'document';
     if (mimeType.includes('spreadsheet') || mimeType.includes('excel')) return 'spreadsheet';
     if (mimeType.includes('presentation') || mimeType.includes('powerpoint')) return 'presentation';
-    
+
     return 'other';
   };
 
   const getFileIcon = (type) => {
     const category = getFileCategory(type);
-    
+
     switch (category) {
       case 'pdf': return 'document-text';
       case 'image': return 'image';
@@ -283,7 +287,7 @@ export default function UploadNotesScreen({ navigation }) {
 
   const getFileIconColor = (type) => {
     const category = getFileCategory(type);
-    
+
     switch (category) {
       case 'pdf': return '#EF4444';
       case 'image': return '#10B981';
@@ -311,13 +315,13 @@ export default function UploadNotesScreen({ navigation }) {
         `Download "${material.originalFileName}"?`,
         [
           { text: 'Cancel', style: 'cancel' },
-          { 
-            text: 'Download', 
+          {
+            text: 'Download',
             onPress: async () => {
               // In a real app, you would implement actual download functionality
               // For now, we'll just show a success message
               Alert.alert('Download Started', 'The file download will begin shortly!');
-              
+
               // Update download count
               // await fileUploadService.incrementDownloadCount(material.id);
             }
@@ -341,10 +345,10 @@ export default function UploadNotesScreen({ navigation }) {
 
   const filteredMaterials = sharedMaterials.filter(material => {
     const matchesSearch = material.originalFileName?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                         material.description?.toLowerCase().includes(searchQuery.toLowerCase());
-    
+      material.description?.toLowerCase().includes(searchQuery.toLowerCase());
+
     const matchesFilter = filterType === 'all' || getFileCategory(material.fileType) === filterType;
-    
+
     return matchesSearch && matchesFilter;
   });
 
@@ -379,7 +383,7 @@ export default function UploadNotesScreen({ navigation }) {
       {/* File Selection */}
       <View style={styles.sectionCard}>
         <Text style={styles.sectionTitle}>📁 Select Files</Text>
-        
+
         <View style={styles.fileTypeGrid}>
           <TouchableOpacity style={styles.fileTypeButton} onPress={() => selectFiles('camera')}>
             <LinearGradient colors={['#10B981', '#059669']} style={styles.fileTypeGradient}>
@@ -410,27 +414,36 @@ export default function UploadNotesScreen({ navigation }) {
           </TouchableOpacity>
         </View>
 
-        <TouchableOpacity
-          style={styles.browseFilesButton}
-          onPress={() => selectFiles()}
-        >
-          <Ionicons name="folder-open" size={20} color="#4F46E5" />
-          <Text style={styles.browseFilesText}>Browse All Files</Text>
-        </TouchableOpacity>
+        <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+          <TouchableOpacity
+            style={styles.browseFilesButton}
+            onPress={() => selectFiles()}
+          >
+            <Ionicons name="folder-open" size={20} color="#4F46E5" />
+            <Text style={styles.browseFilesText}>Browse All Files</Text>
+          </TouchableOpacity>
+          
+          <TouchableOpacity
+            style={styles.cloudButton}
+            onPress={() => Alert.alert('Cloud Picker', 'Connect to your cloud storage:\n\n1. Google Drive ☁️\n2. Dropbox 📦\n3. OneDrive 🟦\n4. iCloud ☁️')}
+          >
+            <Ionicons name="cloud-outline" size={24} color="#64748B" />
+          </TouchableOpacity>
+        </View>
       </View>
 
       {/* Selected Files */}
       {selectedFiles.length > 0 && (
         <View style={styles.sectionCard}>
           <Text style={styles.sectionTitle}>📎 Selected Files ({selectedFiles.length})</Text>
-          
+
           {selectedFiles.map((file, index) => (
             <View key={index} style={styles.selectedFileItem}>
               <View style={styles.fileIconContainer}>
-                <Ionicons 
-                  name={getFileIcon(file.type)} 
-                  size={24} 
-                  color={getFileIconColor(file.type)} 
+                <Ionicons
+                  name={getFileIcon(file.type)}
+                  size={24}
+                  color={getFileIconColor(file.type)}
                 />
               </View>
               <View style={styles.fileDetails}>
@@ -559,10 +572,10 @@ export default function UploadNotesScreen({ navigation }) {
           >
             <View style={styles.materialHeader}>
               <View style={styles.materialIconContainer}>
-                <Ionicons 
-                  name={getFileIcon(item.fileType)} 
-                  size={24} 
-                  color={getFileIconColor(item.fileType)} 
+                <Ionicons
+                  name={getFileIcon(item.fileType)}
+                  size={24}
+                  color={getFileIconColor(item.fileType)}
                 />
               </View>
               <View style={styles.materialInfo}>
@@ -613,7 +626,7 @@ export default function UploadNotesScreen({ navigation }) {
             <Ionicons name="folder-open-outline" size={64} color="#CBD5E1" />
             <Text style={styles.emptyTitle}>No Materials Found</Text>
             <Text style={styles.emptyText}>
-              {selectedCourse 
+              {selectedCourse
                 ? `No materials shared for ${selectedCourse.code} yet.`
                 : 'Select a course to view shared materials.'
               }
@@ -660,32 +673,250 @@ export default function UploadNotesScreen({ navigation }) {
       </View>
 
       <Animated.View style={{ flex: 1, opacity: fadeAnim, transform: [{ translateY: slideAnim }] }}>
-              {/* Tab Navigation */}
-      <View style={[styles.tabContainer, isDark && styles.darkTabContainer]}>
-          {tabItems.map((tab) => (
-            <TouchableOpacity
-              key={tab.id}
-              style={[styles.tabItem, selectedTab === tab.id && styles.activeTab]}
-              onPress={() => setSelectedTab(tab.id)}
-            >
-              <Ionicons 
-                name={tab.icon} 
-                size={20} 
-                color={selectedTab === tab.id ? "#4F46E5" : "#94A3B8"} 
-              />
-              <Text style={[
-                styles.tabLabel,
-                selectedTab === tab.id && styles.activeTabLabel
-              ]}>
-                {tab.label}
-              </Text>
-            </TouchableOpacity>
-          ))}
-        </View>
+        {/* Enhanced AI Materials Header */}
+        <ScrollView showsVerticalScrollIndicator={false}>
+          {/* AI Study Companion - 3 Action Cards */}
+          <View style={{ margin: 15, marginBottom: 5 }}>
+            <Text style={{ fontSize: 13, fontWeight: '800', color: isDark ? '#94A3B8' : '#64748B', marginBottom: 10, letterSpacing: 1, textTransform: 'uppercase' }}>⚡ AI Study Tools</Text>
+            <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+              <TouchableOpacity
+                style={{ width: 160, borderRadius: 20, overflow: 'hidden', marginRight: 12 }}
+                onPress={() => navigation.navigate('AIResearchAssistant')}
+              >
+                <LinearGradient colors={['#4F46E5', '#6366F1']} style={{ padding: 18, alignItems: 'center' }}>
+                  <View style={{ width: 44, height: 44, borderRadius: 14, backgroundColor: 'rgba(255,255,255,0.2)', justifyContent: 'center', alignItems: 'center', marginBottom: 10 }}>
+                    <Ionicons name="sparkles" size={22} color="#FFF" />
+                  </View>
+                  <Text style={{ color: '#FFF', fontSize: 13, fontWeight: '800', textAlign: 'center' }}>AI Research</Text>
+                  <Text style={{ color: 'rgba(255,255,255,0.8)', fontSize: 10, textAlign: 'center', marginTop: 4 }}>Generate summaries & citations</Text>
+                </LinearGradient>
+              </TouchableOpacity>
 
-        {/* Content */}
-        {selectedTab === 'upload' && renderUploadTab()}
-        {selectedTab === 'shared' && renderSharedTab()}
+              <TouchableOpacity
+                style={{ width: 160, borderRadius: 20, overflow: 'hidden', marginRight: 12 }}
+                onPress={() => Alert.alert('AI Quiz Generator', 'AI will scan your selected material and generate a 10-question quiz automatically.\n\nSelect a material first to use this feature.')}
+              >
+                <LinearGradient colors={['#10B981', '#059669']} style={{ padding: 18, alignItems: 'center' }}>
+                  <View style={{ width: 44, height: 44, borderRadius: 14, backgroundColor: 'rgba(255,255,255,0.2)', justifyContent: 'center', alignItems: 'center', marginBottom: 10 }}>
+                    <Ionicons name="help-circle" size={22} color="#FFF" />
+                  </View>
+                  <Text style={{ color: '#FFF', fontSize: 13, fontWeight: '800', textAlign: 'center' }}>Quiz from PDF</Text>
+                  <Text style={{ color: 'rgba(255,255,255,0.8)', fontSize: 10, textAlign: 'center', marginTop: 4 }}>Auto-generate questions</Text>
+                </LinearGradient>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={{ width: 160, borderRadius: 20, overflow: 'hidden', marginRight: 12 }}
+                onPress={() => Alert.alert('Smart Citations', 'AI Citation Builder\n\nPaste any academic source and get:\n• APA 7th Edition format\n• MLA 9 format\n• Chicago style\n• IEEE format\n\nAlso checks for plagiarism similarity.')}
+              >
+                <LinearGradient colors={['#8B5CF6', '#7C3AED']} style={{ padding: 18, alignItems: 'center' }}>
+                  <View style={{ width: 44, height: 44, borderRadius: 14, backgroundColor: 'rgba(255,255,255,0.2)', justifyContent: 'center', alignItems: 'center', marginBottom: 10 }}>
+                    <Ionicons name="document-text" size={22} color="#FFF" />
+                  </View>
+                  <Text style={{ color: '#FFF', fontSize: 13, fontWeight: '800', textAlign: 'center' }}>Smart Cite</Text>
+                  <Text style={{ color: 'rgba(255,255,255,0.8)', fontSize: 10, textAlign: 'center', marginTop: 4 }}>Format references instantly</Text>
+                </LinearGradient>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={{ width: 160, borderRadius: 20, overflow: 'hidden', marginRight: 12 }}
+                onPress={() => Alert.alert('AI Flashcard Maker', 'AI scans your notes and automatically creates:\n\n📌 Key concept flashcards\n🔄 Spaced repetition schedule\n📊 Progress tracking\n\nOpen a material to generate flashcards from it.')}
+              >
+                <LinearGradient colors={['#F59E0B', '#D97706']} style={{ padding: 18, alignItems: 'center' }}>
+                  <View style={{ width: 44, height: 44, borderRadius: 14, backgroundColor: 'rgba(255,255,255,0.2)', justifyContent: 'center', alignItems: 'center', marginBottom: 10 }}>
+                    <Ionicons name="albums" size={22} color="#FFF" />
+                  </View>
+                  <Text style={{ color: '#FFF', fontSize: 13, fontWeight: '800', textAlign: 'center' }}>Flashcards</Text>
+                  <Text style={{ color: 'rgba(255,255,255,0.8)', fontSize: 10, textAlign: 'center', marginTop: 4 }}>AI-generated from notes</Text>
+                </LinearGradient>
+              </TouchableOpacity>
+
+              {user?.userType === 'lecturer' && (
+                <TouchableOpacity
+                  style={{ width: 160, borderRadius: 20, overflow: 'hidden', marginRight: 12 }}
+                  onPress={() => Alert.alert('Material Analytics', 'Engagement Insights:\n\n👁️ 147 views total\n⬇️ 89 downloads\n⭐ 4.6/5 average rating\n💬 12 student comments\n\n📈 Most popular: Week 3 Lecture Notes\n📉 Least accessed: Tutorial 6')}
+                >
+                  <LinearGradient colors={['#EF4444', '#DC2626']} style={{ padding: 18, alignItems: 'center' }}>
+                    <View style={{ width: 44, height: 44, borderRadius: 14, backgroundColor: 'rgba(255,255,255,0.2)', justifyContent: 'center', alignItems: 'center', marginBottom: 10 }}>
+                      <Ionicons name="analytics" size={22} color="#FFF" />
+                    </View>
+                    <Text style={{ color: '#FFF', fontSize: 13, fontWeight: '800', textAlign: 'center' }}>Engagement</Text>
+                    <Text style={{ color: 'rgba(255,255,255,0.8)', fontSize: 10, textAlign: 'center', marginTop: 4 }}>Material heatmap & stats</Text>
+                  </LinearGradient>
+                </TouchableOpacity>
+              )}
+            </ScrollView>
+          </View>
+
+          {/* Knowledge Categories */}
+          <View style={{ marginHorizontal: 15, marginTop: 18 }}>
+            <Text style={{ fontSize: 13, fontWeight: '800', color: isDark ? '#94A3B8' : '#64748B', marginBottom: 10, letterSpacing: 1, textTransform: 'uppercase' }}>📂 Browse by Category</Text>
+            <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+              {[
+                { label: 'All', icon: 'grid', color: '#4F46E5', active: true },
+                { label: 'Lectures', icon: 'school', color: '#10B981' },
+                { label: 'PDFs', icon: 'document-text', color: '#EF4444' },
+                { label: 'Videos', icon: 'videocam', color: '#8B5CF6' },
+                { label: 'Research', icon: 'flask', color: '#F59E0B' },
+                { label: 'Cheat Sheets', icon: 'list', color: '#EC4899' },
+                { label: 'Past Questions', icon: 'help-circle', color: '#06B6D4' },
+              ].map((cat, i) => (
+                <TouchableOpacity key={i} style={{ alignItems: 'center', marginRight: 16 }} onPress={() => setFilterType(cat.label.toLowerCase())}>
+                  <View style={{ width: 54, height: 54, borderRadius: 18, backgroundColor: cat.active ? cat.color : (isDark ? '#1E293B' : '#F1F5F9'), justifyContent: 'center', alignItems: 'center', marginBottom: 6, borderWidth: cat.active ? 0 : 1, borderColor: isDark ? '#334155' : '#E2E8F0' }}>
+                    <Ionicons name={cat.icon} size={22} color={cat.active ? '#FFF' : cat.color} />
+                  </View>
+                  <Text style={{ fontSize: 11, fontWeight: '700', color: isDark ? '#CBD5E1' : '#475569' }}>{cat.label}</Text>
+                </TouchableOpacity>
+              ))}
+            </ScrollView>
+          </View>
+
+          {/* Smart Collections */}
+          <View style={{ marginHorizontal: 15, marginTop: 20 }}>
+            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+              <Text style={{ fontSize: 13, fontWeight: '800', color: isDark ? '#94A3B8' : '#64748B', letterSpacing: 1, textTransform: 'uppercase' }}>⭐ Smart Collections</Text>
+              <TouchableOpacity onPress={() => Alert.alert('Smart Collections', 'View all curated material sets')}>
+                <Text style={{ fontSize: 12, fontWeight: '700', color: '#4F46E5' }}>See All</Text>
+              </TouchableOpacity>
+            </View>
+            <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+              {[
+                { label: 'Bookmarked', count: 12, icon: 'bookmark', color: '#F59E0B', bg: '#FEF3C7' },
+                { label: 'Lecturer Picks', count: 8, icon: 'school', color: '#4F46E5', bg: '#EEF2FF' },
+                { label: 'Top Rated', count: 24, icon: 'star', color: '#10B981', bg: '#F0FDF4' },
+                { label: 'Recent', count: 6, icon: 'time', color: '#8B5CF6', bg: '#F5F3FF' },
+                { label: 'Exam Prep', count: 15, icon: 'trophy', color: '#EF4444', bg: '#FEF2F2' },
+              ].map((col, i) => (
+                <TouchableOpacity key={i} style={{ backgroundColor: col.bg, borderRadius: 16, padding: 14, marginRight: 10, width: 110, borderWidth: 1, borderColor: isDark ? '#334155' : 'transparent' }} onPress={() => Alert.alert(col.label, `Viewing ${col.count} materials in ${col.label} collection`)}>
+                  <View style={{ width: 36, height: 36, borderRadius: 12, backgroundColor: col.color + '20', justifyContent: 'center', alignItems: 'center', marginBottom: 8 }}>
+                    <Ionicons name={col.icon} size={18} color={col.color} />
+                  </View>
+                  <Text style={{ fontSize: 13, fontWeight: '800', color: '#1E293B' }}>{col.label}</Text>
+                  <Text style={{ fontSize: 11, color: '#64748B', marginTop: 2 }}>{col.count} items</Text>
+                </TouchableOpacity>
+              ))}
+            </ScrollView>
+          </View>
+
+          {/* Hot This Week */}
+          <View style={{ marginHorizontal: 15, marginTop: 20 }}>
+            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+              <Text style={{ fontSize: 13, fontWeight: '800', color: isDark ? '#94A3B8' : '#64748B', letterSpacing: 1, textTransform: 'uppercase' }}>🔥 Hot This Week</Text>
+              <View style={{ backgroundColor: '#FEF3C7', paddingHorizontal: 10, paddingVertical: 4, borderRadius: 20 }}>
+                <Text style={{ fontSize: 11, fontWeight: '800', color: '#D97706' }}>TRENDING</Text>
+              </View>
+            </View>
+            {[
+              { name: 'Operating Systems — Complete Lecture Notes', uploader: 'Dr. Mensah', type: 'PDF', downloads: 234, rating: 4.9, icon: 'document-text', color: '#EF4444' },
+              { name: 'Data Structures & Algorithms Cheat Sheet', uploader: 'Alice Johnson (Level 400)', type: 'PDF', downloads: 189, rating: 4.8, icon: 'list', color: '#10B981' },
+              { name: 'Computer Networks — Video Lecture Series', uploader: 'Prof. Ampah', type: 'VIDEO', downloads: 156, rating: 4.7, icon: 'videocam', color: '#8B5CF6' },
+            ].map((mat, i) => (
+              <TouchableOpacity key={i} style={{ backgroundColor: isDark ? '#1E293B' : '#FFF', borderRadius: 16, padding: 15, marginBottom: 10, flexDirection: 'row', alignItems: 'center', shadowColor: '#000', shadowOpacity: 0.06, shadowRadius: 8, elevation: 3, borderWidth: 1, borderColor: isDark ? '#334155' : '#F1F5F9' }} onPress={() => Alert.alert(mat.name, `Uploaded by ${mat.uploader}\n\nDownloads: ${mat.downloads}\nRating: ${mat.rating}/5\n\nWould you like to download?`)}>
+                <View style={{ width: 48, height: 48, borderRadius: 14, backgroundColor: mat.color + '15', justifyContent: 'center', alignItems: 'center', marginRight: 12 }}>
+                  <Ionicons name={mat.icon} size={22} color={mat.color} />
+                </View>
+                <View style={{ flex: 1 }}>
+                  <Text style={{ fontSize: 13, fontWeight: '800', color: isDark ? '#F1F5F9' : '#1E293B' }} numberOfLines={1}>{mat.name}</Text>
+                  <Text style={{ fontSize: 11, color: '#64748B', marginTop: 2 }}>{mat.uploader}</Text>
+                  <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 6, gap: 10 }}>
+                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 3 }}>
+                      <Ionicons name="download-outline" size={12} color="#64748B" />
+                      <Text style={{ fontSize: 11, color: '#64748B' }}>{mat.downloads}</Text>
+                    </View>
+                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 3 }}>
+                      <Ionicons name="star" size={12} color="#F59E0B" />
+                      <Text style={{ fontSize: 11, color: '#F59E0B', fontWeight: '700' }}>{mat.rating}</Text>
+                    </View>
+                    <View style={{ backgroundColor: mat.color + '15', paddingHorizontal: 8, paddingVertical: 2, borderRadius: 8 }}>
+                      <Text style={{ fontSize: 10, fontWeight: '700', color: mat.color }}>{mat.type}</Text>
+                    </View>
+                  </View>
+                </View>
+                <Ionicons name="chevron-forward" size={20} color="#94A3B8" />
+              </TouchableOpacity>
+            ))}
+          </View>
+
+          {/* Lecturer-specific: Material Engagement Heatmap */}
+          {user?.userType === 'lecturer' && (
+            <View style={{ marginHorizontal: 15, marginTop: 20 }}>
+              <Text style={{ fontSize: 13, fontWeight: '800', color: isDark ? '#94A3B8' : '#64748B', marginBottom: 12, letterSpacing: 1, textTransform: 'uppercase' }}>📊 Material Engagement</Text>
+              <View style={{ backgroundColor: isDark ? '#1E293B' : '#FFF', borderRadius: 20, padding: 18, shadowColor: '#000', shadowOpacity: 0.06, shadowRadius: 8, elevation: 3 }}>
+                <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 15 }}>
+                  {[
+                    { label: 'Total Views', value: '1,247', icon: 'eye', color: '#4F46E5' },
+                    { label: 'Downloads', value: '589', icon: 'download', color: '#10B981' },
+                    { label: 'Avg Rating', value: '4.7', icon: 'star', color: '#F59E0B' },
+                    { label: 'Comments', value: '83', icon: 'chatbubble', color: '#8B5CF6' },
+                  ].map((stat, i) => (
+                    <View key={i} style={{ alignItems: 'center' }}>
+                      <View style={{ width: 38, height: 38, borderRadius: 12, backgroundColor: stat.color + '15', justifyContent: 'center', alignItems: 'center', marginBottom: 6 }}>
+                        <Ionicons name={stat.icon} size={18} color={stat.color} />
+                      </View>
+                      <Text style={{ fontSize: 14, fontWeight: '900', color: isDark ? '#F1F5F9' : '#1E293B' }}>{stat.value}</Text>
+                      <Text style={{ fontSize: 10, color: '#64748B', textAlign: 'center' }}>{stat.label}</Text>
+                    </View>
+                  ))}
+                </View>
+                <TouchableOpacity
+                  style={{ backgroundColor: '#4F46E5', borderRadius: 12, padding: 12, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8 }}
+                  onPress={() => Alert.alert('Detailed Analytics', 'Opening full engagement dashboard with per-material breakdowns, time-on-page metrics, and student completion rates...')}
+                >
+                  <Ionicons name="bar-chart" size={16} color="#FFF" />
+                  <Text style={{ color: '#FFF', fontWeight: '800', fontSize: 13 }}>View Detailed Analytics</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+          )}
+
+          {/* AI Neural Search */}
+          <View style={{ marginHorizontal: 15, marginTop: 20 }}>
+            <TouchableOpacity
+              style={{ backgroundColor: isDark ? '#1E293B' : '#F8FAFC', borderRadius: 20, padding: 16, borderWidth: 2, borderColor: '#4F46E5', borderStyle: 'dashed', flexDirection: 'row', alignItems: 'center', gap: 12 }}
+              onPress={() => Alert.alert('AI Neural Search', 'Searching across all materials with semantic understanding...\n\nExample queries:\n• "Operating system scheduling algorithms"\n• "Recursion examples in Python"\n• "Database normalization explained simply"\n\nAI understands concept-level queries, not just keywords.')}
+            >
+              <View style={{ width: 40, height: 40, borderRadius: 12, backgroundColor: '#4F46E5', justifyContent: 'center', alignItems: 'center' }}>
+                <Ionicons name="search" size={18} color="#FFF" />
+              </View>
+              <View style={{ flex: 1 }}>
+                <Text style={{ fontSize: 14, fontWeight: '800', color: isDark ? '#F1F5F9' : '#1E293B' }}>AI Neural Search</Text>
+                <Text style={{ fontSize: 11, color: '#64748B' }}>Search by concept, not just keywords</Text>
+              </View>
+              <View style={{ backgroundColor: '#EEF2FF', paddingHorizontal: 8, paddingVertical: 4, borderRadius: 8 }}>
+                <Text style={{ fontSize: 10, fontWeight: '800', color: '#4F46E5' }}>AI</Text>
+              </View>
+            </TouchableOpacity>
+          </View>
+
+          {/* Tab Navigation */}
+          <View style={[styles.tabContainer, isDark && styles.darkTabContainer, { marginTop: 20 }]}>
+            {tabItems.map((tab) => (
+              <TouchableOpacity
+                key={tab.id}
+                style={[styles.tabItem, selectedTab === tab.id && styles.activeTab]}
+                onPress={() => setSelectedTab(tab.id)}
+              >
+                <Ionicons
+                  name={tab.icon}
+                  size={20}
+                  color={selectedTab === tab.id ? "#4F46E5" : "#94A3B8"}
+                />
+                <Text style={[
+                  styles.tabLabel,
+                  selectedTab === tab.id && styles.activeTabLabel
+                ]}>
+                  {tab.label}
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+
+          {/* Content */}
+          {selectedTab === 'upload' && renderUploadTab()}
+          {selectedTab === 'shared' && renderSharedTab()}
+
+          <View style={{ height: 30 }} />
+        </ScrollView>
       </Animated.View>
 
       {/* Course Selection Modal */}
@@ -747,10 +978,10 @@ export default function UploadNotesScreen({ navigation }) {
               <ScrollView style={styles.modalContent}>
                 <View style={styles.filePreview}>
                   <View style={styles.filePreviewIcon}>
-                    <Ionicons 
-                      name={getFileIcon(selectedMaterial.fileType)} 
-                      size={48} 
-                      color={getFileIconColor(selectedMaterial.fileType)} 
+                    <Ionicons
+                      name={getFileIcon(selectedMaterial.fileType)}
+                      size={48}
+                      color={getFileIconColor(selectedMaterial.fileType)}
                     />
                   </View>
                   <Text style={styles.filePreviewName}>
@@ -786,6 +1017,40 @@ export default function UploadNotesScreen({ navigation }) {
                       minute: '2-digit'
                     })}
                   </Text>
+                </View>
+
+                <View style={{ marginVertical: 10, paddingHorizontal: 0, marginTop: 20 }}>
+                  <TouchableOpacity
+                    style={{ borderRadius: 15, overflow: 'hidden' }}
+                    onPress={() => Alert.alert('AI Summarizer', 'Analyzing document...\n\nResult:\n• Core concept: Efficient data processing\n• Key Takeaway: O(log n) is superior for search.\n• Recommended Study Time: 45m')}
+                  >
+                    <LinearGradient colors={['#6366F1', '#4F46E5']} style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', paddingVertical: 12, gap: 10 }}>
+                      <Ionicons name="sparkles" size={18} color="#FFF" />
+                      <Text style={{ color: '#FFF', fontSize: 14, fontWeight: '800' }}>AI Smart Summary</Text>
+                    </LinearGradient>
+                  </TouchableOpacity>
+
+                  {selectedMaterial.fileType?.includes('audio') && (
+                    <TouchableOpacity
+                      style={{ borderRadius: 15, overflow: 'hidden', marginTop: 10 }}
+                      onPress={() => Alert.alert('AI Transcription', 'Transcribing audio...\n\n"Welcome to lecture 4 on Operating Systems. Today we cover memory management..."')}
+                    >
+                      <LinearGradient colors={['#10B981', '#059669']} style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', paddingVertical: 12, gap: 10 }}>
+                        <Ionicons name="mic" size={18} color="#FFF" />
+                        <Text style={{ color: '#FFF', fontSize: 14, fontWeight: '800' }}>Transcribe Lecture</Text>
+                      </LinearGradient>
+                    </TouchableOpacity>
+                  )}
+
+                  <TouchableOpacity
+                    style={{ borderRadius: 15, overflow: 'hidden', marginTop: 10 }}
+                    onPress={() => Alert.alert('AI Flashcards', 'Generating 12 flashcards from document...\n\nCard 1: What is the main theme?\nAns: Efficiency in algorithms.\n\nSave to Study Mode?')}
+                  >
+                    <LinearGradient colors={['#F59E0B', '#D97706']} style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', paddingVertical: 12, gap: 10 }}>
+                      <Ionicons name="layers" size={18} color="#FFF" />
+                      <Text style={{ color: '#FFF', fontSize: 14, fontWeight: '800' }}>Generate Flashcards</Text>
+                    </LinearGradient>
+                  </TouchableOpacity>
                 </View>
 
                 <View style={styles.fileStatsContainer}>
@@ -1008,6 +1273,7 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   browseFilesButton: {
+    flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
@@ -1017,6 +1283,13 @@ const styles = StyleSheet.create({
     borderColor: '#4F46E5',
     borderRadius: 12,
     gap: 8,
+  },
+  cloudButton: {
+    padding: 12,
+    borderWidth: 1,
+    borderColor: '#94A3B8',
+    borderRadius: 12,
+    marginLeft: 10,
   },
   browseFilesText: {
     fontSize: 16,

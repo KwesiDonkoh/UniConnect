@@ -8,6 +8,7 @@ import {
   Dimensions,
   Alert,
   Modal,
+  Image,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -25,6 +26,7 @@ export const EnhancedVoiceCall = ({ visible, onClose, participant, onCallEnd }) 
   const [noiseReduction, setNoiseReduction] = useState(true);
   const [recording, setRecording] = useState(null);
   const [audioQuality, setAudioQuality] = useState('HD');
+  const [isVideoMode, setIsVideoMode] = useState(false);
 
   // Animation refs
   const pulseAnim = useRef(new Animated.Value(1)).current;
@@ -36,7 +38,6 @@ export const EnhancedVoiceCall = ({ visible, onClose, participant, onCallEnd }) 
 
   useEffect(() => {
     if (visible) {
-      // Slide up animation
       Animated.spring(slideAnim, {
         toValue: 0,
         tension: 50,
@@ -44,7 +45,6 @@ export const EnhancedVoiceCall = ({ visible, onClose, participant, onCallEnd }) 
         useNativeDriver: true,
       }).start();
 
-      // Start call simulation
       setTimeout(() => {
         setCallStatus('active');
         startTimer();
@@ -52,7 +52,6 @@ export const EnhancedVoiceCall = ({ visible, onClose, participant, onCallEnd }) 
         startWaveAnimation();
       }, 2000);
 
-      // Request audio permissions
       requestAudioPermissions();
     } else {
       Animated.timing(slideAnim, {
@@ -69,9 +68,6 @@ export const EnhancedVoiceCall = ({ visible, onClose, participant, onCallEnd }) 
     return () => {
       if (timerRef.current) {
         clearInterval(timerRef.current);
-      }
-      if (recording) {
-        recording.stopAndUnloadAsync();
       }
     };
   }, [visible]);
@@ -96,27 +92,15 @@ export const EnhancedVoiceCall = ({ visible, onClose, participant, onCallEnd }) 
   const startPulseAnimation = () => {
     Animated.loop(
       Animated.sequence([
-        Animated.timing(pulseAnim, {
-          toValue: 1.2,
-          duration: 1000,
-          useNativeDriver: true,
-        }),
-        Animated.timing(pulseAnim, {
-          toValue: 1,
-          duration: 1000,
-          useNativeDriver: true,
-        }),
+        Animated.timing(pulseAnim, { toValue: 1.2, duration: 1000, useNativeDriver: true }),
+        Animated.timing(pulseAnim, { toValue: 1, duration: 1000, useNativeDriver: true }),
       ])
     ).start();
   };
 
   const startWaveAnimation = () => {
     Animated.loop(
-      Animated.timing(waveAnim, {
-        toValue: 1,
-        duration: 2000,
-        useNativeDriver: true,
-      })
+      Animated.timing(waveAnim, { toValue: 1, duration: 2000, useNativeDriver: true })
     ).start();
   };
 
@@ -126,103 +110,22 @@ export const EnhancedVoiceCall = ({ visible, onClose, participant, onCallEnd }) 
     return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
   };
 
-  const handleMute = () => {
-    setIsMuted(!isMuted);
-    // In real implementation, this would mute the microphone
-    Alert.alert(
-      isMuted ? 'Unmuted' : 'Muted',
-      isMuted ? 'Your microphone is now on' : 'Your microphone is now off'
-    );
+  const handleMute = () => setIsMuted(!isMuted);
+  const handleSpeaker = () => setIsSpeakerOn(!isSpeakerOn);
+  const handleVideoToggle = () => setIsVideoMode(!isVideoMode);
+
+  const handleRecord = () => {
+    setIsRecording(!isRecording);
+    Alert.alert(isRecording ? 'Recording Stopped' : 'Recording Started');
   };
 
-  const handleSpeaker = () => {
-    setIsSpeakerOn(!isSpeakerOn);
-    Alert.alert(
-      'Speaker',
-      isSpeakerOn ? 'Speaker turned off' : 'Speaker turned on'
-    );
-  };
-
-  const handleRecord = async () => {
-    if (isRecording) {
-      // Stop recording
-      try {
-        await recording.stopAndUnloadAsync();
-        const uri = recording.getURI();
-        setRecording(null);
-        setIsRecording(false);
-        Alert.alert('Recording Saved', 'Call recording has been saved to your device');
-      } catch (error) {
-        console.error('Error stopping recording:', error);
-      }
-    } else {
-      // Start recording
-      try {
-        const newRecording = new AudioCompat.Recording();
-        await newRecording.prepareToRecordAsync({
-          android: {
-            extension: '.m4a',
-            outputFormat: AudioCompat.RecordingOptionsPresets.HIGH_QUALITY.android.outputFormat,
-            audioEncoder: AudioCompat.RecordingOptionsPresets.HIGH_QUALITY.android.audioEncoder,
-            sampleRate: 44100,
-            numberOfChannels: 2,
-            bitRate: 128000,
-          },
-          ios: {
-            extension: '.m4a',
-            outputFormat: AudioCompat.RecordingOptionsPresets.HIGH_QUALITY.ios.outputFormat,
-            audioQuality: AudioCompat.RecordingOptionsPresets.HIGH_QUALITY.ios.audioQuality,
-            sampleRate: 44100,
-            numberOfChannels: 2,
-            bitRate: 128000,
-            linearPCMBitDepth: 16,
-            linearPCMIsBigEndian: false,
-            linearPCMIsFloat: false,
-          },
-        });
-        await newRecording.startAsync();
-        setRecording(newRecording);
-        setIsRecording(true);
-        Alert.alert('Recording Started', 'Call is now being recorded');
-      } catch (error) {
-        console.error('Error starting recording:', error);
-      }
-    }
-  };
+  const toggleNoiseReduction = () => setNoiseReduction(!noiseReduction);
 
   const handleEndCall = () => {
-    Alert.alert(
-      'End Call',
-      'Are you sure you want to end this call?',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'End Call',
-          style: 'destructive',
-          onPress: () => {
-            setCallStatus('ended');
-            if (timerRef.current) {
-              clearInterval(timerRef.current);
-            }
-            if (recording) {
-              recording.stopAndUnloadAsync();
-            }
-            onCallEnd?.();
-            setTimeout(() => {
-              onClose();
-            }, 1000);
-          }
-        }
-      ]
-    );
-  };
-
-  const toggleNoiseReduction = () => {
-    setNoiseReduction(!noiseReduction);
-    Alert.alert(
-      'Noise Reduction',
-      noiseReduction ? 'Noise reduction disabled' : 'AI noise reduction enabled for crystal clear audio!'
-    );
+    setCallStatus('ended');
+    if (timerRef.current) clearInterval(timerRef.current);
+    onCallEnd?.();
+    setTimeout(() => onClose(), 1000);
   };
 
   const AudioWaveform = () => {
@@ -231,187 +134,105 @@ export const EnhancedVoiceCall = ({ visible, onClose, participant, onCallEnd }) 
         inputRange: [0, 1],
         outputRange: [10, 30 + i * 5],
       });
-
       return (
         <Animated.View
           key={i}
-          style={[
-            styles.waveBar,
-            {
-              height: animatedValue,
-              marginHorizontal: 2,
-              backgroundColor: callStatus === 'active' ? '#4CAF50' : '#666',
-            }
-          ]}
+          style={[styles.waveBar, { height: animatedValue, marginHorizontal: 2, backgroundColor: callStatus === 'active' ? '#4CAF50' : '#666' }]}
         />
       );
     });
-
     return <View style={styles.waveform}>{waves}</View>;
   };
+
+  const VideoScreen = () => (
+    <View style={styles.videoContainer}>
+      <BlurView intensity={60} tint="dark" style={StyleSheet.absoluteFill}>
+        <View style={styles.remoteVideo}>
+          <View style={styles.videoAvatarPlaceholder}>
+            <Text style={styles.videoAvatarText}>{participant?.name?.[0] || 'U'}</Text>
+          </View>
+          <View style={styles.videoOverlay}>
+            <Text style={styles.videoName}>{participant?.name || 'Unknown'}</Text>
+            <View style={styles.liveBadge}><Text style={styles.liveText}>LIVE HD</Text></View>
+          </View>
+        </View>
+        <View style={styles.selfVideo}>
+          <Ionicons name="person" size={40} color="#666" />
+          <View style={styles.selfVideoTag}><Text style={styles.selfVideoText}>You</Text></View>
+        </View>
+      </BlurView>
+    </View>
+  );
 
   if (!visible) return null;
 
   return (
     <Modal visible={visible} transparent animationType="none">
       <View style={styles.overlay}>
-        <Animated.View 
-          style={[
-            styles.container,
-            { transform: [{ translateY: slideAnim }] }
-          ]}
-        >
+        <Animated.View style={[styles.container, { transform: [{ translateY: slideAnim }] }]}>
           <LinearGradient
-            colors={callStatus === 'active' ? ['#667eea', '#764ba2'] : ['#ff6b6b', '#ee5a52']}
+            colors={isVideoMode ? ['#000', '#1a1a1a'] : (callStatus === 'active' ? ['#667eea', '#764ba2'] : ['#ff6b6b', '#ee5a52'])}
             style={styles.gradient}
           >
-            <BlurView intensity={20} style={styles.content}>
-              {/* Status Bar */}
-              <View style={styles.statusBar}>
-                <View style={styles.statusIndicator}>
-                  <View style={[
-                    styles.statusDot,
-                    { backgroundColor: callStatus === 'active' ? '#4CAF50' : '#ff6b6b' }
-                  ]} />
-                  <Text style={styles.statusText}>
-                    {callStatus === 'connecting' && 'Connecting...'}
-                    {callStatus === 'active' && `${audioQuality} Call • ${formatDuration(callDuration)}`}
-                    {callStatus === 'ended' && 'Call Ended'}
-                  </Text>
-                </View>
-                
-                {noiseReduction && callStatus === 'active' && (
-                  <View style={styles.aiIndicator}>
-                    <Ionicons name="sparkles" size={14} color="#4CAF50" />
-                    <Text style={styles.aiText}>AI Enhanced</Text>
+            {isVideoMode ? <VideoScreen /> : (
+              <BlurView intensity={20} style={styles.content}>
+                <View style={styles.statusBar}>
+                  <View style={styles.statusIndicator}>
+                    <View style={[styles.statusDot, { backgroundColor: callStatus === 'active' ? '#4CAF50' : '#ff6b6b' }]} />
+                    <Text style={styles.statusText}>
+                      {callStatus === 'connecting' && 'Connecting...'}
+                      {callStatus === 'active' && `${audioQuality} Call • ${formatDuration(callDuration)}`}
+                      {callStatus === 'ended' && 'Call Ended'}
+                    </Text>
                   </View>
-                )}
-              </View>
-
-              {/* Participant Info */}
-              <View style={styles.participantInfo}>
-                <Animated.View 
-                  style={[
-                    styles.avatar,
-                    { transform: [{ scale: pulseAnim }] }
-                  ]}
-                >
-                  <Text style={styles.avatarText}>
-                    {participant?.name?.charAt(0) || 'U'}
-                  </Text>
-                </Animated.View>
-                
-                <Text style={styles.participantName}>
-                  {participant?.name || 'Unknown User'}
-                </Text>
-                <Text style={styles.participantRole}>
-                  {participant?.userType || 'Student'} • {participant?.academicLevel || ''}
-                </Text>
-              </View>
-
-              {/* Audio Visualization */}
-              <View style={styles.audioVisualization}>
-                <AudioWaveform />
-                <Text style={styles.audioQualityText}>
-                  Crystal Clear Audio {noiseReduction && '• AI Enhanced'}
-                </Text>
-              </View>
-
-              {/* Call Controls */}
-              <View style={styles.controls}>
-                <View style={styles.primaryControls}>
-                  {/* Mute */}
-                  <TouchableOpacity
-                    style={[styles.controlButton, isMuted && styles.controlButtonActive]}
-                    onPress={handleMute}
-                  >
-                    <Ionicons 
-                      name={isMuted ? "mic-off" : "mic"} 
-                      size={24} 
-                      color={isMuted ? "#fff" : "#333"} 
-                    />
-                  </TouchableOpacity>
-
-                  {/* End Call */}
-                  <TouchableOpacity
-                    style={styles.endCallButton}
-                    onPress={handleEndCall}
-                  >
-                    <Ionicons name="call" size={32} color="#fff" />
-                  </TouchableOpacity>
-
-                  {/* Speaker */}
-                  <TouchableOpacity
-                    style={[styles.controlButton, isSpeakerOn && styles.controlButtonActive]}
-                    onPress={handleSpeaker}
-                  >
-                    <Ionicons 
-                      name={isSpeakerOn ? "volume-high" : "volume-medium"} 
-                      size={24} 
-                      color={isSpeakerOn ? "#fff" : "#333"} 
-                    />
-                  </TouchableOpacity>
+                  {noiseReduction && <View style={styles.aiIndicator}><Ionicons name="sparkles" size={14} color="#4CAF50" /><Text style={styles.aiText}>AI Enhanced</Text></View>}
                 </View>
 
-                {/* Secondary Controls */}
+                <View style={styles.participantInfo}>
+                  <Animated.View style={[styles.avatar, { transform: [{ scale: pulseAnim }] }]}>
+                    <Text style={styles.avatarText}>{participant?.name?.[0] || 'U'}</Text>
+                  </Animated.View>
+                  <Text style={styles.participantName}>{participant?.name || 'Unknown'}</Text>
+                  <Text style={styles.participantRole}>{participant?.username || 'Student'}</Text>
+                </View>
+
+                <View style={styles.audioVisualization}>
+                  <AudioWaveform />
+                  <Text style={styles.audioQualityText}>Crystal Clear Audio {noiseReduction && '• AI Enhanced'}</Text>
+                </View>
+              </BlurView>
+            )}
+
+            <View style={[styles.controls, isVideoMode && styles.videoControls]}>
+              <View style={styles.primaryControls}>
+                <TouchableOpacity style={[styles.controlButton, isMuted && styles.controlBtnActive]} onPress={handleMute}>
+                  <Ionicons name={isMuted ? "mic-off" : "mic"} size={26} color={isMuted ? "#FFF" : "#333"} />
+                </TouchableOpacity>
+                <TouchableOpacity style={styles.endCallButton} onPress={handleEndCall}>
+                  <Ionicons name="call" size={36} color="#fff" />
+                </TouchableOpacity>
+                <TouchableOpacity style={[styles.controlButton, isVideoMode && styles.videoActive]} onPress={handleVideoToggle}>
+                  <Ionicons name={isVideoMode ? "videocam" : "videocam-outline"} size={26} color={isVideoMode ? "#FFF" : "#333"} />
+                </TouchableOpacity>
+              </View>
+
+              {!isVideoMode && (
                 <View style={styles.secondaryControls}>
-                  {/* Record */}
-                  <TouchableOpacity
-                    style={[styles.secondaryButton, isRecording && styles.recordingActive]}
-                    onPress={handleRecord}
-                  >
-                    <Ionicons 
-                      name={isRecording ? "stop-circle" : "radio-button-on"} 
-                      size={20} 
-                      color={isRecording ? "#fff" : "#666"} 
-                    />
-                    <Text style={[styles.secondaryButtonText, isRecording && styles.recordingText]}>
-                      {isRecording ? 'Stop Rec' : 'Record'}
-                    </Text>
+                  <TouchableOpacity style={[styles.secBtn, isRecording && styles.recActive]} onPress={handleRecord}>
+                    <Ionicons name={isRecording ? "stop-circle" : "radio-button-on"} size={20} color={isRecording ? "#FFF" : "#666"} />
+                    <Text style={[styles.secBtnText, isRecording && styles.whiteText]}>{isRecording ? "Stop" : "Rec"}</Text>
                   </TouchableOpacity>
-
-                  {/* Noise Reduction */}
-                  <TouchableOpacity
-                    style={[styles.secondaryButton, noiseReduction && styles.aiActive]}
-                    onPress={toggleNoiseReduction}
-                  >
-                    <Ionicons 
-                      name="sparkles" 
-                      size={20} 
-                      color={noiseReduction ? "#fff" : "#666"} 
-                    />
-                    <Text style={[styles.secondaryButtonText, noiseReduction && styles.aiText]}>
-                      AI Audio
-                    </Text>
+                  <TouchableOpacity style={[styles.secBtn, noiseReduction && styles.aiActive]} onPress={toggleNoiseReduction}>
+                    <Ionicons name="sparkles" size={20} color={noiseReduction ? "#FFF" : "#666"} />
+                    <Text style={[styles.secBtnText, noiseReduction && styles.whiteText]}>AI Audio</Text>
                   </TouchableOpacity>
-
-                  {/* Video Call (Future) */}
-                  <TouchableOpacity
-                    style={styles.secondaryButton}
-                    onPress={() => Alert.alert('Coming Soon', 'Video calling feature coming soon!')}
-                  >
-                    <Ionicons name="videocam-outline" size={20} color="#666" />
-                    <Text style={styles.secondaryButtonText}>Video</Text>
+                  <TouchableOpacity style={styles.secBtn} onPress={handleSpeaker}>
+                    <Ionicons name={isSpeakerOn ? "volume-high" : "volume-medium"} size={20} color={isSpeakerOn ? "#4CAF50" : "#666"} />
+                    <Text style={styles.secBtnText}>Speaker</Text>
                   </TouchableOpacity>
                 </View>
-              </View>
-
-              {/* Call Quality Indicator */}
-              <View style={styles.qualityIndicator}>
-                <View style={styles.qualityBars}>
-                  {Array.from({ length: 4 }, (_, i) => (
-                    <View
-                      key={i}
-                      style={[
-                        styles.qualityBar,
-                        { backgroundColor: i < 3 ? '#4CAF50' : '#ddd' }
-                      ]}
-                    />
-                  ))}
-                </View>
-                <Text style={styles.qualityText}>Excellent Connection</Text>
-              </View>
-            </BlurView>
+              )}
+            </View>
           </LinearGradient>
         </Animated.View>
       </View>
@@ -420,187 +241,49 @@ export const EnhancedVoiceCall = ({ visible, onClose, participant, onCallEnd }) 
 };
 
 const styles = StyleSheet.create({
-  overlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.8)',
-  },
-  container: {
-    flex: 1,
-    marginTop: 50,
-  },
-  gradient: {
-    flex: 1,
-    borderTopLeftRadius: 25,
-    borderTopRightRadius: 25,
-  },
-  content: {
-    flex: 1,
-    padding: 30,
-    justifyContent: 'space-between',
-  },
-  statusBar: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 20,
-  },
-  statusIndicator: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  statusDot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    marginRight: 8,
-  },
-  statusText: {
-    color: '#fff',
-    fontSize: 14,
-    fontWeight: '500',
-  },
-  aiIndicator: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: 'rgba(76, 175, 80, 0.2)',
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 12,
-  },
-  aiText: {
-    color: '#4CAF50',
-    fontSize: 12,
-    fontWeight: '600',
-    marginLeft: 4,
-  },
-  participantInfo: {
-    alignItems: 'center',
-    marginVertical: 40,
-  },
-  avatar: {
-    width: 120,
-    height: 120,
-    borderRadius: 60,
-    backgroundColor: 'rgba(255, 255, 255, 0.2)',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginBottom: 20,
-    borderWidth: 3,
-    borderColor: 'rgba(255, 255, 255, 0.3)',
-  },
-  avatarText: {
-    fontSize: 48,
-    fontWeight: 'bold',
-    color: '#fff',
-  },
-  participantName: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#fff',
-    marginBottom: 8,
-  },
-  participantRole: {
-    fontSize: 16,
-    color: 'rgba(255, 255, 255, 0.8)',
-  },
-  audioVisualization: {
-    alignItems: 'center',
-    marginVertical: 30,
-  },
-  waveform: {
-    flexDirection: 'row',
-    alignItems: 'flex-end',
-    justifyContent: 'center',
-    height: 40,
-    marginBottom: 15,
-  },
-  waveBar: {
-    width: 4,
-    borderRadius: 2,
-  },
-  audioQualityText: {
-    color: 'rgba(255, 255, 255, 0.8)',
-    fontSize: 14,
-    fontWeight: '500',
-  },
-  controls: {
-    alignItems: 'center',
-  },
-  primaryControls: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: 30,
-  },
-  controlButton: {
-    width: 60,
-    height: 60,
-    borderRadius: 30,
-    backgroundColor: 'rgba(255, 255, 255, 0.9)',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginHorizontal: 20,
-  },
-  controlButtonActive: {
-    backgroundColor: '#ff6b6b',
-  },
-  endCallButton: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
-    backgroundColor: '#ff6b6b',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginHorizontal: 20,
-    transform: [{ rotate: '135deg' }],
-  },
-  secondaryControls: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-    width: '100%',
-  },
-  secondaryButton: {
-    alignItems: 'center',
-    paddingVertical: 8,
-    paddingHorizontal: 12,
-    borderRadius: 20,
-    backgroundColor: 'rgba(255, 255, 255, 0.1)',
-  },
-  secondaryButtonText: {
-    color: '#666',
-    fontSize: 12,
-    marginTop: 4,
-    fontWeight: '500',
-  },
-  recordingActive: {
-    backgroundColor: '#ff6b6b',
-  },
-  recordingText: {
-    color: '#fff',
-  },
-  aiActive: {
-    backgroundColor: 'rgba(76, 175, 80, 0.3)',
-  },
-  qualityIndicator: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginTop: 20,
-  },
-  qualityBars: {
-    flexDirection: 'row',
-    marginRight: 8,
-  },
-  qualityBar: {
-    width: 3,
-    height: 12,
-    marginHorizontal: 1,
-    borderRadius: 1.5,
-  },
-  qualityText: {
-    color: 'rgba(255, 255, 255, 0.7)',
-    fontSize: 12,
-  },
+  overlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.9)' },
+  container: { flex: 1, marginTop: 40 },
+  gradient: { flex: 1, borderTopLeftRadius: 35, borderTopRightRadius: 35, overflow: 'hidden' },
+  content: { flex: 1, padding: 30, justifyContent: 'space-between', paddingBottom: 120 },
+  videoContainer: { flex: 1 },
+  remoteVideo: { flex: 1, justifyContent: 'center', alignItems: 'center' },
+  videoAvatarPlaceholder: { width: 140, height: 140, borderRadius: 70, backgroundColor: 'rgba(255,255,255,0.1)', justifyContent: 'center', alignItems: 'center' },
+  videoAvatarText: { fontSize: 60, fontWeight: '900', color: '#FFF' },
+  videoOverlay: { position: 'absolute', bottom: 180, alignItems: 'center' },
+  videoName: { color: '#FFF', fontSize: 24, fontWeight: '900' },
+  liveBadge: { backgroundColor: '#EF4444', paddingHorizontal: 10, paddingVertical: 4, borderRadius: 6, marginTop: 10 },
+  liveText: { color: '#FFF', fontSize: 10, fontWeight: '900' },
+  selfVideo: { position: 'absolute', top: 30, right: 20, width: 90, height: 130, borderRadius: 12, backgroundColor: 'rgba(0,0,0,0.5)', borderWidth: 1, borderColor: 'rgba(255,255,255,0.3)', justifyContent: 'center', alignItems: 'center' },
+  selfVideoTag: { position: 'absolute', bottom: 5, backgroundColor: 'rgba(0,0,0,0.6)', padding: 3, borderRadius: 4 },
+  selfVideoText: { color: '#FFF', fontSize: 8 },
+  videoControls: { position: 'absolute', bottom: 40, alignSelf: 'center' },
+  statusBar: { flexDirection: 'row', justifyContent: 'space-between' },
+  statusIndicator: { flexDirection: 'row', alignItems: 'center' },
+  statusDot: { width: 8, height: 8, borderRadius: 4, marginRight: 8 },
+  statusText: { color: '#FFF', fontSize: 14 },
+  aiIndicator: { flexDirection: 'row', alignItems: 'center', backgroundColor: 'rgba(76,175,80,0.2)', padding: 5, borderRadius: 10 },
+  aiText: { color: '#4CAF50', fontSize: 10, fontWeight: '900', marginLeft: 4 },
+  participantInfo: { alignItems: 'center', marginTop: 40 },
+  avatar: { width: 120, height: 120, borderRadius: 60, backgroundColor: 'rgba(255,255,255,0.2)', justifyContent: 'center', alignItems: 'center', borderWidth: 2, borderColor: '#FFF' },
+  avatarText: { fontSize: 40, fontWeight: '900', color: '#FFF' },
+  participantName: { color: '#FFF', fontSize: 26, fontWeight: '900', marginTop: 20 },
+  participantRole: { color: 'rgba(255,255,255,0.7)', fontSize: 16 },
+  audioVisualization: { alignItems: 'center', marginBottom: 40 },
+  waveform: { flexDirection: 'row', alignItems: 'flex-end', height: 40 },
+  waveBar: { width: 4, borderRadius: 2 },
+  audioQualityText: { color: 'rgba(255,255,255,0.5)', fontSize: 12, marginTop: 10 },
+  controls: { paddingHorizontal: 20, paddingBottom: 40, alignItems: 'center' },
+  primaryControls: { flexDirection: 'row', alignItems: 'center', gap: 25, marginBottom: 20 },
+  controlButton: { width: 60, height: 60, borderRadius: 30, backgroundColor: '#FFF', justifyContent: 'center', alignItems: 'center' },
+  controlBtnActive: { backgroundColor: '#EF4444' },
+  videoActive: { backgroundColor: '#6366F1' },
+  endCallButton: { width: 80, height: 80, borderRadius: 40, backgroundColor: '#EF4444', justifyContent: 'center', alignItems: 'center', transform: [{ rotate: '135deg' }] },
+  secondaryControls: { flexDirection: 'row', justifyContent: 'space-between', width: '100%', gap: 10 },
+  secBtn: { flex: 1, height: 44, borderRadius: 12, backgroundColor: 'rgba(255,255,255,0.1)', justifyContent: 'center', alignItems: 'center', flexDirection: 'row', gap: 5 },
+  secBtnText: { color: '#FFF', fontSize: 12 },
+  recActive: { backgroundColor: '#EF4444' },
+  aiActive: { backgroundColor: '#10B981' },
+  whiteText: { color: '#FFF' },
 });
 
 export default EnhancedVoiceCall;

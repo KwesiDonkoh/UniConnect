@@ -306,9 +306,9 @@ export default function AcademicResultsScreen({ navigation }) {
         <View style={styles.filtersContainer}>
           {/* Level Selector */}
           <View style={styles.filterGroup}>
-            <Text style={styles.filterLabel}>Level</Text>
-            <View style={styles.filterButtons}>
-              {['100', '200', '300', '400'].map((level) => (
+            <Text style={styles.filterLabel}>{user.degreeType === 'Undergraduate' ? 'Academic Level' : 'Study Phase'}</Text>
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.filterButtons}>
+              {(user.degreeType === 'Undergraduate' ? ['100', '200', '300', '400', '500'] : [user.degreeType, 'Phase 1', 'Phase 2']).map((level) => (
                 <TouchableOpacity
                   key={level}
                   style={[styles.filterButton, selectedLevel === level && styles.selectedFilter]}
@@ -322,7 +322,7 @@ export default function AcademicResultsScreen({ navigation }) {
                   </Text>
                 </TouchableOpacity>
               ))}
-            </View>
+            </ScrollView>
           </View>
 
           {/* Semester Selector */}

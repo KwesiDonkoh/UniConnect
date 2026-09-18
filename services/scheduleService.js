@@ -4,6 +4,7 @@ import {
   serverTimestamp, 
   doc, 
   updateDoc,
+  getDoc,
   query,
   where,
   orderBy,
@@ -13,6 +14,7 @@ import {
   Timestamp
 } from 'firebase/firestore';
 import { db } from '../config/firebaseConfig';
+import notificationService from './notificationService';
 
 class ScheduleService {
   constructor() {
@@ -445,10 +447,28 @@ class ScheduleService {
     return pattern.days.includes(dayName);
   }
 
-  // Notification methods
+  // Notification methods — wired to notificationService
   async notifyStudentsAboutClass(scheduleId, scheduleData) {
     try {
-      console.log(`New class notification: ${scheduleData.title} for ${scheduleData.courseCode}`);
+      // Only send if notificationService is ready (has currentUserId)
+      if (!notificationService.currentUserId) return { success: true };
+
+      await notificationService.createNotification({
+        title: `📅 Class Scheduled: ${scheduleData.title || scheduleData.courseCode}`,
+        message: `Your ${scheduleData.courseCode} class is scheduled for ${
+          scheduleData.startTime instanceof Date
+            ? scheduleData.startTime.toLocaleString()
+            : 'the upcoming session'
+        }. Venue: ${scheduleData.venue || 'TBD'}.`,
+        type: 'schedule',
+        course: scheduleData.courseCode,
+        courseCode: scheduleData.courseCode,
+        priority: 'normal',
+        targetUserType: 'student',
+        targetAcademicLevel: scheduleData.academicLevel || null,
+        forAllUsers: !scheduleData.academicLevel,
+        metadata: { scheduleId, startTime: scheduleData.startTime, venue: scheduleData.venue },
+      });
       return { success: true };
     } catch (error) {
       console.error('Error notifying students about class:', error);
@@ -458,7 +478,26 @@ class ScheduleService {
 
   async notifyStudentsAboutCancellation(scheduleId, reason) {
     try {
-      console.log(`Class cancellation notification: ${scheduleId} - ${reason}`);
+      if (!notificationService.currentUserId) return { success: true };
+
+      // Fetch the schedule to get course info
+      const scheduleDoc = await getDoc(doc(db, 'classSchedule', scheduleId));
+      const scheduleData = scheduleDoc.exists() ? scheduleDoc.data() : {};
+
+      await notificationService.createNotification({
+        title: `❌ Class Cancelled: ${scheduleData.courseCode || 'Your class'}`,
+        message: `The ${scheduleData.courseCode || ''} class has been cancelled.${
+          reason ? ` Reason: ${reason}` : ''
+        }`,
+        type: 'announcement',
+        course: scheduleData.courseCode,
+        courseCode: scheduleData.courseCode,
+        priority: 'high',
+        targetUserType: 'student',
+        targetAcademicLevel: scheduleData.academicLevel || null,
+        forAllUsers: !scheduleData.academicLevel,
+        metadata: { scheduleId, reason },
+      });
       return { success: true };
     } catch (error) {
       console.error('Error notifying students about cancellation:', error);
@@ -468,7 +507,25 @@ class ScheduleService {
 
   async notifyStudentsAboutReschedule(scheduleId, newStartTime, newEndTime, reason) {
     try {
-      console.log(`Class reschedule notification: ${scheduleId} - ${reason}`);
+      if (!notificationService.currentUserId) return { success: true };
+
+      const scheduleDoc = await getDoc(doc(db, 'classSchedule', scheduleId));
+      const scheduleData = scheduleDoc.exists() ? scheduleDoc.data() : {};
+
+      await notificationService.createNotification({
+        title: `🔄 Class Rescheduled: ${scheduleData.courseCode || 'Your class'}`,
+        message: `The ${scheduleData.courseCode || ''} class has been moved to ${
+          newStartTime instanceof Date ? newStartTime.toLocaleString() : 'a new time'
+        }.${ reason ? ` Reason: ${reason}` : '' }`,
+        type: 'schedule',
+        course: scheduleData.courseCode,
+        courseCode: scheduleData.courseCode,
+        priority: 'high',
+        targetUserType: 'student',
+        targetAcademicLevel: scheduleData.academicLevel || null,
+        forAllUsers: !scheduleData.academicLevel,
+        metadata: { scheduleId, newStartTime, newEndTime, reason },
+      });
       return { success: true };
     } catch (error) {
       console.error('Error notifying students about reschedule:', error);

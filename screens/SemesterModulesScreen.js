@@ -288,13 +288,23 @@ export default function SemesterModulesScreen({ navigation }) {
         )}
 
         {item.status === 'in_progress' && (
-          <TouchableOpacity
-            style={styles.joinChatButton}
-            onPress={() => navigation.navigate('Chat', { courseCode: item.code })}
-          >
-            <Ionicons name="chatbubbles" size={16} color="#10B981" />
-            <Text style={styles.joinChatButtonText}>Join Chat</Text>
-          </TouchableOpacity>
+          <View style={{ flexDirection: 'row', gap: 8 }}>
+            <TouchableOpacity
+              style={styles.joinChatButton}
+              onPress={() => navigation.navigate('Chat', { courseCode: item.code })}
+            >
+              <Ionicons name="chatbubbles" size={16} color="#10B981" />
+              <Text style={styles.joinChatButtonText}>Chat</Text>
+            </TouchableOpacity>
+            
+            <TouchableOpacity
+              style={[styles.joinChatButton, { backgroundColor: '#EEF2FF' }]}
+              onPress={() => navigation.navigate('Materials', { courseCode: item.code })}
+            >
+              <Ionicons name="document-text" size={16} color="#4F46E5" />
+              <Text style={[styles.joinChatButtonText, { color: '#4F46E5' }]}>Materials</Text>
+            </TouchableOpacity>
+          </View>
         )}
       </View>
     </TouchableOpacity>

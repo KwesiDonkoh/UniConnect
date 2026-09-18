@@ -1,79 +1,320 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    // Users collection - users can read/write their own data
+
+    // ──────────────────────────────────────────────
+    // HELPER FUNCTIONS
+    // ──────────────────────────────────────────────
+
+    // Is the requester authenticated?
+    function isAuth() {
+      return request.auth != null;
+    }
+
+    // Is the requester the owner of this document?
+    function isOwner(uid) {
+      return request.auth.uid == uid;
+    }
+
+    // Fetch the calling user's Firestore profile
+    function userProfile() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data;
+    }
+
+    // Is the calling user a lecturer?
+    function isLecturer() {
+      return isAuth() && userProfile().userType == 'lecturer';
+    }
+
+    // Is the calling user a student?
+    function isStudent() {
+      return isAuth() && userProfile().userType == 'student';
+    }
+
+
+    // ──────────────────────────────────────────────
+    // USERS
+    // ──────────────────────────────────────────────
     match /users/{userId} {
-      allow read, write: if request.auth != null && request.auth.uid == userId;
-      // Allow users to read basic info of other users for chat functionality
-      allow read: if request.auth != null && 
-        resource.data.keys().hasAny(['fullName', 'userType', 'academicLevel', 'identifier']);
+      // Anyone logged in can read basic public profile fields (for chat, search, etc.)
+      allow read: if isAuth();
+
+      // Only the user themselves can write their own document
+      allow create, update: if isAuth() && isOwner(userId);
+
+      // Nobody can delete user accounts via client SDK
+      allow delete: if false;
     }
-    
-    // Courses collection - read-only for all authenticated users
-    match /courses/{courseId} {
-      allow read: if request.auth != null;
-      // Only lecturers can write course data
-      allow write: if request.auth != null && 
-        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.userType == "lecturer";
-    }
-    
-    // Materials collection
-    match /materials/{materialId} {
-      // All authenticated users can read materials
-      allow read: if request.auth != null;
-      // Only the uploader or lecturers can write/delete materials
-      allow write, delete: if request.auth != null && (
-        request.auth.uid == resource.data.uploadedBy ||
-        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.userType == "lecturer"
-      );
-      // Allow creation if user is authenticated
-      allow create: if request.auth != null;
-    }
-    
-    // Chat messages collection
-    match /chatMessages/{courseCode} {
-      allow read, write: if request.auth != null;
-      
-      match /messages/{messageId} {
-        // All authenticated users can read messages
-        allow read: if request.auth != null;
-        // Users can create messages with their own senderId
-        allow create: if request.auth != null && request.auth.uid == request.resource.data.senderId;
-        // Users can update messages (for read receipts, reactions)
-        allow update: if request.auth != null;
-        // Users can only delete their own messages
-        allow delete: if request.auth != null && request.auth.uid == resource.data.senderId;
-      }
-    }
-    
-    // Typing indicators collection
-    match /typingIndicators/{courseCode} {
-      allow read, write: if request.auth != null;
-      
-      match /users/{userId} {
-        // Users can read all typing indicators for a course
-        allow read: if request.auth != null;
-        // Users can only write/delete their own typing status
-        allow write, delete: if request.auth != null && request.auth.uid == userId;
-      }
-    }
-    
-    // User presence collection
-    match /userPresence/{userId} {
-      // Users can read all presence data
-      allow read: if request.auth != null;
-      // Users can only write their own presence data
-      allow write: if request.auth != null && request.auth.uid == userId;
-    }
-    
-    // Notifications collection (optional)
+
+
+    // ──────────────────────────────────────────────
+    // NOTIFICATIONS
+    // ──────────────────────────────────────────────
     match /notifications/{notificationId} {
-      // Users can read notifications meant for them
-      allow read: if request.auth != null && 
-        (request.auth.uid in resource.data.recipients || resource.data.forAllUsers == true);
-      // Only lecturers can create notifications
-      allow create: if request.auth != null && 
-        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.userType == "lecturer";
+      // A notification is readable if:
+      //   (a) it's for all users, OR
+      //   (b) the user's UID is in the recipients list, OR
+      //   (c) the targetUserType matches the user's type (and optionally academicLevel)
+      allow read: if isAuth() && (
+        resource.data.forAllUsers == true ||
+        (resource.data.recipients != null && request.auth.uid in resource.data.recipients) ||
+        (
+          (resource.data.targetUserType == null || resource.data.targetUserType == userProfile().userType) &&
+          (resource.data.targetAcademicLevel == null || resource.data.targetAcademicLevel == userProfile().academicLevel)
+        )
+      );
+
+      // Anyone authenticated can create; server-side the notificationService controls who sends what
+      allow create: if isAuth();
+
+      // Only the creator can update or delete
+      allow update, delete: if isAuth() && request.auth.uid == resource.data.createdBy;
     }
+
+
+    // ──────────────────────────────────────────────
+    // COURSES
+    // ──────────────────────────────────────────────
+    match /courses/{courseId} {
+      allow read: if isAuth();
+      allow create, update, delete: if isLecturer();
+    }
+
+
+    // ──────────────────────────────────────────────
+    // MATERIALS (lecture notes, files)
+    // ──────────────────────────────────────────────
+    match /materials/{materialId} {
+      allow read: if isAuth();
+      allow create: if isAuth();
+      allow update, delete: if isAuth() && (
+        request.auth.uid == resource.data.uploadedBy || isLecturer()
+      );
+    }
+
+
+    // ──────────────────────────────────────────────
+    // ASSIGNMENTS
+    // ──────────────────────────────────────────────
+    match /assignments/{assignmentId} {
+      // Students can only read active assignments
+      allow read: if isAuth() && (
+        isLecturer() || resource.data.status == 'active'
+      );
+      // Only lecturers can create/update/delete assignments
+      allow create, update, delete: if isLecturer();
+    }
+
+
+    // ──────────────────────────────────────────────
+    // SUBMISSIONS (student assignment submissions)
+    // ──────────────────────────────────────────────
+    match /submissions/{submissionId} {
+      // Students can read their own submissions; lecturers can read all
+      allow read: if isAuth() && (
+        isLecturer() || request.auth.uid == resource.data.studentId
+      );
+      // Students can create their own submissions
+      allow create: if isAuth() && request.auth.uid == request.resource.data.studentId;
+      // Students can update their own non-graded submission; lecturers can grade any
+      allow update: if isAuth() && (
+        isLecturer() ||
+        (request.auth.uid == resource.data.studentId && resource.data.status == 'submitted')
+      );
+      allow delete: if isLecturer();
+    }
+
+
+    // ──────────────────────────────────────────────
+    // GRADES
+    // ──────────────────────────────────────────────
+    match /grades/{gradeId} {
+      // Students can read their own grades; lecturers can read all
+      allow read: if isAuth() && (
+        isLecturer() || request.auth.uid == resource.data.studentId
+      );
+      allow create, update, delete: if isLecturer();
+    }
+
+    match /gradeCategories/{categoryId} {
+      allow read: if isAuth();
+      allow create, update, delete: if isLecturer();
+    }
+
+    match /overallGrades/{gradeId} {
+      allow read: if isAuth() && (
+        isLecturer() || request.auth.uid == resource.data.studentId
+      );
+      allow create, update, delete: if isLecturer();
+    }
+
+
+    // ──────────────────────────────────────────────
+    // CLASS SCHEDULE & ATTENDANCE
+    // ──────────────────────────────────────────────
+    match /classSchedule/{scheduleId} {
+      allow read: if isAuth();
+      allow create, update, delete: if isLecturer();
+    }
+
+    match /attendance/{attendanceId} {
+      // Students can read their own attendance; lecturers can read all
+      allow read: if isAuth() && (
+        isLecturer() || request.auth.uid == resource.data.studentId
+      );
+      // Only lecturers can record attendance
+      allow create, update, delete: if isLecturer();
+    }
+
+
+    // ──────────────────────────────────────────────
+    // CHAT MESSAGES (course group chats)
+    // ──────────────────────────────────────────────
+    match /chatMessages/{courseCode} {
+      // Top-level course document (last message metadata)
+      allow read, write: if isAuth();
+
+      match /messages/{messageId} {
+        allow read: if isAuth();
+        // Users can only create messages as themselves
+        allow create: if isAuth() && request.auth.uid == request.resource.data.senderId;
+        // Any authenticated user can update (for read receipts, emoji reactions)
+        allow update: if isAuth();
+        // Only the sender can delete their own message
+        allow delete: if isAuth() && request.auth.uid == resource.data.senderId;
+      }
+    }
+
+
+    // ──────────────────────────────────────────────
+    // PRIVATE MESSAGES (direct 1-to-1)
+    // ──────────────────────────────────────────────
+    match /privateMessages/{conversationId} {
+      // Only participants can read/write
+      allow read, write: if isAuth() && (
+        conversationId.matches('.*' + request.auth.uid + '.*')
+      );
+
+      match /messages/{messageId} {
+        allow read: if isAuth() && (
+          conversationId.matches('.*' + request.auth.uid + '.*')
+        );
+        allow create: if isAuth() && request.auth.uid == request.resource.data.senderId;
+        allow update: if isAuth();
+        allow delete: if isAuth() && request.auth.uid == resource.data.senderId;
+      }
+    }
+
+
+    // ──────────────────────────────────────────────
+    // TYPING INDICATORS
+    // ──────────────────────────────────────────────
+    match /typingIndicators/{courseCode} {
+      allow read: if isAuth();
+      allow write: if isAuth();
+
+      match /users/{userId} {
+        allow read: if isAuth();
+        // Users can only manage their own typing status
+        allow write, delete: if isAuth() && isOwner(userId);
+      }
+    }
+
+
+    // ──────────────────────────────────────────────
+    // USER PRESENCE
+    // ──────────────────────────────────────────────
+    match /userPresence/{userId} {
+      allow read: if isAuth();
+      // Users can only update their own presence
+      allow write: if isAuth() && isOwner(userId);
+    }
+
+
+    // ──────────────────────────────────────────────
+    // STUDY NOTES (Smart Notes + Mind Maps)
+    // ──────────────────────────────────────────────
+    match /studyNotes/{noteId} {
+      allow read, create, update, delete: if isAuth() && isOwner(resource.data.ownerUid);
+      allow create: if isAuth() && request.auth.uid == request.resource.data.ownerUid;
+    }
+
+    match /mindMaps/{mapId} {
+      allow read, create, update, delete: if isAuth() && isOwner(resource.data.ownerUid);
+      allow create: if isAuth() && request.auth.uid == request.resource.data.ownerUid;
+    }
+
+
+    // ──────────────────────────────────────────────
+    // PROGRESS (streaks, GPA snapshots, weekly study)
+    // ──────────────────────────────────────────────
+    match /progress/{progressId} {
+      allow read, create, update: if isAuth() && isOwner(resource.data.userId);
+      allow create: if isAuth() && request.auth.uid == request.resource.data.userId;
+      allow delete: if false;
+    }
+
+
+    // ──────────────────────────────────────────────
+    // ACHIEVEMENTS
+    // ──────────────────────────────────────────────
+    match /achievements/{achievementId} {
+      // Anyone authenticated can read achievement definitions
+      allow read: if isAuth();
+      // Only the server (via admin/notificationService) controls writing
+      allow write: if isLecturer();
+    }
+
+    match /userAchievements/{userId} {
+      allow read: if isAuth();
+      // Only the user themselves or a service write their achievements
+      allow write: if isAuth() && isOwner(userId);
+    }
+
+
+    // ──────────────────────────────────────────────
+    // VOICE NOTES
+    // ──────────────────────────────────────────────
+    match /voiceNotes/{voiceNoteId} {
+      // Owner can CRUD, others in the same course/conversation can read
+      allow read: if isAuth();
+      allow create: if isAuth() && request.auth.uid == request.resource.data.ownerUid;
+      allow update, delete: if isAuth() && isOwner(resource.data.ownerUid);
+    }
+
+
+    // ──────────────────────────────────────────────
+    // COURSE REPRESENTATIVE REQUESTS & DATA
+    // ──────────────────────────────────────────────
+    match /courseReps/{repId} {
+      allow read: if isAuth();
+      allow create, update: if isAuth();
+      allow delete: if isLecturer();
+    }
+
+    match /repRequests/{requestId} {
+      allow read: if isAuth() && (
+        isLecturer() || request.auth.uid == resource.data.studentId
+      );
+      allow create: if isStudent();
+      allow update, delete: if isLecturer();
+    }
+
+
+    // ──────────────────────────────────────────────
+    // ZOOM / CALL SESSIONS
+    // ──────────────────────────────────────────────
+    match /zoomSessions/{sessionId} {
+      allow read: if isAuth();
+      allow create, update, delete: if isLecturer();
+    }
+
+    match /callSessions/{sessionId} {
+      allow read: if isAuth();
+      allow create: if isAuth();
+      allow update: if isAuth();
+      allow delete: if isAuth() && request.auth.uid == resource.data.callerId;
+    }
+
   }
 }

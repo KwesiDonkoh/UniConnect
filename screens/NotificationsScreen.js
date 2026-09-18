@@ -15,6 +15,7 @@ import {
   Vibration,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { LinearGradient } from 'expo-linear-gradient';
 import { useApp } from '../context/AppContext';
 import { useTheme } from '../components/ThemeProvider';
 import notificationService from '../services/notificationService';
@@ -32,6 +33,8 @@ export default function NotificationsScreen({ navigation }) {
   const [showDetailsModal, setShowDetailsModal] = useState(false);
   const [sortBy, setSortBy] = useState('newest');
   const [selectedType, setSelectedType] = useState('all');
+  const [activeCategory, setActiveCategory] = useState('academic');
+  const [isFocusMode, setIsFocusMode] = useState(true);
   
   // Create notification form state (for lecturers)
   const [createForm, setCreateForm] = useState({
@@ -244,6 +247,15 @@ export default function NotificationsScreen({ navigation }) {
   // Enhanced filtering and sorting
   const getFilteredAndSortedNotifications = () => {
     let filtered = notifications.filter(notif => {
+      // Filter by category
+      if (activeCategory === 'academic') {
+        if (!['assignment', 'exam', 'material'].includes(notif.type)) return false;
+      } else if (activeCategory === 'social') {
+        if (notif.type !== 'announcement') return false;
+      } else if (activeCategory === 'administrative') {
+        if (!['system', 'billing'].includes(notif.type)) return false;
+      }
+      
       // Filter by read status
       if (filter === 'unread' && notif.read) return false;
       if (filter === 'read' && !notif.read) return false;
@@ -251,8 +263,8 @@ export default function NotificationsScreen({ navigation }) {
       // Filter by type
       if (selectedType !== 'all' && notif.type !== selectedType) return false;
       
-    return true;
-  });
+      return true;
+    });
 
     // Sort notifications
     filtered.sort((a, b) => {
@@ -291,7 +303,6 @@ export default function NotificationsScreen({ navigation }) {
         onPress={() => showNotificationDetails(item)}
         onLongPress={() => {
           Vibration.vibrate(50);
-          // Show context menu options
         }}
         activeOpacity={0.7}
       >
@@ -340,6 +351,30 @@ export default function NotificationsScreen({ navigation }) {
             <Text style={styles.message} numberOfLines={2}>
               {String(item.message || '')}
             </Text>
+
+            {/* Actionable Alerts Inline */}
+            {!item.read && item.type === 'assignment' && (
+              <View style={styles.inlineActions}>
+                <TouchableOpacity 
+                   style={styles.inlineActionBtn}
+                   onPress={(e) => {
+                     e.stopPropagation();
+                     Alert.alert('Quick Action', 'Assignment marked for later. I will remind you at 6 PM.');
+                   }}
+                >
+                  <Text style={styles.inlineActionText}>Remind Later</Text>
+                </TouchableOpacity>
+                <TouchableOpacity 
+                   style={[styles.inlineActionBtn, { backgroundColor: '#4F46E5' }]}
+                   onPress={(e) => {
+                     e.stopPropagation();
+                     handleNotificationAction(item);
+                   }}
+                >
+                  <Text style={[styles.inlineActionText, { color: '#FFF' }]}>Open</Text>
+                </TouchableOpacity>
+              </View>
+            )}
             
             <View style={styles.footer}>
               <View style={styles.courseContainer}>
@@ -352,20 +387,6 @@ export default function NotificationsScreen({ navigation }) {
               </View>
               <Text style={styles.timestamp}>{formatTimestamp(item.timestamp)}</Text>
             </View>
-            
-            {/* Action button for notifications with actions */}
-            {item.actionUrl && (
-              <TouchableOpacity
-                style={styles.notificationAction}
-                onPress={(e) => {
-                  e.stopPropagation();
-                  handleNotificationAction(item);
-                }}
-              >
-                <Text style={styles.actionText}>View Details</Text>
-                <Ionicons name="chevron-forward" size={16} color="#4F46E5" />
-              </TouchableOpacity>
-            )}
           </View>
         </View>
       </TouchableOpacity>
@@ -427,6 +448,18 @@ export default function NotificationsScreen({ navigation }) {
             {unreadCount > 0 && (
               <Text style={[styles.subtitle, isDark && styles.darkSubtitle]}>{unreadCount} unread message{unreadCount > 1 ? 's' : ''}</Text>
             )}
+            <TouchableOpacity 
+               style={[styles.aiSummaryBtn, isFocusMode ? styles.focusModeActive : styles.focusModeInactive]}
+               onPress={() => {
+                 setIsFocusMode(!isFocusMode);
+                 Alert.alert('AI Focus Mode', isFocusMode ? 'Focus Mode is now DISABLED. You will receive all notifications in real-time.' : 'Focus Mode is now ACTIVE. Non-urgent alerts will be muted during your study blocks.');
+               }}
+            >
+               <Ionicons name={isFocusMode ? "moon" : "sunny"} size={16} color={isFocusMode ? "#8B5CF6" : "#F59E0B"} />
+               <Text style={[styles.aiSummaryText, { color: isFocusMode ? "#8B5CF6" : "#F59E0B" }]}>
+                 Focus Mode: {isFocusMode ? 'ON' : 'OFF'}
+               </Text>
+            </TouchableOpacity>
           </View>
           {/* Right side - Create and Filter */}
           <View style={styles.rightActions}>
@@ -445,6 +478,13 @@ export default function NotificationsScreen({ navigation }) {
               onPress={() => setShowFilterModal(true)}
             >
               <Ionicons name="options" size={20} color="#4F46E5" />
+            </TouchableOpacity>
+
+            <TouchableOpacity 
+              style={[styles.filterActionButton, { marginLeft: 10, backgroundColor: '#F59E0B' }]} 
+              onPress={() => Alert.alert('AI Digest', 'You missed 3 assignments and a lecture update. Most urgent: CS301 lab is rescheduled to 4 PM.')}
+            >
+              <Ionicons name="flash" size={20} color="#FFF" />
             </TouchableOpacity>
           </View>
         </View>
@@ -481,12 +521,106 @@ export default function NotificationsScreen({ navigation }) {
         </View>
       </View>
 
+      {/* Notification Hub Stat Cards */}
+      <View style={{ paddingHorizontal: 15, marginTop: 10 }}>
+        <Text style={{ fontSize: 13, fontWeight: '800', color: isDark ? '#94A3B8' : '#64748B', marginBottom: 12, letterSpacing: 1, textTransform: 'uppercase' }}>🔔 Hub Status</Text>
+        <View style={{ flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between' }}>
+          {[
+            { label: 'Unread', value: unreadCount, icon: 'mail-unread', color: '#4F46E5', bg: isDark ? '#1E293B' : '#EEF2FF' },
+            { label: 'Academic', value: notifications.filter(n => ['assignment', 'exam', 'material'].includes(n.type)).length, icon: 'school', color: '#8B5CF6', bg: isDark ? '#1E293B' : '#F5F3FF' },
+            { label: 'Social', value: notifications.filter(n => n.type === 'announcement').length, icon: 'people', color: '#10B981', bg: isDark ? '#1E293B' : '#F0FDF4' },
+            { label: 'Urgent', value: notifications.filter(n => n.priority === 'urgent').length, icon: 'warning', color: '#EF4444', bg: isDark ? '#1E293B' : '#FEF2F2' },
+          ].map((stat, i) => (
+            <TouchableOpacity key={i} style={{ width: '48%', backgroundColor: stat.bg, borderRadius: 20, padding: 15, marginBottom: 12, borderWidth: 1, borderColor: isDark ? '#334155' : 'transparent', flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+              <View style={{ width: 40, height: 40, borderRadius: 12, backgroundColor: stat.color + '15', justifyContent: 'center', alignItems: 'center' }}>
+                <Ionicons name={stat.icon} size={20} color={stat.color} />
+              </View>
+              <View>
+                <Text style={{ fontSize: 18, fontWeight: '900', color: isDark ? '#F1F5F9' : '#1E293B' }}>{stat.value}</Text>
+                <Text style={{ fontSize: 11, color: isDark ? '#94A3B8' : '#64748B', fontWeight: '600' }}>{stat.label}</Text>
+              </View>
+            </TouchableOpacity>
+          ))}
+        </View>
+      </View>
+
+      {/* Live Campus Feed Ticker */}
+      <View style={{ marginHorizontal: 15, marginBottom: 15 }}>
+        <LinearGradient colors={isDark ? ['#1E293B', '#1E293B'] : ['#F1F5F9', '#F8FAFC']} style={{ borderRadius: 15, padding: 10, paddingHorizontal: 15, flexDirection: 'row', alignItems: 'center', gap: 10, borderWidth: 1, borderColor: isDark ? '#334155' : '#E2E8F0' }}>
+          <View style={{ backgroundColor: '#EF4444', paddingHorizontal: 6, paddingVertical: 2, borderRadius: 4 }}>
+            <Text style={{ color: '#FFF', fontSize: 10, fontWeight: '900' }}>LIVE</Text>
+          </View>
+          <Text style={{ color: isDark ? '#CBD5E1' : '#475569', fontSize: 12, fontWeight: '600', flex: 1 }} numberOfLines={1}>
+            📢 Shuttle Service: Bus 4 is delayed by 10 mins due to campus construction...
+          </Text>
+        </LinearGradient>
+      </View>
+
+      {/* AI Smart Digest Banner */}
+      <TouchableOpacity 
+        style={{ marginHorizontal: 15, marginBottom: 15, borderRadius: 24, overflow: 'hidden', shadowColor: '#4F46E5', shadowOpacity: 0.3, shadowRadius: 10, elevation: 5 }}
+        onPress={() => Alert.alert('AI Smart Digest', 'Your personalized AI summary:\n\n🔥 URGENT: CS301 Exam shifted to Room C4 (Tuesday).\n📝 DUE TODAY: Operating Systems lab report (11:59 PM).\n👥 SOCIAL: New messages in "Final Year Study Group".\n\nTip: You have a free slot at 2 PM. Perfect for that OS lab!')}
+      >
+        <LinearGradient colors={['#4F46E5', '#7C3AED']} style={{ padding: 20 }}>
+          <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 12 }}>
+            <View style={{ width: 44, height: 44, borderRadius: 14, backgroundColor: 'rgba(255,255,255,0.2)', justifyContent: 'center', alignItems: 'center' }}>
+              <Ionicons name="sparkles" size={24} color="#FFF" />
+            </View>
+            <View style={{ backgroundColor: 'rgba(255,255,255,0.2)', paddingHorizontal: 10, paddingVertical: 4, borderRadius: 12 }}>
+              <Text style={{ color: '#FFF', fontSize: 10, fontWeight: '800' }}>AI ANALYZING</Text>
+            </View>
+          </View>
+          <Text style={{ color: '#FFF', fontSize: 18, fontWeight: '900', marginBottom: 4 }}>Daily AI Smart Digest</Text>
+          <Text style={{ color: 'rgba(255,255,255,0.85)', fontSize: 13, fontWeight: '600', lineHeight: 20 }}>
+            "You have 4 urgent academic alerts and 2 social updates. Your busiest window is between 2PM - 4PM today."
+          </Text>
+          <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 15, gap: 5 }}>
+            <Text style={{ color: '#FFF', fontSize: 12, fontWeight: '800' }}>Review Priority Items</Text>
+            <Ionicons name="arrow-forward" size={16} color="#FFF" />
+          </View>
+        </LinearGradient>
+      </TouchableOpacity>
+
+      {/* Quick Action Tiles */}
+      <View style={{ marginHorizontal: 15, marginBottom: 20 }}>
+        <Text style={{ fontSize: 13, fontWeight: '800', color: isDark ? '#94A3B8' : '#64748B', marginBottom: 12, letterSpacing: 1, textTransform: 'uppercase' }}>⚡ Quick Actions</Text>
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 10 }}>
+          {[
+            { label: 'Clear All Read', icon: 'trash-outline', color: '#EF4444' },
+            { label: 'Mute Social', icon: 'notifications-off-outline', color: '#F59E0B' },
+            { label: 'Schedule Sync', icon: 'sync-outline', color: '#10B981' },
+            { label: 'Email Recap', icon: 'mail-outline', color: '#4F46E5' },
+            { label: 'Settings', icon: 'settings-outline', color: '#64748B' },
+          ].map((action, i) => (
+            <TouchableOpacity key={i} style={{ backgroundColor: isDark ? '#1E293B' : '#FFF', paddingHorizontal: 15, paddingVertical: 12, borderRadius: 16, flexDirection: 'row', alignItems: 'center', gap: 8, borderWidth: 1, borderColor: isDark ? '#334155' : '#E2E8F0', shadowColor: '#000', shadowOpacity: 0.05, shadowRadius: 5, elevation: 2 }} onPress={() => Alert.alert('Quick Action', `Action "${action.label}" triggered.`)}>
+              <Ionicons name={action.icon} size={18} color={action.color} />
+              <Text style={{ fontSize: 13, fontWeight: '700', color: isDark ? '#CBD5E1' : '#475569' }}>{action.label}</Text>
+            </TouchableOpacity>
+          ))}
+        </ScrollView>
+      </View>
+
+      {/* Category Tabs */}
+      <View style={styles.categoryContainer}>
+        {['academic', 'social', 'administrative'].map(cat => (
+          <TouchableOpacity
+            key={cat}
+            style={[styles.categoryTab, activeCategory === cat && styles.activeCategoryTab]}
+            onPress={() => setActiveCategory(cat)}
+          >
+            <Text style={[styles.categoryTabText, activeCategory === cat && styles.activeCategoryTabText]}>
+              {cat.charAt(0).toUpperCase() + cat.slice(1)}
+            </Text>
+          </TouchableOpacity>
+        ))}
+      </View>
+
       {/* Enhanced Filters */}
       <View style={styles.filters}>
         <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.filterScrollContent}>
-        {renderFilterButton('all', 'All')}
-        {renderFilterButton('unread', 'Unread')}
-          {renderFilterButton('read', 'Read')}
+        {renderFilterButton('all', 'All Status')}
+        {renderFilterButton('unread', 'Unread Only')}
+          {renderFilterButton('read', 'Previously Read')}
           
           {/* Type filters */}
           <View style={styles.filterSeparator} />
@@ -1343,5 +1477,71 @@ const styles = StyleSheet.create({
   filterOptionText: {
     fontSize: 16,
     color: '#374151',
+  },
+  aiSummaryBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 12,
+    alignSelf: 'flex-start',
+    gap: 6,
+    borderWidth: 1,
+  },
+  focusModeActive: {
+    backgroundColor: '#8B5CF615',
+    borderColor: '#8B5CF630',
+  },
+  focusModeInactive: {
+    backgroundColor: '#F59E0B15',
+    borderColor: '#F59E0B30',
+  },
+  aiSummaryText: {
+    fontSize: 12,
+    fontWeight: '800',
+  },
+  categoryContainer: {
+    flexDirection: 'row',
+    paddingHorizontal: 20,
+    backgroundColor: '#FFFFFF',
+    paddingVertical: 10,
+    gap: 10,
+  },
+  categoryTab: {
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 12,
+    backgroundColor: '#F1F5F9',
+  },
+  activeCategoryTab: {
+    backgroundColor: '#4F46E5',
+  },
+  categoryTabText: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: '#64748B',
+  },
+  activeCategoryTabText: {
+    color: '#FFFFFF',
+  },
+  inlineActions: {
+    flexDirection: 'row',
+    gap: 10,
+    marginTop: 12,
+    marginBottom: 4,
+  },
+  inlineActionBtn: {
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 10,
+    backgroundColor: '#F1F5F9',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  inlineActionText: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: '#64748B',
   },
 });

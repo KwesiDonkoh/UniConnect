@@ -36,6 +36,41 @@ import ClassScheduleScreen from './screens/ClassScheduleScreen';
 import ZoomMeetingScreen from './screens/ZoomMeetingScreen';
 import PrivateMessagingScreen from './screens/PrivateMessagingScreen';
 import CourseRepresentativeScreen from './screens/CourseRepresentativeScreen';
+import ShuttleScreen from './screens/ShuttleScreen';
+import GlobalNewsScreen from './screens/GlobalNewsScreen';
+import CampusNewsScreen from './screens/CampusNewsScreen';
+import GlobalGroupsScreen from './screens/GlobalGroupsScreen';
+import MarketplaceScreen from './screens/MarketplaceScreen';
+import WellnessScreen from './screens/WellnessScreen';
+import EventsHubScreen from './screens/EventsHubScreen';
+import AlumniConnectScreen from './screens/AlumniConnectScreen';
+import QuizScreen from './screens/QuizScreen';
+import CanteenScreen from './screens/CanteenScreen';
+import CampusMapScreen from './screens/CampusMapScreen';
+import HostelScreen from './screens/HostelScreen';
+import ScholarshipScreen from './screens/ScholarshipScreen';
+import AcademicInsightScreen from './screens/AcademicInsightScreen';
+import WalletScreen from './screens/WalletScreen';
+import LibraryScreen from './screens/LibraryScreen';
+import RadioScreen from './screens/RadioScreen';
+import ElectionScreen from './screens/ElectionScreen';
+import CareerScreen from './screens/CareerScreen';
+import DiningScreen from './screens/DiningScreen';
+import ToDoScreen from './screens/ToDoScreen';
+import SafetyScreen from './screens/SafetyScreen';
+import SupportHubScreen from './screens/SupportHubScreen';
+import CampusLifeScreen from './screens/CampusLifeScreen';
+import AIResearchAssistantScreen from './screens/AIResearchAssistantScreen';
+import CampusSocialHub from './screens/CampusSocialHub';
+import PerformanceAnalyticsScreen from './screens/PerformanceAnalyticsScreen';
+import PersonalisedTimetableScreen from './screens/PersonalisedTimetableScreen';
+import AssignmentDeadlineScreen from './screens/AssignmentDeadlineScreen';
+import DigitalLibraryVaultScreen from './screens/DigitalLibraryVaultScreen';
+import SmartAttendanceScreen from './screens/SmartAttendanceScreen';
+import CampusNavigationScreen from './screens/CampusNavigationScreen';
+import EventsSeminarHubScreen from './screens/EventsSeminarHubScreen';
+import FeesPaymentsScreen from './screens/FeesPaymentsScreen';
+import ComplaintsSystemScreen from './screens/ComplaintsSystemScreen';
 
 // Import theme provider
 import { ThemeProvider } from './components/ThemeProvider';
@@ -67,7 +102,7 @@ const Tab = createBottomTabNavigator();
 
 function StudentTabs() {
   const { isDark } = useTheme();
-  
+
   return (
     <Tab.Navigator
       screenOptions={({ route }) => ({
@@ -126,7 +161,7 @@ function StudentTabs() {
 
 function LecturerTabs() {
   const { isDark } = useTheme();
-  
+
   return (
     <Tab.Navigator
       screenOptions={({ route }) => ({
@@ -202,7 +237,7 @@ export default function App() {
 function AppContent() {
   const { isAuthenticated, isLoading, user } = useApp();
   const { isDark } = useTheme();
-  
+
   // ALL HOOKS MUST BE DECLARED AT THE TOP - BEFORE ANY CONDITIONAL LOGIC
   const [showSplash, setShowSplash] = useState(true);
 
@@ -222,12 +257,12 @@ function AppContent() {
       try {
         console.log('🚀 Initializing platform health check...');
         await platformHealth.performHealthCheck();
-        
+
         const status = platformHealth.getHealthStatus();
         if (status.issues.length > 0) {
           console.warn('Platform issues detected:', status.issues);
         }
-        
+
         console.log('✅ Platform initialization complete');
       } catch (error) {
         errorReporter.logError(error, { context: 'platformInitialization' });
@@ -265,16 +300,16 @@ function AppContent() {
 
   console.log('🚀 Rendering navigation with auth state:', { isAuthenticated, hasUser: !!user, isLoading });
   console.log('📱 Initial route will be:', !isAuthenticated || !user ? "Login" : "MainTabs");
-  console.log('🔍 Auth state details:', { 
-    isAuthenticated, 
+  console.log('🔍 Auth state details:', {
+    isAuthenticated,
     user: user ? { uid: user.uid, userType: user.userType } : null,
-    isLoading 
+    isLoading
   });
 
   return (
     <NavigationContainer>
       {!isAuthenticated || !user ? (
-        <Stack.Navigator 
+        <Stack.Navigator
           screenOptions={{ headerShown: false }}
           initialRouteName="Login"
         >
@@ -283,94 +318,269 @@ function AppContent() {
           <Stack.Screen name="ForgotPassword" component={ForgotPasswordScreen} />
         </Stack.Navigator>
       ) : (
-        <Stack.Navigator 
+        <Stack.Navigator
           screenOptions={{ headerShown: false }}
           initialRouteName="MainTabs"
         >
-          <Stack.Screen 
-            name="MainTabs" 
-            component={user?.userType === 'lecturer' ? LecturerTabs : StudentTabs} 
+          <Stack.Screen
+            name="MainTabs"
+            component={user?.userType === 'lecturer' ? LecturerTabs : StudentTabs}
           />
-            <Stack.Screen 
-              name="StudyScreen" 
-              component={StudyScreen}
-              options={{ headerShown: false }}
-            />
-            <Stack.Screen 
-              name="AcademicOverview" 
-              component={AcademicOverviewScreen}
-              options={{ headerShown: false }}
-            />
-            <Stack.Screen 
-              name="AcademicCalendar" 
-              component={AcademicCalendarScreen}
-              options={{ headerShown: false }}
-            />
-            <Stack.Screen 
-              name="Gradebook" 
-              component={GradebookScreen}
-              options={{ headerShown: false }}
-            />
-                               <Stack.Screen
-                     name="Analytics"
-                     component={AnalyticsDashboard}
-                     options={{ headerShown: false }}
-                   />
-                   <Stack.Screen
-                     name="CourseRegistration"
-                     component={CourseRegistrationScreen}
-                     options={{ headerShown: false }}
-                   />
-                   <Stack.Screen
-                     name="AcademicResults"
-                     component={AcademicResultsScreen}
-                     options={{ headerShown: false }}
-                   />
-                                      <Stack.Screen
-                     name="WeekendStudy"
-                     component={WeekendStudyScreen}
-                     options={{ headerShown: false }}
-                   />
-                   <Stack.Screen
-                     name="SemesterModules"
-                     component={SemesterModulesScreen}
-                     options={{ headerShown: false }}
-                   />
-                                      <Stack.Screen
-                     name="ClassSchedule"
-                     component={ClassScheduleScreen}
-                     options={{ headerShown: false }}
-                   />
-                   <Stack.Screen
-                     name="ZoomMeeting"
-                     component={ZoomMeetingScreen}
-                     options={{ headerShown: false }}
-                   />
-                   <Stack.Screen
-                     name="PrivateMessaging"
-                     component={PrivateMessagingScreen}
-                     options={{ headerShown: false }}
-                   />
-                  <Stack.Screen
-                    name="SafeMessaging"
-                    component={SafeMessagingScreen}
-                    options={{ headerShown: false }}
-                  />
-                  <Stack.Screen
-                    name="MessagingWithCalls"
-                    component={MessagingWithCallsScreen}
-                    options={{ headerShown: false }}
-                  />
-                  <Stack.Screen
-                    name="CallHistory"
-                    component={SimpleCallHistoryScreen}
-                    options={{ headerShown: false }}
-                  />
-                   <Stack.Screen
-                     name="CourseRepresentative"
-                     component={CourseRepresentativeScreen}
-                     options={{ headerShown: false }}
-                   />
+          <Stack.Screen
+            name="StudyScreen"
+            component={StudyScreen}
+            options={{ headerShown: false }}
+          />
+          <Stack.Screen
+            name="AcademicOverview"
+            component={AcademicOverviewScreen}
+            options={{ headerShown: false }}
+          />
+          <Stack.Screen
+            name="AcademicCalendar"
+            component={AcademicCalendarScreen}
+            options={{ headerShown: false }}
+          />
+          <Stack.Screen
+            name="Gradebook"
+            component={GradebookScreen}
+            options={{ headerShown: false }}
+          />
+          <Stack.Screen
+            name="Analytics"
+            component={AnalyticsDashboard}
+            options={{ headerShown: false }}
+          />
+          <Stack.Screen
+            name="CourseRegistration"
+            component={CourseRegistrationScreen}
+            options={{ headerShown: false }}
+          />
+          <Stack.Screen
+            name="AcademicResults"
+            component={AcademicResultsScreen}
+            options={{ headerShown: false }}
+          />
+          <Stack.Screen
+            name="WeekendStudy"
+            component={WeekendStudyScreen}
+            options={{ headerShown: false }}
+          />
+          <Stack.Screen
+            name="SemesterModules"
+            component={SemesterModulesScreen}
+            options={{ headerShown: false }}
+          />
+          <Stack.Screen
+            name="ClassSchedule"
+            component={ClassScheduleScreen}
+            options={{ headerShown: false }}
+          />
+          <Stack.Screen
+            name="ZoomMeeting"
+            component={ZoomMeetingScreen}
+            options={{ headerShown: false }}
+          />
+          <Stack.Screen
+            name="PrivateMessaging"
+            component={PrivateMessagingScreen}
+            options={{ headerShown: false }}
+          />
+          <Stack.Screen
+            name="SafeMessaging"
+            component={SafeMessagingScreen}
+            options={{ headerShown: false }}
+          />
+          <Stack.Screen
+            name="MessagingWithCalls"
+            component={MessagingWithCallsScreen}
+            options={{ headerShown: false }}
+          />
+          <Stack.Screen
+            name="CallHistory"
+            component={SimpleCallHistoryScreen}
+            options={{ headerShown: false }}
+          />
+          <Stack.Screen
+            name="CourseRepresentative"
+            component={CourseRepresentativeScreen}
+            options={{ headerShown: false }}
+          />
+          <Stack.Screen
+            name="Shuttle"
+            component={ShuttleScreen}
+            options={{ headerShown: false }}
+          />
+          <Stack.Screen
+            name="GlobalNews"
+            component={GlobalNewsScreen}
+            options={{ headerShown: false }}
+          />
+          <Stack.Screen
+            name="CampusNews"
+            component={CampusNewsScreen}
+            options={{ headerShown: false }}
+          />
+          <Stack.Screen
+            name="GlobalGroups"
+            component={GlobalGroupsScreen}
+            options={{ headerShown: false }}
+          />
+          <Stack.Screen
+            name="Marketplace"
+            component={MarketplaceScreen}
+            options={{ headerShown: false }}
+          />
+          <Stack.Screen
+            name="Wellness"
+            component={WellnessScreen}
+            options={{ headerShown: false }}
+          />
+          <Stack.Screen
+            name="EventsHub"
+            component={EventsHubScreen}
+            options={{ headerShown: false }}
+          />
+          <Stack.Screen
+            name="AlumniConnect"
+            component={AlumniConnectScreen}
+            options={{ headerShown: false }}
+          />
+          <Stack.Screen
+            name="Quiz"
+            component={QuizScreen}
+            options={{ headerShown: false }}
+          />
+          <Stack.Screen
+            name="Canteen"
+            component={CanteenScreen}
+            options={{ headerShown: false }}
+          />
+          <Stack.Screen
+            name="CampusMap"
+            component={CampusMapScreen}
+            options={{ headerShown: false }}
+          />
+          <Stack.Screen
+            name="HostelHub"
+            component={HostelScreen}
+            options={{ headerShown: false }}
+          />
+          <Stack.Screen
+            name="Scholarships"
+            component={ScholarshipScreen}
+            options={{ headerShown: false }}
+          />
+          <Stack.Screen
+            name="AcademicInsight"
+            component={AcademicInsightScreen}
+            options={{ headerShown: false }}
+          />
+          <Stack.Screen
+            name="Wallet"
+            component={WalletScreen}
+            options={{ headerShown: false }}
+          />
+          <Stack.Screen
+            name="LibraryHub"
+            component={LibraryScreen}
+            options={{ headerShown: false }}
+          />
+          <Stack.Screen
+            name="Radio"
+            component={RadioScreen}
+            options={{ headerShown: false }}
+          />
+          <Stack.Screen
+            name="Election"
+            component={ElectionScreen}
+            options={{ headerShown: false }}
+          />
+          <Stack.Screen
+            name="Careers"
+            component={CareerScreen}
+            options={{ headerShown: false }}
+          />
+          <Stack.Screen
+            name="Dining"
+            component={DiningScreen}
+            options={{ headerShown: false }}
+          />
+          <Stack.Screen
+            name="Tasks"
+            component={ToDoScreen}
+            options={{ headerShown: false }}
+          />
+          <Stack.Screen
+            name="Safety"
+            component={SafetyScreen}
+            options={{ headerShown: false }}
+          />
+          <Stack.Screen
+            name="SupportHub"
+            component={SupportHubScreen}
+            options={{ headerShown: false }}
+          />
+          <Stack.Screen
+            name="CampusLife"
+            component={CampusLifeScreen}
+            options={{ headerShown: false }}
+          />
+          <Stack.Screen
+            name="AIResearchAssistant"
+            component={AIResearchAssistantScreen}
+            options={{ headerShown: false }}
+          />
+          <Stack.Screen
+            name="CampusSocialHub"
+            component={CampusSocialHub}
+            options={{ headerShown: false }}
+          />
+          <Stack.Screen
+            name="PerformanceAnalytics"
+            component={PerformanceAnalyticsScreen}
+            options={{ headerShown: false }}
+          />
+          <Stack.Screen
+            name="PersonalisedTimetable"
+            component={PersonalisedTimetableScreen}
+            options={{ headerShown: false }}
+          />
+          <Stack.Screen
+            name="AssignmentDeadline"
+            component={AssignmentDeadlineScreen}
+            options={{ headerShown: false }}
+          />
+          <Stack.Screen
+            name="DigitalLibraryVault"
+            component={DigitalLibraryVaultScreen}
+            options={{ headerShown: false }}
+          />
+          <Stack.Screen
+            name="SmartAttendance"
+            component={SmartAttendanceScreen}
+            options={{ headerShown: false }}
+          />
+          <Stack.Screen
+            name="CampusNavigation"
+            component={CampusNavigationScreen}
+            options={{ headerShown: false }}
+          />
+          <Stack.Screen
+            name="EventsSeminarHub"
+            component={EventsSeminarHubScreen}
+            options={{ headerShown: false }}
+          />
+          <Stack.Screen
+            name="FeesPayments"
+            component={FeesPaymentsScreen}
+            options={{ headerShown: false }}
+          />
+          <Stack.Screen
+            name="ComplaintsSystem"
+            component={ComplaintsSystemScreen}
+            options={{ headerShown: false }}
+          />
         </Stack.Navigator>
       )}
     </NavigationContainer>

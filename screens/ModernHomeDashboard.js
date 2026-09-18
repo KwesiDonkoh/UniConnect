@@ -68,6 +68,8 @@ import KNUSTSISSync from '../components/KNUSTSISSync';
 import NeuralAmbience from '../components/NeuralAmbience';
 import CareerVoyager from '../components/CareerVoyager';
 import ResearchLedger from '../components/ResearchLedger';
+import VirtualOfficeHours from '../components/VirtualOfficeHours';
+import LectureHub from '../components/LectureHub';
 import AppFeedback from '../components/AppFeedback';
 import AppRating from '../components/AppRating';
 import ContactSupport from '../components/ContactSupport';
@@ -77,6 +79,12 @@ import VirtualCampusVR from '../components/VirtualCampusVR';
 import NeuralAttendance from '../components/NeuralAttendance';
 import CurriculumArchitect from '../components/CurriculumArchitect';
 import GlobalGrantLedger from '../components/GlobalGrantLedger';
+import ZenSpace from '../components/ZenSpace';
+import CampusGigs from '../components/CampusGigs';
+import SmartBooking from '../components/SmartBooking';
+import ClassPulse from '../components/ClassPulse';
+import AutoGraderAI from '../components/AutoGraderAI';
+import OriginalityMatrix from '../components/OriginalityMatrix';
 
 const { width, height } = Dimensions.get('window');
 
@@ -163,6 +171,14 @@ export default function ModernHomeDashboard({ navigation }) {
   const [showNeuralAttendance, setShowNeuralAttendance] = useState(false);
   const [showCurriculumArchitect, setShowCurriculumArchitect] = useState(false);
   const [showGrantLedger, setShowGrantLedger] = useState(false);
+  const [showOfficeHours, setShowOfficeHours] = useState(false);
+  const [showLectureHub, setShowLectureHub] = useState(false);
+  const [showZenSpace, setShowZenSpace] = useState(false);
+  const [showCampusGigs, setShowCampusGigs] = useState(false);
+  const [showSmartBooking, setShowSmartBooking] = useState(false);
+  const [showClassPulse, setShowClassPulse] = useState(false);
+  const [showAutoGrader, setShowAutoGrader] = useState(false);
+  const [showOriginalityMatrix, setShowOriginalityMatrix] = useState(false);
   const [selectedHubCategory, setSelectedHubCategory] = useState(null);
   const [showGlobalHub, setShowGlobalHub] = useState(false);
   const [showPeerHub, setShowPeerHub] = useState(false);
@@ -531,7 +547,9 @@ export default function ModernHomeDashboard({ navigation }) {
                           <Ionicons name="school" size={14} color="#FFFFFF" />
                         </View>
                         <View>
-                          <Text style={[styles.uniName, isDark && styles.darkText]}>UNIVERSITY CONNECT</Text>
+                          <Text style={[styles.uniName, isDark && styles.darkText]} numberOfLines={1}>
+                            {(user.university || 'UNIVERSITY CONNECT').toUpperCase()}
+                          </Text>
                           <Text style={[styles.uniTagline, isDark && styles.darkTextSecondary]}>Excellence in Connectivity</Text>
                         </View>
                       </View>
@@ -586,8 +604,12 @@ export default function ModernHomeDashboard({ navigation }) {
 
                           <View style={styles.idInfoRow}>
                             <View style={[styles.idInfoItem, { flex: 1 }]}>
-                              <Text style={[styles.idInfoLabel, isDark && styles.darkTextSecondary]}>LEVEL</Text>
-                              <Text style={[styles.idInfoValue, isDark && styles.darkText]}>{user.academicLevel || '100'}</Text>
+                              <Text style={[styles.idInfoLabel, isDark && styles.darkTextSecondary]}>
+                                {user.degreeType === 'Undergraduate' ? 'LEVEL' : 'DEGREE'}
+                              </Text>
+                              <Text style={[styles.idInfoValue, isDark && styles.darkText]}>
+                                {user.degreeType === 'Undergraduate' ? user.academicLevel || '100' : user.degreeType || 'POSTGRAD'}
+                              </Text>
                             </View>
                             <View style={[styles.idInfoItem, { flex: 1 }]}>
                               <Text style={[styles.idInfoLabel, isDark && styles.darkTextSecondary]}>STATUS</Text>
@@ -598,9 +620,16 @@ export default function ModernHomeDashboard({ navigation }) {
                           <View style={styles.idInfoItem}>
                             <Text style={[styles.idInfoLabel, isDark && styles.darkTextSecondary]}>PROGRAM OF STUDY</Text>
                             <Text style={[styles.idInfoValue, isDark && styles.darkText]} numberOfLines={1}>
-                              {user.department || 'BSc. Computer Science'}
+                              {user.programme || user.department || 'BSc. Computer Science'}
                             </Text>
                           </View>
+
+                          {(user.college && user.college.includes('Engineering')) && (
+                            <View style={styles.engineeringBadge}>
+                              <Ionicons name="settings" size={10} color="#FFFFFF" />
+                              <Text style={styles.engineeringBadgeText}>COE ENGINEER</Text>
+                            </View>
+                          )}
                         </View>
                       </View>
                     </View>
@@ -693,7 +722,7 @@ export default function ModernHomeDashboard({ navigation }) {
               >
                 <TouchableOpacity
                   style={styles.hubCard}
-                  onPress={() => openHubDetail('News')}
+                  onPress={() => navigation.navigate('GlobalNews')}
                 >
                   <LinearGradient
                     colors={['#6366F1', '#4F46E5']}
@@ -707,21 +736,35 @@ export default function ModernHomeDashboard({ navigation }) {
 
                 <TouchableOpacity
                   style={styles.hubCard}
-                  onPress={() => openHubDetail('Events')}
+                  onPress={() => navigation.navigate('EventsHub')}
                 >
                   <LinearGradient
                     colors={['#10B981', '#059669']}
                     style={styles.hubCardGradient}
                   >
-                    <Ionicons name="calendar" size={24} color="#FFFFFF" />
-                    <Text style={styles.hubCardTitle}>Campus Events</Text>
-                    <Text style={styles.hubCardSub}>Tech Innovation Summit</Text>
+                    <Ionicons name="calendar-clear" size={24} color="#FFFFFF" />
+                    <Text style={styles.hubCardTitle}>Events Hub</Text>
+                    <Text style={styles.hubCardSub}>Book tickets & Explore</Text>
                   </LinearGradient>
                 </TouchableOpacity>
 
                 <TouchableOpacity
                   style={styles.hubCard}
-                  onPress={() => openHubDetail('Groups')}
+                  onPress={() => navigation.navigate('Shuttle')}
+                >
+                  <LinearGradient
+                    colors={['#A855F7', '#7C3AED']}
+                    style={styles.hubCardGradient}
+                  >
+                    <Ionicons name="bus" size={24} color="#FFFFFF" />
+                    <Text style={styles.hubCardTitle}>Smart Shuttle</Text>
+                    <Text style={styles.hubCardSub}>Live track & Board</Text>
+                  </LinearGradient>
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  style={styles.hubCard}
+                  onPress={() => navigation.navigate('GlobalGroups')}
                 >
                   <LinearGradient
                     colors={['#F59E0B', '#D97706']}
@@ -730,6 +773,34 @@ export default function ModernHomeDashboard({ navigation }) {
                     <Ionicons name="people" size={24} color="#FFFFFF" />
                     <Text style={styles.hubCardTitle}>Global Groups</Text>
                     <Text style={styles.hubCardSub}>Connect with scholars</Text>
+                  </LinearGradient>
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  style={styles.hubCard}
+                  onPress={() => navigation.navigate('Wallet')}
+                >
+                  <LinearGradient
+                    colors={['#0EA5E9', '#0284C7']}
+                    style={styles.hubCardGradient}
+                  >
+                    <Ionicons name="wallet" size={24} color="#FFFFFF" />
+                    <Text style={styles.hubCardTitle}>Student Wallet</Text>
+                    <Text style={styles.hubCardSub}>Manage your campus funds</Text>
+                  </LinearGradient>
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  style={styles.hubCard}
+                  onPress={() => navigation.navigate('Marketplace')}
+                >
+                  <LinearGradient
+                    colors={['#EC4899', '#DB2777']}
+                    style={styles.hubCardGradient}
+                  >
+                    <Ionicons name="cart" size={24} color="#FFFFFF" />
+                    <Text style={styles.hubCardTitle}>Student Market</Text>
+                    <Text style={styles.hubCardSub}>Buy & Sell items</Text>
                   </LinearGradient>
                 </TouchableOpacity>
               </ScrollView>
@@ -828,6 +899,31 @@ export default function ModernHomeDashboard({ navigation }) {
           </LinearGradient>
 
 
+          {/* 2030 Feature: Predictive Success AI */}
+          <View style={{ marginHorizontal: 20, marginTop: 20, backgroundColor: isDark ? '#1E293B' : '#FFF', borderRadius: 24, padding: 20, shadowColor: '#4F46E5', shadowOpacity: 0.1, shadowRadius: 20, elevation: 10, borderWidth: 1, borderColor: isDark ? 'rgba(99, 102, 241, 0.2)' : 'rgba(79, 70, 229, 0.05)' }}>
+            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 15 }}>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                <LinearGradient colors={['#4F46E5', '#7C3AED']} style={{ width: 40, height: 40, borderRadius: 12, justifyContent: 'center', alignItems: 'center' }}>
+                  <Ionicons name="rocket" size={20} color="#FFF" />
+                </LinearGradient>
+                <View>
+                  <Text style={{ fontSize: 16, fontWeight: '900', color: isDark ? '#F1F5F9' : '#1E293B' }}>Predictive Success AI</Text>
+                  <Text style={{ fontSize: 11, color: '#64748B' }}>Real-time academic simulation</Text>
+                </View>
+              </View>
+              <View style={{ alignItems: 'flex-end' }}>
+                <Text style={{ fontSize: 24, fontWeight: '900', color: '#10B981' }}>92%</Text>
+                <Text style={{ fontSize: 9, fontWeight: '800', color: '#10B981' }}>PROBABILITY</Text>
+              </View>
+            </View>
+            <View style={{ height: 6, backgroundColor: isDark ? '#334155' : '#F1F5F9', borderRadius: 3, overflow: 'hidden' }}>
+              <LinearGradient colors={['#4F46E5', '#10B981']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} style={{ width: '92%', height: '100%' }} />
+            </View>
+            <Text style={{ fontSize: 11, color: '#64748B', marginTop: 12, lineHeight: 16 }}>
+              <Text style={{ fontWeight: '800', color: '#4F46E5' }}>AI INSIGHT:</Text> Based on current attendance and CSM301 engagement, you are in the top 5% of your cohort. Maintain this pace to secure a 3.8+ GPA this semester.
+            </Text>
+          </View>
+
           {/* Experience the Future of KNUST Showcase */}
           <View style={[styles.showcaseSection, isDark && styles.darkSection]}>
             <LinearGradient
@@ -838,7 +934,7 @@ export default function ModernHomeDashboard({ navigation }) {
             >
               <View style={styles.showcaseHeader}>
                 <Text style={styles.showcaseBadge}>THE FUTURE IS HERE</Text>
-                <Text style={styles.showcaseTitle}>Experience the Future of KNUST</Text>
+                <Text style={styles.showcaseTitle}>Experience the Future of {user.university || 'UniConnect'}</Text>
               </View>
 
               <View style={styles.showcaseGrid}>
@@ -874,7 +970,7 @@ export default function ModernHomeDashboard({ navigation }) {
                   <Text style={styles.showcaseCardTitle}>Research</Text>
                 </TouchableOpacity>
 
-                  <TouchableOpacity style={styles.showcaseCard} onPress={() => setShowPeerCollab(true)}>
+                <TouchableOpacity style={styles.showcaseCard} onPress={() => setShowPeerCollab(true)}>
                   <View style={[styles.showcaseIconBg, { backgroundColor: '#F472B6' }]}><Ionicons name="people" size={20} color="#FFFFFF" /></View>
                   <Text style={styles.showcaseCardTitle}>Peers</Text>
                 </TouchableOpacity>
@@ -899,9 +995,14 @@ export default function ModernHomeDashboard({ navigation }) {
                   <Text style={styles.showcaseCardTitle}>Compass</Text>
                 </TouchableOpacity>
 
-                <TouchableOpacity style={styles.showcaseCard} onPress={() => setShowStudyTutors(true)}>
-                  <View style={[styles.showcaseIconBg, { backgroundColor: '#F43F5E' }]}><Ionicons name="school" size={20} color="#FFFFFF" /></View>
-                  <Text style={styles.showcaseCardTitle}>AI Tutors</Text>
+                <TouchableOpacity style={styles.showcaseCard} onPress={() => setShowLectureHub(true)}>
+                  <View style={[styles.showcaseIconBg, { backgroundColor: '#F43F5E' }]}><Ionicons name="videocam" size={20} color="#FFFFFF" /></View>
+                  <Text style={styles.showcaseCardTitle}>Lectures</Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity style={styles.showcaseCard} onPress={() => setShowOfficeHours(true)}>
+                  <View style={[styles.showcaseIconBg, { backgroundColor: '#6366F1' }]}><Ionicons name="calendar" size={20} color="#FFFFFF" /></View>
+                  <Text style={styles.showcaseCardTitle}>Faculty</Text>
                 </TouchableOpacity>
               </View>
 
@@ -1135,7 +1236,7 @@ export default function ModernHomeDashboard({ navigation }) {
               <View style={styles.quickActionRow}>
                 <TouchableOpacity
                   style={[styles.quickActionCard, isDark && styles.darkCard]}
-                  onPress={() => setShowGlobalHub(true)}
+                  onPress={() => navigation.navigate('GlobalNews')}
                   activeOpacity={0.8}
                 >
                   <LinearGradient
@@ -1229,6 +1330,79 @@ export default function ModernHomeDashboard({ navigation }) {
             </View>
           </View>
 
+          {/* Life & Wellness Hub */}
+          <View style={[styles.section, isDark && styles.darkSection]}>
+            <View style={styles.sectionHeader}>
+              <View style={styles.sectionTitleRow}>
+                <View style={styles.sectionIcon}>
+                  <Ionicons name="sparkles" size={20} color="#6366F1" />
+                </View>
+                <Text style={[styles.sectionTitle, isDark && styles.darkText]}>Student Life & Wellness</Text>
+              </View>
+              <TouchableOpacity onPress={() => navigation.navigate('Wellness')}>
+                <Text style={styles.seeAllText}>Zen Center</Text>
+              </TouchableOpacity>
+            </View>
+
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.hubScroll}>
+              <TouchableOpacity
+                style={styles.hubCard}
+                onPress={() => navigation.navigate('Wellness')}
+              >
+                <LinearGradient
+                  colors={['#A855F7', '#6B21A8']}
+                  style={styles.hubCardGradient}
+                >
+                  <Ionicons name="leaf" size={24} color="#FFFFFF" />
+                  <Text style={styles.hubCardTitle}>ZenSpace</Text>
+                  <Text style={styles.hubCardSub}>Mental Wellness Hub</Text>
+                </LinearGradient>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={styles.hubCard}
+                onPress={() => navigation.navigate('Marketplace')}
+              >
+                <LinearGradient
+                  colors={['#EC4899', '#BE185D']}
+                  style={styles.hubCardGradient}
+                >
+                  <Ionicons name="cart" size={24} color="#FFFFFF" />
+                  <Text style={styles.hubCardTitle}>Market</Text>
+                  <Text style={styles.hubCardSub}>Buy & Sell Campus</Text>
+                </LinearGradient>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={styles.hubCard}
+                onPress={() => navigation.navigate('EventsHub')}
+              >
+                <LinearGradient
+                  colors={['#10B981', '#047857']}
+                  style={styles.hubCardGradient}
+                >
+                  <Ionicons name="planet" size={24} color="#FFFFFF" />
+                  <Text style={styles.hubCardTitle}>Campus Life</Text>
+                  <Text style={styles.hubCardSub}>Festivals & Hacks</Text>
+                </LinearGradient>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={styles.hubCard}
+                onPress={() => navigation.navigate('AlumniConnect')}
+              >
+                <LinearGradient
+                  colors={['#6366F1', '#4338CA']}
+                  style={styles.hubCardGradient}
+                >
+                  <Ionicons name="school" size={24} color="#FFFFFF" />
+                  <Text style={styles.hubCardTitle}>Alumni</Text>
+                  <Text style={styles.hubCardSub}>Network & Mentor</Text>
+                </LinearGradient>
+              </TouchableOpacity>
+            </ScrollView>
+          </View>
+
           {/* Additional Student Features */}
           <View style={[styles.section, isDark && styles.darkSection]}>
             <Text style={[styles.sectionTitle, isDark && styles.darkText]}>📚 Academic Tools</Text>
@@ -1284,6 +1458,97 @@ export default function ModernHomeDashboard({ navigation }) {
                   <Text style={styles.additionalFeatureText}>Game Center</Text>
                 </LinearGradient>
               </TouchableOpacity>
+
+              <TouchableOpacity
+                style={[styles.additionalFeatureCard, isDark && styles.darkCard]}
+                onPress={() => navigation.navigate('AIResearchAssistant')}
+              >
+                <LinearGradient
+                  colors={['#4F46E5', '#3730A3']}
+                  style={styles.additionalFeatureGradient}
+                >
+                  <Ionicons name="sparkles" size={24} color="#FFFFFF" />
+                  <Text style={styles.additionalFeatureText}>Research AI</Text>
+                </LinearGradient>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={[styles.additionalFeatureCard, isDark && styles.darkCard]}
+                onPress={() => navigation.navigate('PerformanceAnalytics')}
+              >
+                <LinearGradient
+                  colors={['#10B981', '#047857']}
+                  style={styles.additionalFeatureGradient}
+                >
+                  <Ionicons name="analytics" size={24} color="#FFFFFF" />
+                  <Text style={styles.additionalFeatureText}>Analytics</Text>
+                </LinearGradient>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={[styles.additionalFeatureCard, isDark && styles.darkCard]}
+                onPress={() => navigation.navigate('CampusSocialHub')}
+              >
+                <LinearGradient
+                  colors={['#F59E0B', '#D97706']}
+                  style={styles.additionalFeatureGradient}
+                >
+                  <Ionicons name="share-social" size={24} color="#FFFFFF" />
+                  <Text style={styles.additionalFeatureText}>Social Hub</Text>
+                </LinearGradient>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={[styles.additionalFeatureCard, isDark && styles.darkCard]}
+                onPress={() => navigation.navigate('Quiz')}
+              >
+                <LinearGradient
+                  colors={['#6366F1', '#4F46E5']}
+                  style={styles.additionalFeatureGradient}
+                >
+                  <Ionicons name="medal" size={24} color="#FFFFFF" />
+                  <Text style={styles.additionalFeatureText}>AI Quizzify</Text>
+                </LinearGradient>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={[styles.additionalFeatureCard, isDark && styles.darkCard]}
+                onPress={() => navigation.navigate('Scholarships')}
+              >
+                <LinearGradient
+                  colors={['#F59E0B', '#D97706']}
+                  style={styles.additionalFeatureGradient}
+                >
+                  <Ionicons name="rocket" size={24} color="#FFFFFF" />
+                  <Text style={styles.additionalFeatureText}>Scholarships</Text>
+                </LinearGradient>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={[styles.additionalFeatureCard, isDark && styles.darkCard]}
+                onPress={() => navigation.navigate('AcademicInsight')}
+              >
+                <LinearGradient
+                  colors={['#4F46E5', '#3730A3']}
+                  style={styles.additionalFeatureGradient}
+                >
+                  <Ionicons name="analytics" size={24} color="#FFFFFF" />
+                  <Text style={styles.additionalFeatureText}>GPA Insights</Text>
+                </LinearGradient>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={[styles.additionalFeatureCard, isDark && styles.darkCard]}
+                onPress={() => navigation.navigate('LibraryHub')}
+              >
+                <LinearGradient
+                  colors={['#8B5CF6', '#7C3AED']}
+                  style={styles.additionalFeatureGradient}
+                >
+                  <Ionicons name="library" size={24} color="#FFFFFF" />
+                  <Text style={styles.additionalFeatureText}>Library Hub</Text>
+                </LinearGradient>
+              </TouchableOpacity>
             </View>
           </View>
 
@@ -1297,18 +1562,233 @@ export default function ModernHomeDashboard({ navigation }) {
                 </TouchableOpacity>
               </View>
 
-              <FlatList
-                data={currentLevelModules.slice(0, 5)}
-                renderItem={renderModernCourseCard}
-                keyExtractor={(item) => item.code}
+              <ScrollView
                 horizontal
                 showsHorizontalScrollIndicator={false}
-                contentContainerStyle={styles.coursesList}
-              />
+                style={{ flexDirection: 'row' }}
+              >
+                {currentLevelModules.slice(0, 5).map((item) => (
+                  <React.Fragment key={item.code}>
+                    {renderModernCourseCard({ item })}
+                  </React.Fragment>
+                ))}
+              </ScrollView>
             </View>
           )}
 
+          {/* Campus Services */}
+          <View style={[styles.section, isDark && styles.darkSection]}>
+            <View style={styles.sectionHeader}>
+              <View style={styles.sectionTitleRow}>
+                <View style={[styles.sectionIcon, { backgroundColor: '#10B98120' }]}>
+                  <Ionicons name="business" size={20} color="#10B981" />
+                </View>
+                <Text style={[styles.sectionTitle, isDark && styles.darkText]}>Campus Services</Text>
+              </View>
+              <TouchableOpacity onPress={() => navigation.navigate('CampusMap')}>
+                <Text style={styles.seeAllText}>Open Map</Text>
+              </TouchableOpacity>
+            </View>
+
+            <View style={styles.additionalFeaturesGrid}>
+              <TouchableOpacity
+                style={[styles.additionalFeatureCard, isDark && styles.darkCard]}
+                onPress={() => navigation.navigate('Dining')}
+              >
+                <LinearGradient
+                  colors={['#F59E0B', '#D97706']}
+                  style={styles.additionalFeatureGradient}
+                >
+                  <Ionicons name="restaurant" size={24} color="#FFFFFF" />
+                  <Text style={styles.additionalFeatureText}>Dining Hub</Text>
+                </LinearGradient>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={[styles.additionalFeatureCard, isDark && styles.darkCard]}
+                onPress={() => navigation.navigate('Shuttle')}
+              >
+                <LinearGradient
+                  colors={['#4F46E5', '#3B82F6']}
+                  style={styles.additionalFeatureGradient}
+                >
+                  <Ionicons name="bus" size={24} color="#FFFFFF" />
+                  <Text style={styles.additionalFeatureText}>Smart Shuttle</Text>
+                </LinearGradient>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={[styles.additionalFeatureCard, isDark && styles.darkCard]}
+                onPress={() => navigation.navigate('LibraryHub')}
+              >
+                <LinearGradient
+                  colors={['#8B5CF6', '#6D28D9']}
+                  style={styles.additionalFeatureGradient}
+                >
+                  <Ionicons name="library" size={24} color="#FFFFFF" />
+                  <Text style={styles.additionalFeatureText}>Smart Library</Text>
+                </LinearGradient>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={[styles.additionalFeatureCard, isDark && styles.darkCard]}
+                onPress={() => navigation.navigate('HostelHub')}
+              >
+                <LinearGradient
+                  colors={['#EC4899', '#D946EF']}
+                  style={styles.additionalFeatureGradient}
+                >
+                  <Ionicons name="bed" size={24} color="#FFFFFF" />
+                  <Text style={styles.additionalFeatureText}>Hostel Hub</Text>
+                </LinearGradient>
+              </TouchableOpacity>
+            </View>
+          </View>
+
+          {/* Student Life & Support Hub */}
+          <View style={[styles.section, isDark && styles.darkSection]}>
+            <View style={styles.sectionHeader}>
+              <View style={styles.sectionTitleRow}>
+                <View style={[styles.sectionIcon, { backgroundColor: '#10B98120' }]}>
+                  <Ionicons name="sparkles" size={20} color="#10B981" />
+                </View>
+                <Text style={[styles.sectionTitle, isDark && styles.darkText]}>Student Life & Support</Text>
+              </View>
+            </View>
+
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.hubScroll}>
+              <TouchableOpacity
+                style={styles.hubCard}
+                onPress={() => navigation.navigate('Wellness')}
+              >
+                <LinearGradient
+                  colors={['#10B981', '#059669']}
+                  style={styles.hubCardGradient}
+                >
+                  <Ionicons name="leaf" size={24} color="#FFFFFF" />
+                  <Text style={styles.hubCardTitle}>Wellness</Text>
+                  <Text style={styles.hubCardSub}>Health & Meditation</Text>
+                </LinearGradient>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={styles.hubCard}
+                onPress={() => navigation.navigate('Careers')}
+              >
+                <LinearGradient
+                  colors={['#6366F1', '#4F46E5']}
+                  style={styles.hubCardGradient}
+                >
+                  <Ionicons name="briefcase" size={24} color="#FFFFFF" />
+                  <Text style={styles.hubCardTitle}>Careers</Text>
+                  <Text style={styles.hubCardSub}>Jobs & Internships</Text>
+                </LinearGradient>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={styles.hubCard}
+                onPress={() => navigation.navigate('Tasks')}
+              >
+                <LinearGradient
+                  colors={['#F59E0B', '#D97706']}
+                  style={styles.hubCardGradient}
+                >
+                  <Ionicons name="checkbox" size={24} color="#FFFFFF" />
+                  <Text style={styles.hubCardTitle}>My Tasks</Text>
+                  <Text style={styles.hubCardSub}>Study & Projects</Text>
+                </LinearGradient>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={styles.hubCard}
+                onPress={() => navigation.navigate('CampusLife')}
+              >
+                <LinearGradient
+                  colors={['#9333EA', '#7928CA']}
+                  style={styles.hubCardGradient}
+                >
+                  <Ionicons name="trophy" size={24} color="#FFFFFF" />
+                  <Text style={styles.hubCardTitle}>Campus Life</Text>
+                  <Text style={styles.hubCardSub}>Events & Sports</Text>
+                </LinearGradient>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={styles.hubCard}
+                onPress={() => navigation.navigate('SupportHub')}
+              >
+                <LinearGradient
+                  colors={['#3B82F6', '#2563EB']}
+                  style={styles.hubCardGradient}
+                >
+                  <Ionicons name="help-buoy" size={24} color="#FFFFFF" />
+                  <Text style={styles.hubCardTitle}>UniHelp</Text>
+                  <Text style={styles.hubCardSub}>Support & IT Hub</Text>
+                </LinearGradient>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={styles.hubCard}
+                onPress={() => navigation.navigate('Safety')}
+              >
+                <LinearGradient
+                  colors={['#EF4444', '#DC2626']}
+                  style={styles.hubCardGradient}
+                >
+                  <Ionicons name="shield-checkmark" size={24} color="#FFFFFF" />
+                  <Text style={styles.hubCardTitle}>Safety</Text>
+                  <Text style={styles.hubCardSub}>Report & Protect</Text>
+                </LinearGradient>
+              </TouchableOpacity>
+            </ScrollView>
+          </View>
+
           {/* Achievements & Progress */}
+          <View style={[styles.section, isDark && styles.darkSection]}>
+            {/* ... existing achievements ... */}
+          </View>
+
+          {/* Media & Governance Hub */}
+          <View style={[styles.section, isDark && styles.darkSection]}>
+            <View style={styles.sectionHeader}>
+              <View style={styles.sectionTitleRow}>
+                <View style={[styles.sectionIcon, { backgroundColor: '#6366F120' }]}>
+                  <Ionicons name="megaphone" size={20} color="#6366F1" />
+                </View>
+                <Text style={[styles.sectionTitle, isDark && styles.darkText]}>Media & Governance</Text>
+              </View>
+            </View>
+
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.hubScroll}>
+              <TouchableOpacity
+                style={styles.hubCard}
+                onPress={() => navigation.navigate('Radio')}
+              >
+                <LinearGradient
+                  colors={['#1F2937', '#111827']}
+                  style={styles.hubCardGradient}
+                >
+                  <Ionicons name="radio" size={24} color="#FFFFFF" />
+                  <Text style={styles.hubCardTitle}>UniRadio</Text>
+                  <Text style={styles.hubCardSub}>Live Campus Broadcast</Text>
+                </LinearGradient>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={styles.hubCard}
+                onPress={() => navigation.navigate('Election')}
+              >
+                <LinearGradient
+                  colors={['#EF4444', '#B91C1C']}
+                  style={styles.hubCardGradient}
+                >
+                  <Ionicons name="checkbox" size={24} color="#FFFFFF" />
+                  <Text style={styles.hubCardTitle}>SRC Elections</Text>
+                  <Text style={styles.hubCardSub}>Cast Your Vote</Text>
+                </LinearGradient>
+              </TouchableOpacity>
+            </ScrollView>
+          </View>
           <View style={[styles.section, isDark && styles.darkSection]}>
             <View style={styles.sectionHeader}>
               <Text style={[styles.sectionTitle, isDark && styles.darkText]}>🏆 Achievements & Progress</Text>
@@ -1585,8 +2065,186 @@ export default function ModernHomeDashboard({ navigation }) {
             ))}
           </View>
 
+
+          {/* ════════════ CAMPUS SERVICES HUB ════════════ */}
+          <View style={{ paddingHorizontal: 20, marginTop: 30, marginBottom: 8 }}>
+            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 18 }}>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                <LinearGradient colors={['#6366F1', '#8B5CF6']} style={{ width: 36, height: 36, borderRadius: 12, justifyContent: 'center', alignItems: 'center' }}>
+                  <Ionicons name="grid" size={18} color="#FFF" />
+                </LinearGradient>
+                <View>
+                  <Text style={{ fontSize: 18, fontWeight: '900', color: isDark ? '#F1F5F9' : '#1E293B' }}>Campus Services</Text>
+                  <Text style={{ fontSize: 11, color: '#64748B', fontWeight: '600' }}>Everything you need, one tap away</Text>
+                </View>
+              </View>
+            </View>
+
+            {/* Row 1 */}
+            <View style={{ flexDirection: 'row', gap: 12, marginBottom: 12 }}>
+              {/* Personalised Timetable */}
+              <TouchableOpacity
+                style={{ flex: 1, borderRadius: 22, overflow: 'hidden', elevation: 6, shadowColor: '#6366F1', shadowOpacity: 0.2, shadowRadius: 10 }}
+                onPress={() => navigation.navigate('PersonalisedTimetable')}
+                activeOpacity={0.88}
+              >
+                <LinearGradient colors={['#6366F1', '#4F46E5']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}
+                  style={{ padding: 18, minHeight: 120, justifyContent: 'space-between' }}>
+                  <View style={{ width: 44, height: 44, borderRadius: 14, backgroundColor: 'rgba(255,255,255,0.2)', justifyContent: 'center', alignItems: 'center' }}>
+                    <Ionicons name="calendar" size={22} color="#FFF" />
+                  </View>
+                  <View>
+                    <Text style={{ color: '#FFF', fontSize: 14, fontWeight: '900', lineHeight: 18 }}>Personalised{'\n'}Timetable</Text>
+                    <Text style={{ color: 'rgba(255,255,255,0.75)', fontSize: 10, marginTop: 4, fontWeight: '600' }}>View weekly schedule</Text>
+                  </View>
+                </LinearGradient>
+              </TouchableOpacity>
+
+              {/* Assignment Deadline */}
+              <TouchableOpacity
+                style={{ flex: 1, borderRadius: 22, overflow: 'hidden', elevation: 6, shadowColor: '#EF4444', shadowOpacity: 0.2, shadowRadius: 10 }}
+                onPress={() => navigation.navigate('AssignmentDeadline')}
+                activeOpacity={0.88}
+              >
+                <LinearGradient colors={['#F59E0B', '#EF4444']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}
+                  style={{ padding: 18, minHeight: 120, justifyContent: 'space-between' }}>
+                  <View style={{ width: 44, height: 44, borderRadius: 14, backgroundColor: 'rgba(255,255,255,0.2)', justifyContent: 'center', alignItems: 'center' }}>
+                    <Ionicons name="hourglass" size={22} color="#FFF" />
+                  </View>
+                  <View>
+                    <Text style={{ color: '#FFF', fontSize: 14, fontWeight: '900', lineHeight: 18 }}>Assignment{'\n'}Deadlines</Text>
+                    <Text style={{ color: 'rgba(255,255,255,0.75)', fontSize: 10, marginTop: 4, fontWeight: '600' }}>Track & submit work</Text>
+                  </View>
+                </LinearGradient>
+              </TouchableOpacity>
+            </View>
+
+            {/* Row 2 */}
+            <View style={{ flexDirection: 'row', gap: 12, marginBottom: 12 }}>
+              {/* Digital Library Vault */}
+              <TouchableOpacity
+                style={{ flex: 1, borderRadius: 22, overflow: 'hidden', elevation: 6, shadowColor: '#10B981', shadowOpacity: 0.2, shadowRadius: 10 }}
+                onPress={() => navigation.navigate('DigitalLibraryVault')}
+                activeOpacity={0.88}
+              >
+                <LinearGradient colors={['#10B981', '#059669']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}
+                  style={{ padding: 18, minHeight: 120, justifyContent: 'space-between' }}>
+                  <View style={{ width: 44, height: 44, borderRadius: 14, backgroundColor: 'rgba(255,255,255,0.2)', justifyContent: 'center', alignItems: 'center' }}>
+                    <Ionicons name="library" size={22} color="#FFF" />
+                  </View>
+                  <View>
+                    <Text style={{ color: '#FFF', fontSize: 14, fontWeight: '900', lineHeight: 18 }}>Digital Library{'\n'}Vault</Text>
+                    <Text style={{ color: 'rgba(255,255,255,0.75)', fontSize: 10, marginTop: 4, fontWeight: '600' }}>PDFs, notes & past Qs</Text>
+                  </View>
+                </LinearGradient>
+              </TouchableOpacity>
+
+              {/* Smart Attendance */}
+              <TouchableOpacity
+                style={{ flex: 1, borderRadius: 22, overflow: 'hidden', elevation: 6, shadowColor: '#EF4444', shadowOpacity: 0.2, shadowRadius: 10 }}
+                onPress={() => navigation.navigate('SmartAttendance')}
+                activeOpacity={0.88}
+              >
+                <LinearGradient colors={['#EF4444', '#DC2626']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}
+                  style={{ padding: 18, minHeight: 120, justifyContent: 'space-between' }}>
+                  <View style={{ width: 44, height: 44, borderRadius: 14, backgroundColor: 'rgba(255,255,255,0.2)', justifyContent: 'center', alignItems: 'center' }}>
+                    <Ionicons name="scan-circle" size={22} color="#FFF" />
+                  </View>
+                  <View>
+                    <Text style={{ color: '#FFF', fontSize: 14, fontWeight: '900', lineHeight: 18 }}>Smart{'\n'}Attendance</Text>
+                    <Text style={{ color: 'rgba(255,255,255,0.75)', fontSize: 10, marginTop: 4, fontWeight: '600' }}>QR & GPS check-in</Text>
+                  </View>
+                </LinearGradient>
+              </TouchableOpacity>
+            </View>
+
+            {/* Row 3 */}
+            <View style={{ flexDirection: 'row', gap: 12, marginBottom: 12 }}>
+              {/* Campus Navigation */}
+              <TouchableOpacity
+                style={{ flex: 1, borderRadius: 22, overflow: 'hidden', elevation: 6, shadowColor: '#3B82F6', shadowOpacity: 0.2, shadowRadius: 10 }}
+                onPress={() => navigation.navigate('CampusNavigation')}
+                activeOpacity={0.88}
+              >
+                <LinearGradient colors={['#3B82F6', '#1D4ED8']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}
+                  style={{ padding: 18, minHeight: 120, justifyContent: 'space-between' }}>
+                  <View style={{ width: 44, height: 44, borderRadius: 14, backgroundColor: 'rgba(255,255,255,0.2)', justifyContent: 'center', alignItems: 'center' }}>
+                    <Ionicons name="navigate" size={22} color="#FFF" />
+                  </View>
+                  <View>
+                    <Text style={{ color: '#FFF', fontSize: 14, fontWeight: '900', lineHeight: 18 }}>Campus{'\n'}Navigation</Text>
+                    <Text style={{ color: 'rgba(255,255,255,0.75)', fontSize: 10, marginTop: 4, fontWeight: '600' }}>Find any building</Text>
+                  </View>
+                </LinearGradient>
+              </TouchableOpacity>
+
+              {/* Events & Seminar Hub */}
+              <TouchableOpacity
+                style={{ flex: 1, borderRadius: 22, overflow: 'hidden', elevation: 6, shadowColor: '#8B5CF6', shadowOpacity: 0.2, shadowRadius: 10 }}
+                onPress={() => navigation.navigate('EventsSeminarHub')}
+                activeOpacity={0.88}
+              >
+                <LinearGradient colors={['#8B5CF6', '#6366F1']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}
+                  style={{ padding: 18, minHeight: 120, justifyContent: 'space-between' }}>
+                  <View style={{ width: 44, height: 44, borderRadius: 14, backgroundColor: 'rgba(255,255,255,0.2)', justifyContent: 'center', alignItems: 'center' }}>
+                    <Ionicons name="ticket" size={22} color="#FFF" />
+                  </View>
+                  <View>
+                    <Text style={{ color: '#FFF', fontSize: 14, fontWeight: '900', lineHeight: 18 }}>Events &{'\n'}Seminar Hub</Text>
+                    <Text style={{ color: 'rgba(255,255,255,0.75)', fontSize: 10, marginTop: 4, fontWeight: '600' }}>RSVP & book tickets</Text>
+                  </View>
+                </LinearGradient>
+              </TouchableOpacity>
+            </View>
+
+            {/* Row 4 — Wide Cards */}
+            {/* Fees & Payments */}
+            <TouchableOpacity
+              style={{ borderRadius: 22, overflow: 'hidden', elevation: 6, shadowColor: '#10B981', shadowOpacity: 0.2, shadowRadius: 10, marginBottom: 12 }}
+              onPress={() => navigation.navigate('FeesPayments')}
+              activeOpacity={0.88}
+            >
+              <LinearGradient colors={['#10B981', '#0EA5E9']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }}
+                style={{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: 22, paddingVertical: 18, gap: 18 }}>
+                <View style={{ width: 52, height: 52, borderRadius: 16, backgroundColor: 'rgba(255,255,255,0.2)', justifyContent: 'center', alignItems: 'center' }}>
+                  <Ionicons name="card" size={26} color="#FFF" />
+                </View>
+                <View style={{ flex: 1 }}>
+                  <Text style={{ color: '#FFF', fontSize: 17, fontWeight: '900' }}>Fees & Payments</Text>
+                  <Text style={{ color: 'rgba(255,255,255,0.8)', fontSize: 12, marginTop: 3, fontWeight: '600' }}>Pay tuition · View receipts · Track balance</Text>
+                </View>
+                <Ionicons name="arrow-forward-circle" size={30} color="rgba(255,255,255,0.85)" />
+              </LinearGradient>
+            </TouchableOpacity>
+
+            {/* Complaints System + Offline Mode */}
+            <TouchableOpacity
+              style={{ borderRadius: 22, overflow: 'hidden', elevation: 6, shadowColor: '#6366F1', shadowOpacity: 0.2, shadowRadius: 10, marginBottom: 12 }}
+              onPress={() => navigation.navigate('ComplaintsSystem')}
+              activeOpacity={0.88}
+            >
+              <LinearGradient colors={['#6366F1', '#8B5CF6', '#EC4899']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }}
+                style={{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: 22, paddingVertical: 18, gap: 18 }}>
+                <View style={{ width: 52, height: 52, borderRadius: 16, backgroundColor: 'rgba(255,255,255,0.2)', justifyContent: 'center', alignItems: 'center' }}>
+                  <Ionicons name="megaphone" size={26} color="#FFF" />
+                </View>
+                <View style={{ flex: 1 }}>
+                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                    <Text style={{ color: '#FFF', fontSize: 17, fontWeight: '900' }}>Complaints System</Text>
+                    <View style={{ backgroundColor: 'rgba(0,0,0,0.25)', paddingHorizontal: 8, paddingVertical: 2, borderRadius: 8 }}>
+                      <Text style={{ color: '#FFF', fontSize: 9, fontWeight: '900', letterSpacing: 1 }}>+ OFFLINE</Text>
+                    </View>
+                  </View>
+                  <Text style={{ color: 'rgba(255,255,255,0.8)', fontSize: 12, marginTop: 3, fontWeight: '600' }}>Report · Track · Access local vault offline</Text>
+                </View>
+                <Ionicons name="arrow-forward-circle" size={30} color="rgba(255,255,255,0.85)" />
+              </LinearGradient>
+            </TouchableOpacity>
+          </View>
+
           {/* Bottom Spacing */}
           <View style={{ height: 120 }} />
+
         </ScrollView>
       </Animated.View>
 
@@ -1745,7 +2403,7 @@ export default function ModernHomeDashboard({ navigation }) {
       <StudyBuddy visible={showStudyBuddy} onClose={() => setShowStudyBuddy(false)} user={user} />
       <ExamTimer visible={showExamTimer} onClose={() => setShowExamTimer(false)} isDark={isDark} />
       <SmartHallPass visible={showHallPass} onClose={() => setShowHallPass(false)} user={user} />
-      <SISSyncProvider visible={showSISSync} onClose={() => setShowSISSync(false)} onSyncComplete={() => Alert.alert('Sync Successful', 'Your profile and grades have been updated from KNUST SIS.')} />
+      <SISSyncProvider visible={showSISSync} onClose={() => setShowSISSync(false)} onSyncComplete={() => Alert.alert('Sync Successful', `Your profile and grades have been updated from your ${user.university || 'university'} portal.`)} />
       {/* Lecturer AI Suite Modal */}
       <LecturerAISuite
         visible={showLecturerSuite}
@@ -1766,14 +2424,25 @@ export default function ModernHomeDashboard({ navigation }) {
       <AppFeedback visible={showFeedback} onClose={() => setShowFeedback(false)} isDark={isDark} />
       <AppRating visible={showRating} onClose={() => setShowRating(false)} isDark={isDark} />
       <ContactSupport visible={showSupport} onClose={() => setShowSupport(false)} isDark={isDark} />
-      
+
       <GlobalNetwork visible={showGlobalNetwork} onClose={() => setShowGlobalNetwork(false)} isDark={isDark} />
       <AIThesisMentor visible={showThesisMentor} onClose={() => setShowThesisMentor(false)} isDark={isDark} />
       <VirtualCampusVR visible={showVirtualCampus} onClose={() => setShowVirtualCampus(false)} isDark={isDark} />
       <NeuralAttendance visible={showNeuralAttendance} onClose={() => setShowNeuralAttendance(false)} isDark={isDark} />
+      <VirtualOfficeHours visible={showOfficeHours} onClose={() => setShowOfficeHours(false)} isDark={isDark} />
+      <LectureHub visible={showLectureHub} onClose={() => setShowLectureHub(false)} isDark={isDark} />
       <CurriculumArchitect visible={showCurriculumArchitect} onClose={() => setShowCurriculumArchitect(false)} isDark={isDark} />
       <GlobalGrantLedger visible={showGrantLedger} onClose={() => setShowGrantLedger(false)} isDark={isDark} />
-      
+
+      <ZenSpace visible={showZenSpace} onClose={() => setShowZenSpace(false)} isDark={isDark} />
+      <CampusGigs visible={showCampusGigs} onClose={() => setShowCampusGigs(false)} isDark={isDark} />
+      <SmartBooking visible={showSmartBooking} onClose={() => setShowSmartBooking(false)} isDark={isDark} />
+      <ClassPulse visible={showClassPulse} onClose={() => setShowClassPulse(false)} isDark={isDark} />
+      <AutoGraderAI visible={showAutoGrader} onClose={() => setShowAutoGrader(false)} isDark={isDark} />
+      <OriginalityMatrix visible={showOriginalityMatrix} onClose={() => setShowOriginalityMatrix(false)} isDark={isDark} />
+
+
+
       <DreamJournal visible={showDreamJournal} onClose={() => setShowDreamJournal(false)} isDark={isDark} />
       <TimeTravel visible={showTimeTravel} onClose={() => setShowTimeTravel(false)} isDark={isDark} />
 
@@ -2124,6 +2793,26 @@ const styles = StyleSheet.create({
   },
   idInfoGrid: {
     gap: 4,
+  },
+  engineeringBadge: {
+    position: 'absolute',
+    top: -10,
+    right: 0,
+    backgroundColor: '#6366F1',
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: 6,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.2)',
+  },
+  engineeringBadgeText: {
+    fontSize: 8,
+    fontWeight: '900',
+    color: '#FFFFFF',
+    letterSpacing: 0.5,
   },
   idInfoItem: {
     marginBottom: 1,

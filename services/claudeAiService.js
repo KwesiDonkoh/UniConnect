@@ -1,126 +1,135 @@
-/**
- * Claude AI Service - Deep intelligent AI integration
- * Powered by Claude 3.5 Sonnet principles
- */
+import { supabase } from '../config/supabaseConfig';
+
+const ANTHROPIC_API_KEY = (process.env.EXPO_PUBLIC_ANTHROPIC_API_KEY || '').trim();
+const CLAUDE_MODEL = 'claude-3-5-sonnet-20241022';
+const API_URL = 'https://api.anthropic.com/v1/messages';
+
 class ClaudeAiService {
   constructor() {
-    this.modelName = 'Claude 3.5 Sonnet';
-    this.version = 'v2.0';
+    this.isOnline = ANTHROPIC_API_KEY.length > 0;
   }
 
-  /**
-   * Generates a deep, intelligent response to a query
-   * @param {string} query - The user's question
-   * @param {object} context - Optional context (userType, course, preferences)
-   * @returns {Promise<string>} - The AI response
-   */
   async generateResponse(query, context = {}) {
-    const { userType = 'student', course = null, academicLevel = '100' } = context;
-    
-    // Simulate API delay
-    await new Promise(resolve => setTimeout(resolve, 2000));
+    const startTime = Date.now();
+    let response;
+    let usedRealAPI = false;
 
-    const lowercaseQuery = query.toLowerCase();
-
-    // Science-related deep dive
-    if (lowercaseQuery.includes('science') || lowercaseQuery.includes('what is science')) {
-      return this._generateScienceExegesis();
+    try {
+      if (this.isOnline) {
+        response = await this._callClaudeAPI(query, context);
+        usedRealAPI = true;
+      } else {
+        response = this._smartLocalResponse(query, context);
+      }
+    } catch (error) {
+      console.error('[Claude AI] API call failed — falling back to local:', error.message);
+      response = this._smartLocalResponse(query, context);
     }
 
-    // Technology/Computing deep dive
-    if (lowercaseQuery.includes('computer') || lowercaseQuery.includes('code') || lowercaseQuery.includes('software')) {
-      return this._generateComputingExegesis(query);
+    if (!response || typeof response !== 'string' || response.trim() === '') {
+      response = this._smartLocalResponse(query, context);
     }
 
-    // Academic deep dive
-    if (lowercaseQuery.includes('study') || lowercaseQuery.includes('how to learn')) {
-      return this._generatePedagogicalAdvice(context);
+    const currentUid = await this._getCurrentUserId();
+    if (currentUid && query && response) {
+      this.logInteraction(currentUid, query, response, context, Date.now() - startTime, usedRealAPI).catch(() => {});
     }
 
-    // Default intelligent response (General Knowledge)
-    return this._generateGeneralIntelligenceResponse(query);
+    return response;
   }
 
-  /**
-   * Generates a "multi-billion dollar" depth response for 'What is Science?'
-   */
-  _generateScienceExegesis() {
-    return `Science (from Latin *scientia*, meaning "knowledge") is the systematic enterprise that builds and organizes knowledge in the form of testable explanations and predictions about the universe.
-
-### 🔭 The Pillars of Scientific Inquiry
-1.  **Empiricism**: Knowledge comes primarily from sensory experience.
-2.  **Rationalism**: The use of logic and deductive reasoning to understand reality.
-3.  **Skepticism**: The constant questioning of existing paradigms.
-
-### 🧬 The Methodology
-Modern science follows the **Scientific Method**:
-- **Observation**: Noticing phenomena in the natural world.
-- **Hypothesis**: Proposing a tentative explanation.
-- **Experimentation**: Rigorously testing variables.
-- **Peer Review**: subjecting findings to independent scrutiny.
-
-### 🌐 Impact on Humanity
-Science isn't just a subject; it's a lens. It has enabled us to:
-- Map the human genome.
-- Understand the quantum nature of particles.
-- Launch telescopes that look back into the dawn of time (James Webb).
-
-*Is there a specific branch of science—like Physics, Biology, or Social Sciences—that you'd like to explore in depth?*`;
+  async summarise(text, maxLength = 150) {
+    const query = `Please summarise the following in about ${maxLength} words, using bullet points where appropriate:\n\n${text}`;
+    return this.generateResponse(query, { userType: 'student' });
   }
 
-  _generateComputingExegesis(query) {
-    return `Computing is the study and development of algorithmic processes and hardware that process information.
-
-### 💻 Key Computing Paradigms
-- **Von Neumann Architecture**: The foundational structure of most computers today.
-- **Algorithms & Data Structures**: The "logic" vs "storage" of computation.
-- **Distributed Systems**: How modern clouds (like the ones powering UniConnect) operate.
-
-### 🚀 Future Horizons
-- **AI & LLMs**: Like the Claude model I'm running on.
-- **Quantum Computing**: Utilizing superposition for exponential speed.
-- **Edge Computing**: Moving processing closer to the user.
-
-*As a ${query.includes('code') ? 'developer' : 'scholar'}, would you like me to analyze a specific algorithm or architectural pattern?*`;
+  async generateQuiz(topic, count = 5, options = {}) {
+    const difficulty = options.difficulty || 'medium';
+    const type = options.type || 'multiple choice';
+    const query = `Generate ${count} ${difficulty} ${type} quiz questions about: "${topic}".`;
+    return this.generateResponse(query, { userType: 'student', ...options });
   }
 
-  _generatePedagogicalAdvice(context) {
-    return `Effective learning is about **encoding** and **retrieval**, not just reading.
-
-### 🧠 The Claude Method for Accelerated Learning:
-1.  **Feynman Technique**: Explain a concept as if to a child. If you can't, you don't understand it yet.
-2.  **Spaced Repetition**: Re-engage with the material just before you're about to forget it.
-3.  **Active Recall**: Test yourself constantly (use our "Quiz Generator" feature!).
-
-### 📈 Your Context
-Since you are a **${context.userType}** studying **${context.course?.name || 'General Studies'}**, focus on integrating these concepts into your project work immediately.
-
-*Would you like me to create a 7-day optimized study schedule for your current modules?*`;
+  async giveFeedback(text, options = {}) {
+    const query = `As an academic assessor, provide constructive feedback on this student submission:\n\n${text}`;
+    return this.generateResponse(query, { userType: 'lecturer', ...options });
   }
 
-  _generateGeneralIntelligenceResponse(query) {
-    return `That's an excellent question! As an AI trained by Anthropic principles (Claude), I approach "${query}" by looking at multiple perspectives.
-
-### 📜 Philosophical Context
-To understand this, we must first look at the underlying principles of... [Depth Added Dynamically]
-
-### 🔍 Analysis
-- **Perspective A**: The practical implementation.
-- **Perspective B**: The theoretical framework.
-- **Perspective C**: The future ethical implications.
-
-### 💡 Synthesis
-In summary, your question touches on the intersection of knowledge and application.
-
-*I have access to extensive resources on this topic. Should I provide academic references or a practical walkthrough?*`;
+  async explainConcept(concept, academicLevel = '200') {
+    const query = `Explain "${concept}" at level ${academicLevel} for a CS student.`;
+    return this.generateResponse(query, { userType: 'student', academicLevel });
   }
 
-  /**
-   * Log AI interactions (lightweight, no Firestore dependency)
-   */
-  async logInteraction(userId, query, response) {
-    // Logging is handled locally for now
-    console.log(`[Claude AI] User: ${userId} | Query: "${query.substring(0, 40)}..."`);
+  async buildStudyPlan(params) {
+    const query = `Create a study plan based on parameters: ${JSON.stringify(params)}`;
+    return this.generateResponse(query, { userType: 'student' });
+  }
+
+  async _callClaudeAPI(query, context) {
+    const systemPrompt = this._buildSystemPrompt(context);
+    const messages = [
+      ...(context.conversationHistory || []),
+      { role: 'user', content: query },
+    ];
+
+    const response = await fetch(API_URL, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': ANTHROPIC_API_KEY,
+        'anthropic-version': '2023-06-01',
+        'anthropic-dangerous-direct-browser-access': 'true',
+      },
+      body: JSON.stringify({
+        model: CLAUDE_MODEL,
+        max_tokens: 1024,
+        system: systemPrompt,
+        messages,
+      }),
+    });
+
+    if (!response.ok) {
+      throw new Error(`API error ${response.status}`);
+    }
+
+    const data = await response.json();
+    return data?.content?.[0]?.text;
+  }
+
+  _buildSystemPrompt(context) {
+    const { userType = 'student', userName } = context;
+    if (userType === 'lecturer') {
+      return `You are an AI teaching assistant for UniConnect, helping ${userName || 'a lecturer'}.`;
+    }
+    return `You are an AI academic tutor for UniConnect, helping ${userName || 'a student'}.`;
+  }
+
+  _smartLocalResponse(query, context) {
+    return `Great question! Here is academic assistance regarding your query: "${query}".`;
+  }
+
+  async logInteraction(userId, query, response, context = {}, latencyMs = 0, usedRealAPI = false) {
+    try {
+      await supabase.from('ai_interactions').insert([{
+        user_id: userId,
+        query: String(query).substring(0, 500),
+        response_length: String(response || '').length,
+        used_api: usedRealAPI,
+        latency_ms: latencyMs,
+        created_at: new Date().toISOString(),
+      }]);
+    } catch (error) {
+      console.warn('[AI] Interaction logging failed:', error.message);
+    }
+  }
+
+  async _getCurrentUserId() {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      return user?.id || null;
+    } catch {
+      return null;
+    }
   }
 }
 

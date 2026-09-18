@@ -48,6 +48,16 @@ export const AppProvider = ({ children }) => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
 
+  // New Lifestyle State
+  const [tasks, setTasks] = useState([
+    { id: 1, title: 'Study for Data Structures Exam', type: 'Exams', deadline: '2 days left', completed: false, category: 'Academic' },
+    { id: 2, title: 'Write Research Paper on AI Ethics', type: 'Paper', deadline: 'Next Friday', completed: false, category: 'Academic' },
+    { id: 3, title: 'Group Project Meeting', type: 'Project', deadline: 'Today, 4 PM', completed: true, category: 'Personal' },
+  ]);
+  const [walletBalance, setWalletBalance] = useState(157.50);
+  const [diningCart, setDiningCart] = useState([]);
+  const [moodLogs, setMoodLogs] = useState([]);
+
   // Listen to authentication state changes
   useEffect(() => {
     const unsubscribe = authService.onAuthStateChange(async (firebaseUser) => {
@@ -64,10 +74,14 @@ export const AppProvider = ({ children }) => {
           avatar: firebaseUser.photoURL || 'https://i.pravatar.cc/150?img=1',
           department: userData.department || 'Computer Science',
           userType: userData.userType || 'student',
+          university: userData.university || 'KNUST',
+          degreeType: userData.degreeType || 'Undergraduate',
+          college: userData.college || userData.department || '',
+          programme: userData.programme || '',
           // Student-specific fields
           ...(userData.userType === 'student' && {
             academicLevel: userData.academicLevel || '100',
-            levelDescription: userData.levelDescription || 'First Year - Foundation',
+            levelDescription: userData.levelDescription || 'Undergraduate',
             readingCourses: userData.readingCourses || [],
           }),
           // Lecturer-specific fields
@@ -243,6 +257,15 @@ export const AppProvider = ({ children }) => {
       chatMessages: chatMessages || [],
       setChatMessages,
       csModules: getCoursesForUser(),
+      // Lifestyle integration
+      tasks,
+      setTasks,
+      walletBalance,
+      setWalletBalance,
+      diningCart,
+      setDiningCart,
+      moodLogs,
+      setMoodLogs,
     };
     
     console.log('🔧 Context value created successfully:', {
@@ -250,11 +273,13 @@ export const AppProvider = ({ children }) => {
       userType: contextValue.user?.userType,
       modulesCount: contextValue.csModules?.length || 0,
       notificationsCount: contextValue.notifications?.length || 0,
-      chatMessagesCount: contextValue.chatMessages?.length || 0
+      chatMessagesCount: contextValue.chatMessages?.length || 0,
+      tasksCount: tasks.length
     });
   } catch (error) {
     console.error('❌ Error creating context value:', error);
     contextValue = {
+      // ... existing defaults
       user: null,
       setUser: () => {},
       isAuthenticated: false,
@@ -269,6 +294,15 @@ export const AppProvider = ({ children }) => {
       chatMessages: [],
       setChatMessages: () => {},
       csModules: [],
+      // New fields
+      tasks: [],
+      setTasks: () => {},
+      walletBalance: 0,
+      setWalletBalance: () => {},
+      diningCart: [],
+      setDiningCart: () => {},
+      moodLogs: [],
+      setMoodLogs: () => {},
     };
   }
 

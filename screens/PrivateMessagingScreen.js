@@ -20,6 +20,8 @@ import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useApp } from '../context/AppContext';
 import privateMessagingService from '../services/privateMessagingService';
+import EnhancedMessageBubble from '../components/EnhancedMessageBubble';
+import VoiceNoteRecorder from '../components/VoiceNoteRecorder';
 
 const { width, height } = Dimensions.get('window');
 
@@ -37,6 +39,9 @@ function PrivateMessagingScreen({ navigation }) {
   const [searchQuery, setSearchQuery] = useState('');
   const [chatSubject, setChatSubject] = useState('');
   const [selectedLecturer, setSelectedLecturer] = useState(null);
+  const [isTyping, setIsTyping] = useState(false);
+  const [showVoiceRecorder, setShowVoiceRecorder] = useState(false);
+  const [otherUserTyping, setOtherUserTyping] = useState(false);
 
   // Animation refs
   const fadeAnim = useRef(new Animated.Value(0)).current;
@@ -148,18 +153,22 @@ function PrivateMessagingScreen({ navigation }) {
     }
   };
 
-  const sendMessage = async () => {
-    if (!messageText.trim() || !selectedConversation) return;
+  const sendMessage = async (text = messageText, type = 'text', data = {}) => {
+    if (!text.trim() && type === 'text') return;
+    if (!selectedConversation) return;
 
     try {
       setSending(true);
       const result = await privateMessagingService.sendPrivateMessage(
         selectedConversation.id,
-        messageText.trim()
+        text.trim(),
+        type,
+        data
       );
 
       if (result.success) {
-        setMessageText('');
+        if (type === 'text') setMessageText('');
+        setIsTyping(false);
       } else {
         Alert.alert('Error', result.error || 'Failed to send message');
       }
@@ -169,6 +178,29 @@ function PrivateMessagingScreen({ navigation }) {
     } finally {
       setSending(false);
     }
+  };
+
+  const handleVoiceNoteReady = async (uri, duration) => {
+    await sendMessage('Sent a voice note', 'voice', { audioUri: uri, duration });
+    setShowVoiceRecorder(false);
+  };
+
+  const handleReaction = async (message, emoji) => {
+    // Simulate reaction
+    const updatedMessages = messages.map(m => {
+      if (m.id === message.id) {
+        const reactions = { ...(m.reactions || {}) };
+        if (!reactions[emoji]) reactions[emoji] = [];
+        if (reactions[emoji].includes(user.uid)) {
+          reactions[emoji] = reactions[emoji].filter(id => id !== user.uid);
+        } else {
+          reactions[emoji].push(user.uid);
+        }
+        return { ...m, reactions };
+      }
+      return m;
+    });
+    setMessages(updatedMessages);
   };
 
   const openConversation = (conversation) => {
@@ -249,41 +281,13 @@ function PrivateMessagingScreen({ navigation }) {
   );
 
   const renderMessage = ({ item }) => {
-    const isCurrentUser = item.senderId === user?.uid;
-    
     return (
-      <View style={[
-        styles.messageContainer,
-        isCurrentUser ? styles.currentUserMessage : styles.otherUserMessage
-      ]}>
-        <View style={[
-          styles.messageBubble,
-          isCurrentUser ? styles.currentUserBubble : styles.otherUserBubble
-        ]}>
-          <Text style={[
-            styles.messageText,
-            isCurrentUser ? styles.currentUserText : styles.otherUserText
-          ]}>
-            {item.text}
-          </Text>
-          
-          <View style={styles.messageFooter}>
-            <Text style={[
-              styles.messageTime,
-              isCurrentUser ? styles.currentUserTime : styles.otherUserTime
-            ]}>
-              {formatTime(item.timestamp)}
-            </Text>
-            {item.isConfidential && (
-              <Ionicons 
-                name="shield-checkmark" 
-                size={12} 
-                color={isCurrentUser ? 'rgba(255,255,255,0.7)' : '#10B981'} 
-              />
-            )}
-          </View>
-        </View>
-      </View>
+      <EnhancedMessageBubble
+        message={item}
+        isCurrentUser={item.senderId === user?.uid}
+        onReactionPress={handleReaction}
+        onLongPress={(msg) => Alert.alert('Message Options', 'Forward, Copy, or Delete?')}
+      />
     );
   };
 
@@ -439,7 +443,50 @@ function PrivateMessagingScreen({ navigation }) {
               contentContainerStyle={styles.messagesList}
               showsVerticalScrollIndicator={false}
             />
+
+            {/* Smart Actions Horizontal Scroll */}
+            <View style={{ height: 50, borderTopWidth: 1, borderTopColor: '#F1F5F9' }}>
+              <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: 15, alignItems: 'center', gap: 10 }}>
+                <TouchableOpacity 
+                   style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: '#EEF2FF', paddingHorizontal: 12, paddingVertical: 6, borderRadius: 10, gap: 5 }}
+                   onPress={() => navigation.navigate('Materials')}
+                >
+                  <Ionicons name="document-text" size={16} color="#4F46E5" />
+                  <Text style={{ fontSize: 12, fontWeight: '700', color: '#4F46E5' }}>Share Notes</Text>
+                </TouchableOpacity>
+                
+                <TouchableOpacity 
+                  style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: '#F0FDF4', paddingHorizontal: 12, paddingVertical: 6, borderRadius: 10, gap: 5 }}
+                  onPress={() => Alert.alert('AI Summary', 'Analyzing recent messages...\n\nKey Takeaways:\n1. Lecture scheduled for 2 PM.\n2. Bring the printed textbook.')}
+                >
+                  <Ionicons name="sparkles" size={16} color="#10B981" />
+                  <Text style={{ fontSize: 12, fontWeight: '700', color: '#10B981' }}>Summarize Chat</Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity 
+                  style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: '#FFF7ED', paddingHorizontal: 12, paddingVertical: 6, borderRadius: 10, gap: 5 }}
+                  onPress={() => Alert.alert('Poll', 'Create a poll for the students/lecturer?')}
+                >
+                  <Ionicons name="stats-chart" size={16} color="#F59E0B" />
+                  <Text style={{ fontSize: 12, fontWeight: '700', color: '#F59E0B' }}>Create Poll</Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity 
+                  style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: '#FDF2F8', paddingHorizontal: 12, paddingVertical: 6, borderRadius: 10, gap: 5 }}
+                  onPress={() => navigation.navigate('ClassSchedule')}
+                >
+                  <Ionicons name="calendar" size={16} color="#EC4899" />
+                  <Text style={{ fontSize: 12, fontWeight: '700', color: '#EC4899' }}>Link Schedule</Text>
+                </TouchableOpacity>
+              </ScrollView>
+            </View>
             
+            {otherUserTyping && (
+              <View style={styles.typingIndicator}>
+                <Text style={styles.typingText}>{selectedConversation.otherParticipant?.name} is typing...</Text>
+              </View>
+            )}
+
             <View style={styles.inputContainer}>
               <View style={styles.confidentialNotice}>
                 <Ionicons name="shield-checkmark" size={16} color="#10B981" />
@@ -449,22 +496,44 @@ function PrivateMessagingScreen({ navigation }) {
               </View>
               
               <View style={styles.messageInputContainer}>
-                <TextInput
-                  style={styles.messageInput}
-                  placeholder="Type your message..."
-                  placeholderTextColor="#9CA3AF"
-                  value={messageText}
-                  onChangeText={setMessageText}
-                  multiline
-                  maxLength={1000}
-                />
+                <TouchableOpacity 
+                   style={styles.inputIconButton}
+                   onPress={() => setShowVoiceRecorder(!showVoiceRecorder)}
+                >
+                  <Ionicons name={showVoiceRecorder ? "close" : "mic"} size={22} color="#4F46E5" />
+                </TouchableOpacity>
+
+                {showVoiceRecorder ? (
+                  <View style={{ flex: 1, height: 45, justifyContent: 'center' }}>
+                    <VoiceNoteRecorder 
+                      onFinish={handleVoiceNoteReady}
+                      onCancel={() => setShowVoiceRecorder(false)}
+                      isDark={false}
+                    />
+                  </View>
+                ) : (
+                  <TextInput
+                    style={styles.messageInput}
+                    placeholder="Type your message..."
+                    placeholderTextColor="#9CA3AF"
+                    value={messageText}
+                    onChangeText={(text) => {
+                      setMessageText(text);
+                      if (text.length > 0 && !isTyping) setIsTyping(true);
+                      if (text.length === 0) setIsTyping(false);
+                    }}
+                    multiline
+                    maxLength={1000}
+                  />
+                )}
+
                 <TouchableOpacity
                   style={[
                     styles.sendButton,
-                    (!messageText.trim() || sending) && styles.sendButtonDisabled
+                    (!messageText.trim() && !showVoiceRecorder || sending) && styles.sendButtonDisabled
                   ]}
-                  onPress={sendMessage}
-                  disabled={!messageText.trim() || sending}
+                  onPress={() => sendMessage()}
+                  disabled={!messageText.trim() && !showVoiceRecorder || sending}
                 >
                   {sending ? (
                     <ActivityIndicator size="small" color="#FFFFFF" />
@@ -799,9 +868,22 @@ const styles = StyleSheet.create({
   messageFooter: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
+    justifyContent: 'flex-end',
     marginTop: 4,
-    gap: 8,
+    gap: 4,
+  },
+  typingIndicator: {
+    paddingHorizontal: 20,
+    paddingVertical: 5,
+  },
+  typingText: {
+    fontSize: 12,
+    color: '#94A3B8',
+    fontStyle: 'italic',
+  },
+  inputIconButton: {
+    padding: 8,
+    marginRight: 4,
   },
   messageTime: {
     fontSize: 10,
